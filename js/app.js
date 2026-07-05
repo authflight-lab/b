@@ -3,6 +3,10 @@
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
 
+  // VERBATIM legal copy from spec §9 (Play footer). Do not paraphrase.
+  BT.LEGAL_POINTS =
+    "Points are not currency, cannot be bought or sold. They carry no value outside of this bots shop. This app contains simulated casino-style games. Real gambling has worse odds than what you see here. Winning here does not mean you'll win anywhere else.";
+
   BT.state = { me: null, balance: 0, ageAck: false };
 
   const tg = (window.Telegram && window.Telegram.WebApp) || null;
@@ -83,7 +87,7 @@
         el("p", null, [el("strong", null, "You must be 18 or older to continue.")]),
         el("p", null, BT.LEGAL_POINTS),
         el("p", null, "These are simulated casino-style games with a built-in house edge. They are for entertainment only — points have no monetary value and cannot be exchanged for cash, crypto, or goods outside this bot's shop."),
-        el("p", null, "By continuing you confirm you are at least 18 years old, that this simulation is legal where you live, and that you accept the full disclaimer in the Support tab."),
+        el("p", null, "By continuing you confirm you are at least 18 years old and that this simulation is legal where you live."),
       ]),
       el("div", { class: "spacer" }),
       accept,
@@ -107,9 +111,6 @@
     if (!root) return;
     current = key;
     document.querySelectorAll(".pillnav-link").forEach((t) => t.classList.toggle("active", t.dataset.screen === key));
-    const curIco = document.getElementById("pillnav-current-ico");
-    const activeLink = document.querySelector(`.pillnav-link[data-screen="${key}"] .pillnav-ico`);
-    if (curIco && activeLink) curIco.textContent = activeLink.textContent;
     const scr = BT.screens && BT.screens[key];
     if (scr && typeof scr.render === "function") {
       try { scr.render(root); }
@@ -122,37 +123,10 @@
   }
   BT.showScreen = showScreen;
 
-  // ---- Pill nav (frosted-glass dynamic-island style expanding nav) ---------
+  // ---- Pill nav (frosted-glass floating nav bar, always expanded) ----------
   function wireNav() {
-    const nav = document.getElementById("pillnav");
-    const toggle = document.getElementById("pillnav-toggle");
-    const currentBtn = document.getElementById("pillnav-current");
-    if (!nav) return;
-
-    let leaveTimer = null;
-    const expand = () => { clearTimeout(leaveTimer); nav.classList.add("expanded"); };
-    const collapse = () => { nav.classList.remove("expanded"); };
-
-    toggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (nav.classList.contains("expanded")) collapse(); else expand();
-    });
-    currentBtn.addEventListener("click", (e) => { e.stopPropagation(); expand(); });
-
-    // Desktop convenience: hover to preview the expanded pill.
-    nav.addEventListener("mouseenter", expand);
-    nav.addEventListener("mouseleave", () => { leaveTimer = setTimeout(collapse, 350); });
-
     document.querySelectorAll(".pillnav-link").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        showScreen(btn.dataset.screen);
-        collapse();
-      });
-    });
-
-    // Tapping anywhere outside the pill collapses it back down.
-    document.addEventListener("click", (e) => {
-      if (!nav.contains(e.target)) collapse();
+      btn.addEventListener("click", () => showScreen(btn.dataset.screen));
     });
   }
 
