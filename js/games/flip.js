@@ -9,7 +9,7 @@
     const bet = C.betControl(10);
     const seed = C.seedBox();
     const banner = C.resultBanner();
-    const coin = el("div", { class: "coin" }, "🪙");
+    const coin = el("div", { class: "coin" }, "◎");
     const track = el("div", { class: "mult-track" });
     let roundId = null, busy = false, streak = 0;
 
@@ -54,7 +54,7 @@
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       const os = resp.outcome_step || {};
       const face = os.result || os.side || (os.win ? side : "?");
-      coin.textContent = face === "heads" ? "🪙" : (face === "tails" ? "🌝" : "🪙");
+      coin.textContent = face === "heads" ? "◉" : (face === "tails" ? "◯" : "◎");
       const busted = !!resp.busted;
       streak += 1;
       pushMult(resp.multiplier, !busted);
@@ -85,7 +85,7 @@
     }
 
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", null, "🪙 Flip"),
+      el("h3", null, "◎ Flip"),
       el("p", { class: "small muted" }, "Pick a side each round. Every correct flip multiplies your bet by 1.98×. Cash out any time before you miss."),
       coin,
       track,
@@ -100,5 +100,5 @@
     cashBtn.style.display = "none";
   }
 
-  C.register({ key: "flip", title: "Flip", icon: "🪙", render });
+  C.register({ key: "flip", title: "Flip", icon: "◎", render });
 })();

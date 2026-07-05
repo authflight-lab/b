@@ -74,7 +74,7 @@
     });
 
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", null, "🔻 Plinko"),
+      el("h3", null, "▽ Plinko"),
       el("p", { class: "small muted" }, "Drop a ball through the pegs. Where it lands sets your multiplier. More rows and higher risk spread the payouts."),
       el("div", { class: "row" }, [
         el("div", { class: "field grow" }, [el("label", null, "Rows"), rowsSel]),
@@ -89,5 +89,5 @@
     ]));
   }
 
-  C.register({ key: "plinko", title: "Plinko", icon: "🔻", render });
+  C.register({ key: "plinko", title: "Plinko", icon: "▽", render });
 })();

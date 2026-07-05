@@ -75,10 +75,10 @@
       if (floorEl && Array.isArray(traps)) {
         traps.forEach((tc) => {
           const tcell = floorEl.querySelector('.cell[data-c="' + tc + '"]');
-          if (tcell) { tcell.classList.add("mine"); tcell.textContent = "💥"; }
+          if (tcell) { tcell.classList.add("mine"); tcell.textContent = "✕"; }
         });
       }
-      if (chosen) { chosen.classList.add(safe ? "safe" : "mine"); chosen.textContent = safe ? "✅" : "💥"; }
+      if (chosen) { chosen.classList.add(safe ? "safe" : "mine"); chosen.textContent = safe ? "✓" : "✕"; }
       if (resp.multiplier) multEl.textContent = "Current: " + (Math.round(resp.multiplier * 100) / 100) + "×";
       if (resp.busted) { finish(resp); return; }
       if (resp.done || f >= FLOORS - 1) { finish(resp); return; }
@@ -105,7 +105,7 @@
 
     buildTower();
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", null, "🏛️ Towers"),
+      el("h3", null, "▲ Towers"),
       el("p", { class: "small muted" }, "Climb floor by floor. Pick a safe tile each floor to grow your multiplier; a trap ends the run. Cash out any time."),
       el("div", { class: "field" }, [el("label", null, "Difficulty"), diffSel]),
       tower,
@@ -118,5 +118,5 @@
     ]));
   }
 
-  C.register({ key: "towers", title: "Towers", icon: "🏛️", render });
+  C.register({ key: "towers", title: "Towers", icon: "▲", render });
 })();

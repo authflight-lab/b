@@ -57,7 +57,7 @@
       const isMine = os.is_mine !== undefined ? os.is_mine : !!resp.busted;
       cells[i].classList.remove("disabled");
       cells[i].classList.add(isMine ? "mine" : "safe");
-      cells[i].textContent = isMine ? "💣" : "💎";
+      cells[i].textContent = isMine ? "⊗" : "◆";
       if (resp.multiplier) multEl.textContent = "Current: " + (Math.round(resp.multiplier * 100) / 100) + "×";
       if (resp.busted || resp.done) { finish(resp); }
       else { BT.ui.haptic("light"); lockGrid(false); }
@@ -81,7 +81,7 @@
       if (Array.isArray(mines)) {
         mines.forEach((idx) => {
           if (cells[idx] && !cells[idx].classList.contains("mine")) {
-            cells[idx].classList.remove("disabled"); cells[idx].classList.add("mine"); cells[idx].textContent = "💣";
+            cells[idx].classList.remove("disabled"); cells[idx].classList.add("mine"); cells[idx].textContent = "⊗";
           }
         });
       }
@@ -92,7 +92,7 @@
     }
 
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", null, "💣 Mines"),
+      el("h3", null, "⊗ Mines"),
       el("p", { class: "small muted" }, "Reveal gems to grow your multiplier. Hit a mine and you lose. Cash out whenever."),
       el("div", { class: "field" }, [el("label", null, "Mines"), mineSel]),
       grid,
@@ -105,5 +105,5 @@
     ]));
   }
 
-  C.register({ key: "mines", title: "Mines", icon: "💣", render });
+  C.register({ key: "mines", title: "Mines", icon: "⊗", render });
 })();

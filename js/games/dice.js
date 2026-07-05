@@ -20,7 +20,7 @@
       marker.style.left = v + "%";
     });
 
-    const face = el("div", { class: "dice-face" }, "🎲");
+    const face = el("div", { class: "dice-face" }, "⚅");
     const marker = el("div", { class: "dice-marker", style: "left:50%" });
     const meter = el("div", { class: "dice-meter" }, marker);
 
@@ -59,7 +59,7 @@
       const roll = o.roll !== undefined ? o.roll : o.result;
       if (typeof roll === "number") {
         marker.style.left = Math.max(0, Math.min(100, roll)) + "%";
-        face.textContent = "🎲 " + (Math.round(roll * 100) / 100);
+        face.textContent = "⚅ " + (Math.round(roll * 100) / 100);
       }
       const win = o.win !== undefined ? o.win : (s.payout || 0) > 0;
       C.syncBalance(s);
@@ -75,7 +75,7 @@
 
     root.appendChild(
       el("div", { class: "card" }, [
-        el("h3", null, "🎲 Dice"),
+        el("h3", null, "⚅ Dice"),
         el("p", { class: "small muted" }, "Pick a target 2–98. You win if the roll lands under your target. Lower target = higher payout."),
         face,
         meter,
@@ -88,5 +88,5 @@
     );
   }
 
-  C.register({ key: "dice", title: "Dice", icon: "🎲", render });
+  C.register({ key: "dice", title: "Dice", icon: "⚅", render });
 })();

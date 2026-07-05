@@ -58,8 +58,8 @@
 
     root.appendChild(el("div", { class: "card" }, [
       el("div", { class: "section-title" }, "Daily quest"),
-      questRow("💬 Chatted in the group today", quest.chatted),
-      questRow("🎁 Claimed daily points", quest.claimed),
+      questRow("✎ Chatted in the group today", quest.chatted),
+      questRow("✚ Claimed daily points", quest.claimed),
       el("div", { class: "spacer" }),
       claimBtn,
       el("div", { class: "small muted center", style: "margin-top:8px" },
@@ -114,7 +114,7 @@
   }
   function previewCard() {
     return el("div", { class: "card" }, [
-      el("h3", null, "🍸 Welcome to Bartender"),
+      el("h3", null, "✦ Welcome to Bartender"),
       el("p", { class: "muted" }, "The rewards server isn't connected yet. You're viewing a preview — earn points by chatting in the group, claim daily, play games, and redeem prizes in the Shop."),
       el("div", { class: "stat-grid" }, [stat("Balance", "— pts"), stat("Streak", "— days")]),
     ]);

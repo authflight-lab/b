@@ -18,7 +18,7 @@
     const banner = C.resultBanner();
     let roundId = null, busy = false, ended = true;
 
-    const cardEl = el("div", { class: "dice-face" }, "🂠");
+    const cardEl = el("div", { class: "dice-face" }, "▭");
     const track = el("div", { class: "mult-track" });
     const hiBtn = el("button", { class: "btn accent2 grow" }, "▲ Higher");
     const loBtn = el("button", { class: "btn accent2 grow" }, "▼ Lower");
@@ -30,7 +30,7 @@
       track.appendChild(el("div", { class: "mult-step" + (on ? " on" : "") }, m ? (Math.round(m * 100) / 100) + "×" : "?"));
       track.scrollLeft = track.scrollWidth;
     }
-    function setCard(r) { cardEl.textContent = "🃏 " + cardLabel(r); }
+    function setCard(r) { cardEl.textContent = "▪ " + cardLabel(r); }
 
     function applyState(resp) {
       // Enable/disable buttons if the server tells us probabilities are 0.
@@ -92,7 +92,7 @@
     }
 
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", null, "🃏 HighLow"),
+      el("h3", null, "▪ HighLow"),
       el("p", { class: "small muted" }, "Guess whether the next card is higher or lower. Each correct call chains your multiplier. Cash out any time."),
       cardEl,
       track,
@@ -106,5 +106,5 @@
     ]));
   }
 
-  C.register({ key: "highlow", title: "HighLow", icon: "🃏", render });
+  C.register({ key: "highlow", title: "HighLow", icon: "▪", render });
 })();

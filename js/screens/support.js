@@ -12,7 +12,7 @@
     BT.ui.clear(root);
 
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", null, "❔ Support & Help"),
+      el("h3", null, "? Support & Help"),
       el("p", { class: "muted" }, "Need a hand? Here's how everything works and how to reach us."),
     ]));
 

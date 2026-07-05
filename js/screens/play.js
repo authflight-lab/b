@@ -27,7 +27,7 @@
       grid.appendChild(el("div", {
         class: "game-tile" + (selected === key ? " active" : ""),
         onclick: () => { selected = key; renderGames(root); },
-      }, [el("div", { class: "g-ico" }, g.icon || "🎮"), el("div", { class: "g-name" }, g.title)]));
+      }, [el("div", { class: "g-ico" }, g.icon || "▶"), el("div", { class: "g-name" }, g.title)]));
     });
     root.appendChild(grid);
 

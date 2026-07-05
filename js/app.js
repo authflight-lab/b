@@ -78,7 +78,7 @@
     });
 
     gate.appendChild(el("div", { class: "overlay-card" }, [
-      el("h2", null, "🔞 Before you play"),
+      el("h2", null, "18+ Before you play"),
       el("div", { class: "legal" }, [
         el("p", null, [el("strong", null, "You must be 18 or older to continue.")]),
         el("p", null, BT.LEGAL_POINTS),

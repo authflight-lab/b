@@ -10,8 +10,8 @@
     BT.ui.clear(root);
 
     const tabs = el("div", { class: "pilltabs" }, [
-      tab("rich", "💰 Rich List"),
-      tab("chatters", "💬 Chatters"),
+      tab("rich", "$ Rich List"),
+      tab("chatters", "✎ Chatters"),
     ]);
     const body = el("div", { id: "lb-body" }, BT.ui.loading("Loading rankings…"));
     root.appendChild(tabs);
@@ -64,9 +64,9 @@
     ]);
   }
   function medal(rank) {
-    if (rank === 1) return "🥇";
-    if (rank === 2) return "🥈";
-    if (rank === 3) return "🥉";
+    if (rank === 1) return "①";
+    if (rank === 2) return "②";
+    if (rank === 3) return "③";
     return "#" + (rank === undefined || rank === null ? "?" : rank);
   }
 
