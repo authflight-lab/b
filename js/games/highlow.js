@@ -92,7 +92,7 @@
     }
 
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", null, "▪ HighLow"),
+      el("h3", { class: "game-title" }, [BT.ui.icon("highlow", 22), el("span", null, "HighLow")]),
       el("p", { class: "small muted" }, "Guess whether the next card is higher or lower. Each correct call chains your multiplier. Cash out any time."),
       cardEl,
       track,
@@ -106,5 +106,5 @@
     ]));
   }
 
-  C.register({ key: "highlow", title: "HighLow", icon: "▪", render });
+  C.register({ key: "highlow", title: "HighLow", render });
 })();

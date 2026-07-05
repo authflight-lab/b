@@ -105,7 +105,7 @@
 
     buildTower();
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", null, "▲ Towers"),
+      el("h3", { class: "game-title" }, [BT.ui.icon("towers", 22), el("span", null, "Towers")]),
       el("p", { class: "small muted" }, "Climb floor by floor. Pick a safe tile each floor to grow your multiplier; a trap ends the run. Cash out any time."),
       el("div", { class: "field" }, [el("label", null, "Difficulty"), diffSel]),
       tower,
@@ -118,5 +118,5 @@
     ]));
   }
 
-  C.register({ key: "towers", title: "Towers", icon: "▲", render });
+  C.register({ key: "towers", title: "Towers", render });
 })();

@@ -75,7 +75,7 @@
 
     root.appendChild(
       el("div", { class: "card" }, [
-        el("h3", null, "⚅ Dice"),
+        el("h3", { class: "game-title" }, [BT.ui.icon("dice", 22), el("span", null, "Dice")]),
         el("p", { class: "small muted" }, "Pick a target 2–98. You win if the roll lands under your target. Lower target = higher payout."),
         face,
         meter,
@@ -88,5 +88,5 @@
     );
   }
 
-  C.register({ key: "dice", title: "Dice", icon: "⚅", render });
+  C.register({ key: "dice", title: "Dice", render });
 })();

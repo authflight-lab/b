@@ -165,8 +165,16 @@ input[type="number"], input[type="text"], select {
 .game-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
 .game-tile { background: var(--bg-elev-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 8px; text-align: center; cursor: pointer; }
 .game-tile.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.game-tile .g-ico { font-size: 22px; }
-.game-tile .g-name { font-size: 12px; margin-top: 4px; }
+.game-tile .g-ico { display: flex; align-items: center; justify-content: center; height: 30px; color: var(--text); }
+.game-tile.active .g-ico { color: var(--accent); }
+.game-tile .g-name { font-size: 12px; margin-top: 6px; }
+
+/* Inline SVG icon wrapper */
+.icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+.icon svg { display: block; }
+
+/* Game screen title with leading icon */
+.game-title { display: flex; align-items: center; gap: 8px; }
 
 /* Seed / fairness box */
 .seedbox { background: var(--bg-elev-2); border: 1px dashed var(--border); border-radius: 12px; padding: 10px 12px; margin: 12px 0; }

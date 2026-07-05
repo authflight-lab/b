@@ -5,12 +5,12 @@
   const fmt = BT.ui.fmt;
 
   const GAMES = [
-    { key: "plinko",  icon: "▽", label: "Plinko"  },
-    { key: "mines",   icon: "⊗", label: "Mines"   },
-    { key: "dice",    icon: "⚅", label: "Dice"    },
-    { key: "towers",  icon: "▲", label: "Towers"  },
-    { key: "highlow", icon: "♠", label: "HighLow" },
-    { key: "flip",    icon: "◎", label: "Flip"    },
+    { key: "plinko",  label: "Plinko"  },
+    { key: "mines",   label: "Mines"   },
+    { key: "dice",    label: "Dice"    },
+    { key: "towers",  label: "Towers"  },
+    { key: "highlow", label: "HighLow" },
+    { key: "flip",    label: "Flip"    },
   ];
 
   const QUESTS = [
@@ -98,7 +98,7 @@
     });
     GAMES.forEach((g) => {
       const tile = el("div", { class: "game-tile", style: "cursor:pointer" }, [
-        el("div", { class: "g-ico" }, g.icon),
+        el("div", { class: "g-ico" }, BT.ui.icon(g.key, 26)),
         el("div", { class: "g-name" }, g.label),
       ]);
       tile.addEventListener("click", () => BT.showScreen("play"));

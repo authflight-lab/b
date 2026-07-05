@@ -86,5 +86,52 @@
     return el("div", { class: "notice" }, text);
   }
 
-  BT.ui = { el, clear, fmt, fmtDate, toast, haptic, loading, notice, appendChildren };
+  // Cohesive inline-SVG icon set (24×24, stroke = currentColor) so game icons
+  // read as one designed pack and inherit theme color. Replaces mismatched glyphs.
+  const ICONS = {
+    dice:
+      '<rect x="3" y="3" width="18" height="18" rx="4.5"/>' +
+      '<circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>',
+    flip:
+      '<circle cx="12" cy="12" r="9"/>' +
+      '<circle cx="12" cy="12" r="4.5"/>',
+    mines:
+      '<circle cx="10.5" cy="14" r="7"/>' +
+      '<path d="M16 9.5C17 7.5 18.5 6 20 6"/>' +
+      '<path d="M20 2.8v3.2"/>' +
+      '<path d="M18.4 4.4h3.2"/>',
+    towers:
+      '<path d="M12 2 2 7l10 5 10-5-10-5Z"/>' +
+      '<path d="M2 12l10 5 10-5"/>' +
+      '<path d="M2 17l10 5 10-5"/>',
+    highlow:
+      '<path d="M7 4v16"/>' +
+      '<path d="M3 8l4-4 4 4"/>' +
+      '<path d="M17 20V4"/>' +
+      '<path d="M21 16l-4 4-4-4"/>',
+    plinko:
+      '<circle cx="12" cy="4.5" r="1.5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="8" cy="11" r="1.5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="16" cy="11" r="1.5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="4" cy="17.5" r="1.5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="12" cy="17.5" r="1.5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="20" cy="17.5" r="1.5" fill="currentColor" stroke="none"/>',
+  };
+
+  function icon(name, size) {
+    const s = size || 24;
+    const body = ICONS[name] || "";
+    const wrap = el("span", { class: "icon" });
+    wrap.innerHTML =
+      '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="none" ' +
+      'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' +
+      'aria-hidden="true">' + body + "</svg>";
+    return wrap;
+  }
+
+  BT.ui = { el, clear, fmt, fmtDate, toast, haptic, loading, notice, icon, appendChildren };
 })();
