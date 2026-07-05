@@ -64,9 +64,6 @@
     ]);
   }
   function medal(rank) {
-    if (rank === 1) return "①";
-    if (rank === 2) return "②";
-    if (rank === 3) return "③";
     return "#" + (rank === undefined || rank === null ? "?" : rank);
   }
 
