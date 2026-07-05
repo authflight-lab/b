@@ -24,7 +24,7 @@
     const tower = el("div", { class: "towers" });
     const multEl = el("div", { class: "small muted center" }, "");
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
-    const cashBtn = el("button", { class: "btn good block", style: "display:none" }, "Cash out");
+    const cashBtn = el("button", { class: "btn primary block", style: "display:none" }, "Cash out");
 
     function buildTower() {
       BT.ui.clear(tower);

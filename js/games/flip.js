@@ -15,7 +15,7 @@
 
     const headsBtn = el("button", { class: "btn accent2 grow" }, "Heads");
     const tailsBtn = el("button", { class: "btn accent2 grow" }, "Tails");
-    const cashBtn = el("button", { class: "btn good block" }, "Cash out");
+    const cashBtn = el("button", { class: "btn primary block" }, "Cash out");
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
     const playRow = el("div", { class: "row", style: "display:none" }, [headsBtn, tailsBtn]);
 

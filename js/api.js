@@ -299,7 +299,16 @@
     const server_seed = fakeHash();
     const payout = Math.round(round.bet * round.multiplier);
     settlePayout(round, payout);
-    return { ok: true, server_seed, payout, balance: MOCK.profile.balance };
+    let outcome;
+    if (name === "mines") {
+      const minesCount = parseInt(round.params.mines, 10) || 3;
+      // Mirror the real API: cashout reveals server_seed anyway, so the mine
+      // layout is already derivable — commit one if the player cashed out
+      // before any reveal, otherwise reuse the committed layout.
+      if (!round.__mineSet) round.__mineSet = new Set(sampleMinePositions(minesCount));
+      outcome = { mines: Array.from(round.__mineSet).sort((a, b) => a - b) };
+    }
+    return { ok: true, server_seed, payout, outcome, balance: MOCK.profile.balance };
   }
   // ---- END MOCK MODE ---------------------------------------------------------
 

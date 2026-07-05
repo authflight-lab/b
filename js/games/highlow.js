@@ -24,7 +24,7 @@
     const loBtn = el("button", { class: "btn accent2 grow" }, "▼ Lower");
     const playRow = el("div", { class: "row", style: "display:none" }, [hiBtn, loBtn]);
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
-    const cashBtn = el("button", { class: "btn good block", style: "display:none" }, "Cash out");
+    const cashBtn = el("button", { class: "btn primary block", style: "display:none" }, "Cash out");
 
     function pushMult(m, on) {
       track.appendChild(el("div", { class: "mult-step" + (on ? " on" : "") }, m ? (Math.round(m * 100) / 100) + "×" : "?"));
