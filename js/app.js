@@ -111,6 +111,7 @@
     if (!root) return;
     current = key;
     document.querySelectorAll(".pillnav-link").forEach((t) => t.classList.toggle("active", t.dataset.screen === key));
+    moveIndicator();
     const scr = BT.screens && BT.screens[key];
     if (scr && typeof scr.render === "function") {
       try { scr.render(root); }
@@ -123,11 +124,20 @@
   }
   BT.showScreen = showScreen;
 
-  // ---- Pill nav (frosted-glass floating nav bar, always expanded) ----------
+  // ---- Pill nav (liquid-glass floating nav bar, always expanded) -----------
+  function moveIndicator() {
+    const indicator = document.getElementById("pillnav-indicator");
+    const active = document.querySelector(".pillnav-link.active");
+    if (!indicator || !active) return;
+    indicator.style.width = active.offsetWidth + "px";
+    indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+  }
+
   function wireNav() {
     document.querySelectorAll(".pillnav-link").forEach((btn) => {
       btn.addEventListener("click", () => showScreen(btn.dataset.screen));
     });
+    window.addEventListener("resize", moveIndicator);
   }
 
   // ---- Boot -----------------------------------------------------------------

@@ -31,42 +31,74 @@ body {
 /* Screen area */
 .screen-root {
   flex: 1 1 auto;
-  padding: calc(16px + var(--safe-top)) 16px calc(124px + var(--safe-bottom));
+  padding: calc(16px + var(--safe-top)) 16px calc(104px + var(--safe-bottom));
   max-width: 640px; width: 100%; margin: 0 auto;
 }
 
-/* Pill nav — frosted-glass floating nav bar, always fully expanded */
+/* Pill nav — real liquid-glass floating nav bar, always fully expanded */
 .pillnav {
-  position: fixed; left: 50%; bottom: calc(18px + var(--safe-bottom)); z-index: 30;
+  position: fixed; left: 50%; bottom: calc(16px + var(--safe-bottom)); z-index: 30;
   transform: translateX(-50%);
-  width: min(94vw, 460px);
+  width: min(88vw, 360px);
 }
 .pillnav-inner {
   position: relative;
   display: flex; align-items: center;
-  height: 64px;
-  padding: 6px;
-  background: rgba(30, 37, 51, 0.55);
-  border: 0.5px solid rgba(255,255,255,0.14);
+  height: 50px;
+  padding: 5px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.09) 100%),
+    rgba(28, 34, 47, 0.45);
+  border: 0.5px solid rgba(255,255,255,0.28);
   border-radius: 999px;
-  box-shadow: 0 10px 34px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07);
-  backdrop-filter: blur(22px) saturate(160%);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -10px 14px rgba(0,0,0,0.22),
+    inset 0 0 24px rgba(255,255,255,0.04);
+  backdrop-filter: blur(24px) saturate(180%) brightness(1.08);
+  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.08);
+}
+.pillnav-inner::before {
+  content: "";
+  position: absolute; top: 2px; left: 8%; right: 8%; height: 46%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0) 100%);
+  border-radius: 999px;
+  pointer-events: none;
 }
 
 .pillnav-links {
+  position: relative;
   flex: 1 1 auto; min-width: 0;
-  display: flex; align-items: center; justify-content: space-between; gap: 4px;
+  display: flex; align-items: center; justify-content: space-between; gap: 2px;
+}
+
+.pillnav-indicator {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,176,32,0.4), rgba(255,176,32,0.18));
+  box-shadow:
+    0 2px 12px rgba(255,176,32,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.5),
+    inset 0 -6px 10px rgba(255,176,32,0.15);
+  transition: transform 0.6s cubic-bezier(0.6, -0.28, 0.35, 1.35),
+              width 0.6s cubic-bezier(0.6, -0.28, 0.35, 1.35);
+  will-change: transform, width;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .pillnav-link {
+  position: relative; z-index: 1;
   flex: 1 1 auto;
   display: flex; align-items: center; justify-content: center;
   background: none; border: none; color: var(--text-dim); font: inherit;
-  padding: 10px 6px; border-radius: 999px; cursor: pointer;
+  padding: 8px 4px; border-radius: 999px; cursor: pointer;
+  transition: color .3s ease;
 }
-.pillnav-link.active { color: var(--accent); background: rgba(255,255,255,0.08); }
-.pillnav-label { font-size: 15px; font-weight: 600; }
+.pillnav-link.active { color: #201400; }
+.pillnav-label { font-size: 12.5px; font-weight: 700; letter-spacing: 0.1px; }
 
 /* Cards & sections */
 .card {
