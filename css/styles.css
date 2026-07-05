@@ -312,8 +312,49 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
 .cell.reveal-only { pointer-events: none; opacity: 0.38; box-shadow: none; }
 .cell.reveal-only .cell-icon { animation: none; transform: scale(1); opacity: 1; filter: grayscale(35%); }
 
+/* Towers — vertical gem climb inside a dungeon shaft */
+.tower-shaft {
+  padding: 12px; margin: 12px 0; border-radius: 16px;
+  background:
+    radial-gradient(120% 55% at 50% -8%, rgba(0,124,143,0.16), transparent 62%),
+    linear-gradient(180deg, rgba(12,20,32,0.6), rgba(6,10,18,0.4));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-inset-hi), inset 0 0 42px rgba(0,0,0,0.4);
+}
 .towers { display: flex; flex-direction: column-reverse; gap: 8px; }
-.tower-floor { display: grid; gap: 8px; }
+.tower-floor { display: grid; gap: 8px; transition: opacity .25s ease, filter .25s ease; }
+.tower-floor.dim { opacity: 0.42; filter: saturate(0.6); }
+
+/* Per-tile multiplier badge (revealed safe tiles only) */
+.cell .cell-mult {
+  position: absolute; bottom: 3px; left: 50%;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.2px; line-height: 1;
+  padding: 2px 6px; border-radius: 999px; color: #d9ffe9; white-space: nowrap;
+  background: rgba(53,199,124,0.92); box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+  opacity: 0; transform: translate(-50%, 5px); transition: opacity .25s ease, transform .25s ease;
+  pointer-events: none;
+}
+.cell.safe .cell-mult { opacity: 1; transform: translate(-50%, 0); }
+
+/* Tower gems: a 💎 whose hue/brightness shifts per state (green = safe) */
+.cell.tower-cell .cell-icon {
+  transform: none; opacity: 0.38; animation: none;
+  filter: grayscale(0.85) brightness(0.6);
+  transition: filter .25s ease, transform .2s ease, opacity .25s ease;
+}
+.tower-floor.active .cell.tower-cell .cell-icon {
+  opacity: 0.85; filter: grayscale(0.2) brightness(1);
+  animation: gemFloat 2.2s ease-in-out infinite;
+}
+.tower-floor.active .cell.tower-cell:not(.disabled):active { transform: scale(0.92); }
+.cell.tower-cell.safe .cell-icon {
+  opacity: 1; animation: cellPop .38s cubic-bezier(.34,1.56,.64,1);
+  filter: hue-rotate(85deg) saturate(1.5) brightness(1.15) drop-shadow(0 0 6px rgba(53,199,124,0.7));
+}
+.cell.tower-cell.mine .cell-icon {
+  opacity: 1; filter: none; animation: cellPop .38s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes gemFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .coin-flip-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 10px 0 16px; perspective: 700px; }
 .coin-shadow { width: 62px; height: 12px; margin-top: 10px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0,0,0,0.35), rgba(0,0,0,0) 70%); animation: coinShadowPulse 2.4s ease-in-out infinite; }
 @keyframes coinShadowPulse { 0%, 100% { transform: scaleX(1); opacity: 0.8; } 50% { transform: scaleX(0.82); opacity: 0.5; } }
