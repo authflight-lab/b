@@ -83,10 +83,13 @@
     // --- Probability bar ----------------------------------------------------
     const loPct = el("span", { class: "hl-prob-pct" }, "—");
     const hiPct = el("span", { class: "hl-prob-pct" }, "—");
-    const probBar = el("div", { class: "hl-prob" }, [
-      el("div", { class: "hl-prob-half lo" }, [el("span", { class: "hl-prob-label" }, "Lower / Same"), loPct]),
-      el("div", { class: "hl-prob-half hi" }, [el("span", { class: "hl-prob-label" }, "Higher / Same"), hiPct]),
+    const loProb = el("button", { class: "hl-prob-half lo", type: "button" }, [
+      el("span", { class: "hl-prob-label" }, "Lower / Same"), loPct,
     ]);
+    const hiProb = el("button", { class: "hl-prob-half hi", type: "button" }, [
+      el("span", { class: "hl-prob-label" }, "Higher / Same"), hiPct,
+    ]);
+    const probBar = el("div", { class: "hl-prob" }, [loProb, hiProb]);
 
     function setCard(r, animate) {
       const su = suitFor(r, step);
@@ -113,6 +116,7 @@
         hiPct.textContent = loPct.textContent = "—";
         hiBtn.disabled = loBtn.disabled = true;
         hiBtn.classList.add("locked"); loBtn.classList.add("locked");
+        hiProb.disabled = loProb.disabled = true;
         return;
       }
       const ph = pHi(rank), pl = pLo(rank);
@@ -125,6 +129,8 @@
       loBtn.disabled = !playable || !canLo;
       hiBtn.classList.toggle("locked", !playable);
       loBtn.classList.toggle("locked", !playable);
+      hiProb.disabled = !playable || !canHi;
+      loProb.disabled = !playable || !canLo;
     }
 
     // --- Actions ------------------------------------------------------------
@@ -153,6 +159,7 @@
     async function guess(dir) {
       if (busy || ended || !roundId) return; busy = true;
       hiBtn.disabled = loBtn.disabled = cashBtn.disabled = true;
+      hiProb.disabled = loProb.disabled = true;
       const resp = await BT.api.gameStep("highlow", { round_id: roundId, move: { guess: dir } });
       busy = false;
       if (!resp || resp.ok === false) {
@@ -184,6 +191,8 @@
     // Direction naming: backend expects "higher"/"lower".
     hiBtn.addEventListener("click", () => guess("higher"));
     loBtn.addEventListener("click", () => guess("lower"));
+    hiProb.addEventListener("click", () => guess("higher"));
+    loProb.addEventListener("click", () => guess("lower"));
 
     cashBtn.addEventListener("click", async () => {
       if (busy || ended || !roundId) return; busy = true; cashBtn.disabled = true;
