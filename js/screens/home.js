@@ -1,20 +1,159 @@
-// Home — balance, streak, daily claim, quest state, recent activity.
+// Home — hero balance, streak, CTA buttons, quest rows, games grid, activity.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
   const fmt = BT.ui.fmt;
 
+  const GAMES = [
+    { key: "plinko",  icon: "▽", label: "Plinko"  },
+    { key: "mines",   icon: "⊗", label: "Mines"   },
+    { key: "dice",    icon: "⚅", label: "Dice"    },
+    { key: "towers",  icon: "▲", label: "Towers"  },
+    { key: "highlow", icon: "♠", label: "HighLow" },
+    { key: "flip",    icon: "◎", label: "Flip"    },
+  ];
+
+  const QUESTS = [
+    { n: "01", label: "Chat",   desc: "Earn points for every message in the group.", screen: null },
+    { n: "02", label: "Play",   desc: "Six games live, instant payouts.",            screen: "play" },
+    { n: "03", label: "Redeem", desc: "Telegram Stars, Premium, or the $100 crypto prize.", screen: "shop" },
+  ];
+
+  // ── Hero header ──────────────────────────────────────────────────────────────
+  function heroSection(name, balance, streakDays, memberStatus) {
+    return el("div", { style: "padding:4px 0 18px" }, [
+      // Top row: welcome + name (left) / streak + status (right)
+      el("div", { class: "row between", style: "align-items:flex-start;margin-bottom:14px;gap:12px" }, [
+        el("div", { style: "min-width:0" }, [
+          el("div", { class: "small muted" }, "Welcome back"),
+          el("div", { style: "font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, name),
+        ]),
+        el("div", { style: "text-align:right;flex:0 0 auto" }, [
+          el("div", { style: "font-weight:700;font-size:14px" }, fmt(streakDays) + " Day Streak"),
+          el("div", { class: "small muted" }, memberStatus || "Member"),
+          el("div", { class: "small", style: "color:var(--accent-2)" }, "t.me/partygc"),
+        ]),
+      ]),
+      // Balance hero
+      el("div", { style: "font-size:60px;font-weight:800;line-height:1;color:var(--text);font-variant-numeric:tabular-nums" },
+        fmt(balance)),
+      el("div", { class: "muted", style: "font-size:16px;font-weight:600;margin-top:4px" }, "Tokens"),
+    ]);
+  }
+
+  // ── CTA buttons ──────────────────────────────────────────────────────────────
+  function ctaRow(canClaim, onRewards, onClaim) {
+    const rewardBtn = el("button", { class: "btn", style: "flex:1" }, "Rewards");
+    rewardBtn.addEventListener("click", onRewards);
+
+    const claimBtn = el("button", {
+      class: "btn primary",
+      style: "flex:1",
+      disabled: !canClaim ? "disabled" : null,
+    }, canClaim ? "Claim Daily Points" : "Claimed today ✓");
+    claimBtn.addEventListener("click", () => {
+      if (claimBtn.disabled) return;
+      claimBtn.disabled = true;
+      onClaim();
+    });
+
+    return el("div", { class: "row", style: "gap:10px;margin-bottom:20px" }, [rewardBtn, claimBtn]);
+  }
+
+  // ── Quest list ───────────────────────────────────────────────────────────────
+  function questList() {
+    const wrap = el("div", { style: "margin-bottom:16px" }, [
+      el("div", { class: "section-title" }, "Quests"),
+    ]);
+    const list = el("div", {
+      style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden",
+    });
+    QUESTS.forEach((q, i) => {
+      const row = el("div", {
+        style: "display:flex;align-items:center;gap:14px;padding:14px 16px;" +
+          (i < QUESTS.length - 1 ? "border-bottom:1px solid var(--border);" : "") +
+          (q.screen ? "cursor:pointer;" : ""),
+      }, [
+        el("div", { style: "font-weight:800;font-size:13px;color:var(--accent-2);min-width:24px" }, q.n),
+        el("div", { style: "flex:1;min-width:0" }, [
+          el("div", { style: "font-weight:700;font-size:15px" }, q.label),
+          el("div", { class: "small muted", style: "margin-top:1px" }, q.desc),
+        ]),
+        q.screen ? el("div", { style: "color:var(--text-dim);font-size:18px;flex:0 0 auto" }, "→") : null,
+      ]);
+      if (q.screen) row.addEventListener("click", () => BT.showScreen(q.screen));
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  // ── Games grid ───────────────────────────────────────────────────────────────
+  function gamesGrid() {
+    const wrap = el("div", { style: "margin-bottom:16px" }, [
+      el("div", { class: "section-title" }, "Explore Games"),
+    ]);
+    const grid = el("div", {
+      style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px",
+    });
+    GAMES.forEach((g) => {
+      const tile = el("div", { class: "game-tile", style: "cursor:pointer" }, [
+        el("div", { class: "g-ico" }, g.icon),
+        el("div", { class: "g-name" }, g.label),
+      ]);
+      tile.addEventListener("click", () => BT.showScreen("play"));
+      grid.appendChild(tile);
+    });
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
+  // ── Recent activity (framed list, matches quests/games styling) ───────────────
+  function activitySection() {
+    const wrap = el("div", { style: "margin-bottom:4px" }, [
+      el("div", { class: "section-title" }, "Recent activity"),
+    ]);
+    wrap.appendChild(el("div", {
+      id: "home-history",
+      style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden",
+    }, el("div", { class: "loading" }, "Loading…")));
+    return wrap;
+  }
+
+  function fillActivity(hist) {
+    const box = document.getElementById("home-history");
+    if (!box) return;
+    BT.ui.clear(box);
+    const rows = (hist && hist.rows) || [];
+    if (!rows.length) {
+      box.appendChild(el("div", { style: "padding:16px" }, BT.ui.notice("No activity yet. Chat, claim, and play to get started.")));
+      return;
+    }
+    const shown = rows.slice(0, 12);
+    shown.forEach((r, i) => {
+      const pos = (r.amount || 0) >= 0;
+      box.appendChild(el("div", {
+        class: "row between",
+        style: "padding:14px 16px;" + (i < shown.length - 1 ? "border-bottom:1px solid var(--border);" : ""),
+      }, [
+        el("div", { style: "min-width:0" }, [
+          el("div", { style: "font-weight:600" }, kindLabel(r.kind)),
+          el("div", { class: "small muted", style: "margin-top:1px" }, BT.ui.fmtDate(r.created_at)),
+        ]),
+        el("div", { class: "rank-val", style: pos ? "" : "color:var(--bad)" }, (pos ? "+" : "") + fmt(r.amount)),
+      ]));
+    });
+  }
+
+  // ── Main render ──────────────────────────────────────────────────────────────
   async function render(root) {
     BT.ui.clear(root);
-    root.appendChild(el("div", { class: "loading" }, "Loading your profile…"));
+    root.appendChild(el("div", { class: "loading" }, "Loading…"));
 
     const me = await BT.api.me();
     BT.ui.clear(root);
 
-    if (me && me._unconfigured) {
-      root.appendChild(previewCard());
-      return;
-    }
+    if (me && me._unconfigured) { renderPreview(root); return; }
     if (!me || me.ok === false || me.error) {
       root.appendChild(BT.ui.notice(errMsg(me)));
       root.appendChild(el("div", { class: "spacer" }));
@@ -23,101 +162,79 @@
     }
 
     BT.applyMe(me);
+    renderLive(root, me);
+  }
 
-    const name = me.display_name || me.username || "Bartender guest";
+  function renderLive(root, me) {
+    const name = me.display_name || me.username || "Guest";
     const quest = me.quest || {};
     const canClaim = !(me.last_claim_at && isSameUtcDay(me.last_claim_at)) && !quest.claimed;
 
-    const claimBtn = el("button", { class: "btn primary block", disabled: !canClaim ? "disabled" : null },
-      canClaim ? "Claim daily points" : "Claimed today ✓");
-    claimBtn.addEventListener("click", async () => {
-      claimBtn.disabled = true;
-      const r = await BT.api.claim();
-      if (r && r.ok) {
-        BT.setBalance(r.new_balance);
-        BT.ui.toast("+" + fmt(r.awarded) + " pts • streak " + fmt(r.streak_days), "success");
-        BT.ui.haptic("success");
-        render(root);
-      } else {
-        BT.ui.toast(r && r.error === "already_claimed" ? "Already claimed today." : errMsg(r), r && r.error === "already_claimed" ? "" : "error");
-        render(root);
+    root.appendChild(heroSection(name, me.balance, me.streak_days, me.member_status));
+
+    root.appendChild(ctaRow(
+      canClaim,
+      () => BT.showScreen("shop"),
+      async () => {
+        const r = await BT.api.claim();
+        if (r && r.ok) {
+          BT.setBalance(r.new_balance);
+          BT.ui.toast("+" + fmt(r.awarded) + " pts • streak " + fmt(r.streak_days), "success");
+          BT.ui.haptic("success");
+          render(root);
+        } else {
+          BT.ui.toast(r && r.error === "already_claimed" ? "Already claimed today." : errMsg(r),
+            r && r.error === "already_claimed" ? "" : "error");
+          render(root);
+        }
       }
-    });
+    ));
 
-    root.appendChild(el("div", { class: "card" }, [
-      el("div", { class: "row between" }, [
-        el("div", null, [el("div", { class: "small muted" }, "Signed in as"), el("div", { style: "font-weight:700;font-size:17px" }, name)]),
-        el("div", { class: "badge" }, (me.member_status || "member")),
-      ]),
-      el("div", { class: "spacer" }),
-      el("div", { class: "stat-grid" }, [
-        stat("Balance", fmt(me.balance) + " pts"),
-        stat("Streak", fmt(me.streak_days) + " days"),
-      ]),
-    ]));
+    root.appendChild(questList());
+    root.appendChild(gamesGrid());
+    root.appendChild(activitySection());
 
-    root.appendChild(el("div", { class: "card" }, [
-      el("div", { class: "section-title" }, "Daily quest"),
-      questRow("✎ Chatted in the group today", quest.chatted),
-      questRow("✚ Claimed daily points", quest.claimed),
-      el("div", { class: "spacer" }),
-      claimBtn,
-      el("div", { class: "small muted center", style: "margin-top:8px" },
-        me.can_redeem ? "You've met today's activity floor — redeeming is unlocked." : "Chat + claim today to unlock redeeming in the Shop."),
-    ]));
-
-    root.appendChild(el("div", { class: "card" }, [
-      el("div", { class: "section-title" }, "Recent activity"),
-      el("div", { id: "home-history", class: "list" }, BT.ui.loading("Loading…")),
-    ]));
-
-    const hist = await BT.api.history();
-    const box = document.getElementById("home-history");
-    if (box) {
-      BT.ui.clear(box);
-      const rows = (hist && hist.rows) || [];
-      if (!rows.length) box.appendChild(BT.ui.notice("No activity yet. Chat, claim, and play to get started."));
-      rows.slice(0, 12).forEach((r) => {
-        const pos = (r.amount || 0) >= 0;
-        box.appendChild(el("div", { class: "list-item row between" }, [
-          el("div", null, [
-            el("div", { style: "font-weight:600" }, kindLabel(r.kind)),
-            el("div", { class: "small muted" }, BT.ui.fmtDate(r.created_at)),
-          ]),
-          el("div", { class: "rank-val", style: pos ? "" : "color:var(--bad)" }, (pos ? "+" : "") + fmt(r.amount)),
-        ]));
-      });
-    }
+    BT.api.history().then(fillActivity);
   }
 
-  function stat(k, v) { return el("div", { class: "stat" }, [el("div", { class: "k" }, k), el("div", { class: "v" }, v)]); }
-  function questRow(label, done) {
-    return el("div", { class: "row between", style: "padding:6px 0" }, [
-      el("span", null, label),
-      el("span", { class: "badge " + (done ? "good" : "") }, done ? "Done" : "Pending"),
-    ]);
+  // ── Preview (no API) ─────────────────────────────────────────────────────────
+  function renderPreview(root) {
+    root.appendChild(heroSection("Guest", 0, "—", "Member"));
+
+    const rewardBtn = el("button", { class: "btn", style: "flex:1;opacity:.5", disabled: "disabled" }, "Rewards");
+    const claimBtn  = el("button", { class: "btn primary", style: "flex:1;opacity:.5", disabled: "disabled" }, "Claim Daily Points");
+    root.appendChild(el("div", { class: "row", style: "gap:10px;margin-bottom:20px" }, [rewardBtn, claimBtn]));
+
+    root.appendChild(questList());
+    root.appendChild(gamesGrid());
+    root.appendChild(BT.ui.notice("The rewards server isn't connected yet. You're viewing a preview."));
   }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
   function kindLabel(k) {
-    const m = { chat: "Chat reward", daily: "Daily claim", game_bet: "Game bet", game_win: "Game win", redeem: "Redemption", redeem_refund: "Redeem refund", admin: "Admin grant", migrate: "Migrated", depo_out: "Sent points", depo_in: "Received points", setbal_correction: "Balance correction" };
+    const m = {
+      chat: "Chat reward", daily: "Daily claim", game_bet: "Game bet",
+      game_win: "Game win", redeem: "Redemption", redeem_refund: "Redeem refund",
+      admin: "Admin grant", migrate: "Migrated",
+      depo_out: "Sent points", depo_in: "Received points",
+      setbal_correction: "Balance correction",
+    };
     return m[k] || k || "Activity";
   }
+
   function isSameUtcDay(iso) {
     try {
       const d = new Date(iso), n = new Date();
-      return d.getUTCFullYear() === n.getUTCFullYear() && d.getUTCMonth() === n.getUTCMonth() && d.getUTCDate() === n.getUTCDate();
+      return d.getUTCFullYear() === n.getUTCFullYear() &&
+             d.getUTCMonth()    === n.getUTCMonth()    &&
+             d.getUTCDate()     === n.getUTCDate();
     } catch (e) { return false; }
   }
+
   function errMsg(r) {
-    if (r && r._network) return "Couldn't reach the server. Check your connection and retry.";
-    if (r && r.error === "bad_init_data") return "Open this app from inside Telegram to sign in.";
+    if (r && r._network) return "Couldn't reach the server. Check your connection.";
+    if (r && r.error === "bad_init_data") return "Open this app from Telegram to sign in.";
     return "Something went wrong loading your profile.";
-  }
-  function previewCard() {
-    return el("div", { class: "card" }, [
-      el("h3", null, "✦ Welcome to Bartender"),
-      el("p", { class: "muted" }, "The rewards server isn't connected yet. You're viewing a preview — earn points by chatting in the group, claim daily, play games, and redeem prizes in the Shop."),
-      el("div", { class: "stat-grid" }, [stat("Balance", "— pts"), stat("Streak", "— days")]),
-    ]);
   }
 
   BT.screens = BT.screens || {};
