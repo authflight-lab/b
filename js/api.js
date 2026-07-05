@@ -265,15 +265,16 @@
     }
 
     if (name === "highlow") {
-      // Mirror the real API: ranks 1..13, TIE counts as a loss, and the per-step
+      // Mirror the real API: ranks 1..13, TIE counts as a WIN for the picked
+      // direction ("higher or same" / "lower or same"), and the per-step
       // multiplier is (1 - EPS) / p_dir(r) so the UI's preview matches payouts.
       const EPS = 0.01;
       const dir = (body.move && body.move.guess) === "higher" ? "higher" : "lower";
       const cur = round.__card || (round.__card = 1 + Math.floor(Math.random() * 13));
-      const p = dir === "higher" ? (13 - cur) / 13 : (cur - 1) / 13;
+      const p = dir === "higher" ? (14 - cur) / 13 : cur / 13;
       if (p <= 0) return { ok: false, error: "invalid_move" };
       const next = 1 + Math.floor(Math.random() * 13);
-      const win = dir === "higher" ? next > cur : next < cur; // tie => loss
+      const win = dir === "higher" ? next >= cur : next <= cur; // tie => win
       round.__card = next;
       if (!win) {
         const server_seed = fakeHash();

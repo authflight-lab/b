@@ -1,9 +1,9 @@
-// HighLow — guess if the next card is higher or lower. /step + /cashout.
-// Ranks are 1..13 (A..K); a TIE counts as a LOSS. The per-direction multiplier
-// and probability shown are a PREVIEW from the game's published formula
-// (p_hi=(13-r)/13, p_lo=(r-1)/13, step factor (1-EPS)/p); the real payout is
-// always the server's chain multiplier from the settle/cashout response.
-// Suit glyphs are decorative only — HiLo ignores suit.
+// HighLow — guess if the next card is higher-or-same or lower-or-same. /step + /cashout.
+// Ranks are 1..13 (A..K); a TIE counts as a WIN for the picked side (Rainbet rule).
+// The per-direction multiplier and probability shown are a PREVIEW from the game's
+// published formula (p_hi=(14-r)/13, p_lo=r/13, step factor (1-EPS)/p); the real
+// payout is always the server's chain multiplier from the settle/cashout response.
+// Both sides are always >= 1/13, so neither is ever 0%. Suit glyphs are decorative.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -19,8 +19,8 @@
   ];
   const rankLabel = (r) => RANKS[r] || "?";
   const suitFor = (r, step) => SUITS[(r * 3 + step * 5 + 1) % 4]; // deterministic, cosmetic
-  const pHi = (r) => (13 - r) / 13;
-  const pLo = (r) => (r - 1) / 13;
+  const pHi = (r) => (14 - r) / 13;
+  const pLo = (r) => r / 13;
   const stepFactor = (p) => (p > 0 ? (1 - EPS) / p : 0);
 
   function render(root) {
@@ -71,12 +71,12 @@
     const loArrow = el("div", { class: "hl-arrow" }, "▼");
     const loMult = el("div", { class: "hl-mult" }, "—");
     const loBtn = el("button", { class: "hl-side lo", type: "button" }, [
-      loArrow, el("div", { class: "hl-dir" }, "Lower"), loMult,
+      loArrow, el("div", { class: "hl-dir" }, "Lower / Same"), loMult,
     ]);
     const hiArrow = el("div", { class: "hl-arrow" }, "▲");
     const hiMult = el("div", { class: "hl-mult" }, "—");
     const hiBtn = el("button", { class: "hl-side hi", type: "button" }, [
-      hiArrow, el("div", { class: "hl-dir" }, "Higher"), hiMult,
+      hiArrow, el("div", { class: "hl-dir" }, "Higher / Same"), hiMult,
     ]);
     const board = el("div", { class: "hl-board" }, [loBtn, cardEl, hiBtn]);
 
@@ -84,8 +84,8 @@
     const loPct = el("span", { class: "hl-prob-pct" }, "—");
     const hiPct = el("span", { class: "hl-prob-pct" }, "—");
     const probBar = el("div", { class: "hl-prob" }, [
-      el("div", { class: "hl-prob-half lo" }, [el("span", { class: "hl-prob-label" }, "Lower"), loPct]),
-      el("div", { class: "hl-prob-half hi" }, [el("span", { class: "hl-prob-label" }, "Higher"), hiPct]),
+      el("div", { class: "hl-prob-half lo" }, [el("span", { class: "hl-prob-label" }, "Lower / Same"), loPct]),
+      el("div", { class: "hl-prob-half hi" }, [el("span", { class: "hl-prob-label" }, "Higher / Same"), hiPct]),
     ]);
 
     function setCard(r, animate) {
@@ -208,7 +208,7 @@
     refreshOdds(false);
     root.appendChild(el("div", { class: "card" }, [
       el("h3", { class: "game-title" }, [BT.ui.icon("highlow", 22), el("span", null, "HighLow")]),
-      el("p", { class: "small muted" }, "Guess whether the next card is higher or lower than the current one. Each correct call chains your multiplier — a tie counts as a loss. Cash out any time."),
+      el("p", { class: "small muted" }, "Guess whether the next card is higher-or-same or lower-or-same than the current one. Each correct call chains your multiplier — a tie counts in your favor. Cash out any time."),
       histEl,
       board,
       probBar,
