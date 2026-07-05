@@ -153,6 +153,7 @@
       el("div", { class: "field" }, [el("label", null, "Risk"), diffSel]),
       shaft,
       multPanel,
+      bet.node,
       startBtn,
       cashBtn,
       banner.node,
