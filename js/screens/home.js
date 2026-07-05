@@ -31,7 +31,7 @@
         el("div", { style: "text-align:right;flex:0 0 auto" }, [
           el("div", { style: "font-weight:700;font-size:14px" }, fmt(streakDays) + " Day Streak"),
           el("div", { class: "small muted" }, memberStatus || "Member"),
-          el("div", { class: "small", style: "color:var(--accent-2)" }, "t.me/partygc"),
+          el("div", { class: "small", style: "color:var(--accent)" }, "t.me/partygc"),
         ]),
       ]),
       // Balance hero
@@ -74,7 +74,7 @@
           (i < QUESTS.length - 1 ? "border-bottom:1px solid var(--border);" : "") +
           (q.screen ? "cursor:pointer;" : ""),
       }, [
-        el("div", { style: "font-weight:800;font-size:13px;color:var(--accent-2);min-width:24px" }, q.n),
+        el("div", { style: "font-weight:800;font-size:13px;color:var(--accent);min-width:24px" }, q.n),
         el("div", { style: "flex:1;min-width:0" }, [
           el("div", { style: "font-weight:700;font-size:15px" }, q.label),
           el("div", { class: "small muted", style: "margin-top:1px" }, q.desc),
