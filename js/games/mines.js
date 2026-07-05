@@ -80,8 +80,11 @@
       const mines = o.mines || o.mine_positions;
       if (Array.isArray(mines)) {
         mines.forEach((idx) => {
-          if (cells[idx] && !cells[idx].classList.contains("mine")) {
-            cells[idx].classList.remove("disabled"); cells[idx].classList.add("mine"); cells[idx].textContent = "⊗";
+          const c = cells[idx];
+          // Never overwrite a cell the player already cleared as safe — a mine
+          // layout must never re-mark a revealed-safe cell.
+          if (c && !c.classList.contains("mine") && !c.classList.contains("safe")) {
+            c.classList.remove("disabled"); c.classList.add("mine"); c.textContent = "⊗";
           }
         });
       }

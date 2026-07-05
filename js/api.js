@@ -212,13 +212,19 @@
     if (name === "mines") {
       const mines = parseInt(round.params.mines, 10) || 3;
       const totalCells = 25;
-      const remaining = totalCells - round.step;
-      const isMine = Math.random() < (mines / remaining);
-      if (isMine) {
+      // Commit a fixed mine layout for the round on the first reveal, so the
+      // outcome is consistent: cells revealed safe can never later be shown as
+      // mines. Membership is checked against the committed layout, not a fresh
+      // per-step coin flip.
+      if (!round.__mineSet) round.__mineSet = new Set(sampleMinePositions(mines));
+      const layout = Array.from(round.__mineSet).sort((a, b) => a - b);
+      const cell = body.move && typeof body.move.cell === "number" ? body.move.cell : -1;
+      if (round.__mineSet.has(cell)) {
         const server_seed = fakeHash();
         settlePayout(round, 0);
-        return { ok: true, outcome_step: { is_mine: true }, multiplier: round.multiplier, busted: true, payout: 0, server_seed, outcome: { mines: sampleMinePositions(mines) }, balance: MOCK.profile.balance };
+        return { ok: true, outcome_step: { cell, is_mine: true }, multiplier: round.multiplier, busted: true, payout: 0, server_seed, outcome: { mines: layout, hit: cell }, balance: MOCK.profile.balance };
       }
+      const remaining = totalCells - round.step;
       round.multiplier = round2(round.multiplier * (remaining / (remaining - mines)));
       round.step++;
       const done = round.step >= (totalCells - mines);
@@ -226,9 +232,9 @@
         const server_seed = fakeHash();
         const payout = Math.round(round.bet * round.multiplier);
         settlePayout(round, payout);
-        return { ok: true, outcome_step: { is_mine: false }, multiplier: round.multiplier, busted: false, done: true, payout, server_seed, balance: MOCK.profile.balance };
+        return { ok: true, outcome_step: { cell, is_mine: false }, multiplier: round.multiplier, busted: false, done: true, payout, server_seed, outcome: { mines: layout, cleared: true }, balance: MOCK.profile.balance };
       }
-      return { ok: true, outcome_step: { is_mine: false }, multiplier: round.multiplier, busted: false, done: false, balance: MOCK.profile.balance };
+      return { ok: true, outcome_step: { cell, is_mine: false }, multiplier: round.multiplier, busted: false, done: false, balance: MOCK.profile.balance };
     }
 
     if (name === "towers") {
