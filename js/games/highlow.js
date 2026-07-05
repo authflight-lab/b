@@ -1,15 +1,16 @@
 // HighLow — guess if the next card is higher-or-same or lower-or-same. /step + /cashout.
 // Ranks are 1..13 (A..K); a TIE counts as a WIN for the picked side (Rainbet rule).
 // The per-direction multiplier and probability shown are a PREVIEW from the game's
-// published formula (p_hi=(14-r)/13, p_lo=r/13, step factor (1-EPS)/p); the real
-// payout is always the server's chain multiplier from the settle/cashout response.
-// Both sides are always >= 1/13, so neither is ever 0%. Suit glyphs are decorative.
+// published formula (p_hi=(14-r)/13, p_lo=r/13, step factor (1-EPS)/p, EPS=0.05);
+// the real payout is always the server's chain multiplier from settle/cashout.
+// A direction is disabled when it can't grow the chain (step factor <= 1, i.e. a
+// guaranteed win at K-lower / A-higher). Suit glyphs are decorative.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
   const C = BT.games.common;
 
-  const EPS = 0.01;
+  const EPS = 0.05; // HighLow-specific house edge (matches api/game/highlow.py HL_EPS)
   const RANKS = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
   const SUITS = [
     { g: "♠", red: false },
@@ -120,15 +121,16 @@
         return;
       }
       const ph = pHi(rank), pl = pLo(rank);
-      const canHi = ph > 0, canLo = pl > 0;
-      hiMult.textContent = canHi ? (mult * stepFactor(ph)).toFixed(2) + "×" : "—";
-      loMult.textContent = canLo ? (mult * stepFactor(pl)).toFixed(2) + "×" : "—";
+      // Only offer a side if it can actually grow the chain (step factor > 1x).
+      const canHi = stepFactor(ph) > 1, canLo = stepFactor(pl) > 1;
+      hiMult.textContent = canHi ? (mult * stepFactor(ph)).toFixed(2) + "×" : "Sure win";
+      loMult.textContent = canLo ? (mult * stepFactor(pl)).toFixed(2) + "×" : "Sure win";
       hiPct.textContent = (ph * 100).toFixed(2) + "%";
       loPct.textContent = (pl * 100).toFixed(2) + "%";
       hiBtn.disabled = !playable || !canHi;
       loBtn.disabled = !playable || !canLo;
-      hiBtn.classList.toggle("locked", !playable);
-      loBtn.classList.toggle("locked", !playable);
+      hiBtn.classList.toggle("locked", !playable || !canHi);
+      loBtn.classList.toggle("locked", !playable || !canLo);
       hiProb.disabled = !playable || !canHi;
       loProb.disabled = !playable || !canLo;
     }

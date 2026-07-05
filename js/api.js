@@ -268,11 +268,13 @@
       // Mirror the real API: ranks 1..13, TIE counts as a WIN for the picked
       // direction ("higher or same" / "lower or same"), and the per-step
       // multiplier is (1 - EPS) / p_dir(r) so the UI's preview matches payouts.
-      const EPS = 0.01;
+      // HighLow uses its own larger house edge (matches api/game/highlow.py HL_EPS).
+      const EPS = 0.05;
       const dir = (body.move && body.move.guess) === "higher" ? "higher" : "lower";
       const cur = round.__card || (round.__card = 1 + Math.floor(Math.random() * 13));
       const p = dir === "higher" ? (14 - cur) / 13 : cur / 13;
-      if (p <= 0) return { ok: false, error: "invalid_move" };
+      // Reject a pick that can't grow the chain (guaranteed win, step factor <= 1).
+      if (p <= 0 || (1 - EPS) / p <= 1) return { ok: false, error: "invalid_move" };
       const next = 1 + Math.floor(Math.random() * 13);
       const win = dir === "higher" ? next >= cur : next <= cur; // tie => win
       round.__card = next;
