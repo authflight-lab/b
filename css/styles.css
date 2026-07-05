@@ -337,10 +337,19 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
 .hl-side .hl-arrow { font-size: 18px; line-height: 1; color: var(--text-dim); }
 .hl-side .hl-dir { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
 .hl-side .hl-mult { margin-top: 2px; padding: 4px 10px; border-radius: 8px; background: var(--bg-elev); border: 1px solid var(--glass-border); font-weight: 800; font-size: 13px; color: var(--accent); font-variant-numeric: tabular-nums; }
-.hl-side.hi:not(:disabled):not(.locked) { border-color: rgba(53,199,124,0.4); }
-.hl-side.hi:not(:disabled):not(.locked) .hl-arrow { color: var(--good); }
-.hl-side.lo:not(:disabled):not(.locked) { border-color: rgba(240,85,76,0.4); }
-.hl-side.lo:not(:disabled):not(.locked) .hl-arrow { color: var(--bad); }
+/* Active side buttons: no red/green — a silver shimmer ring mixed with dark grey. */
+.hl-side.hi:not(:disabled):not(.locked),
+.hl-side.lo:not(:disabled):not(.locked) {
+  border-color: transparent; border-width: 2px;
+  background:
+    linear-gradient(160deg, #1a2130, #12161f) padding-box,
+    linear-gradient(115deg, #2c3038 0%, #d9dde4 14%, #8b909a 27%, #24282f 43%, #d9dde4 60%, #8b909a 75%, #2c3038 100%) border-box;
+  background-size: 260% 100%;
+  animation: hlShimmer 3s linear infinite;
+}
+.hl-side.hi:not(:disabled):not(.locked) .hl-arrow,
+.hl-side.lo:not(:disabled):not(.locked) .hl-arrow { color: #d9dde4; }
+@keyframes hlShimmer { to { background-position: -260% 0; } }
 
 .hl-card {
   position: relative; width: 116px; height: 164px; border-radius: 14px;
@@ -360,14 +369,12 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
 
 .hl-prob { display: flex; gap: 8px; margin: 12px 0 4px; }
 .hl-prob-half { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--glass-bg-2); border: 1px solid var(--glass-border); box-shadow: var(--glass-inset-hi); font: inherit; text-align: left; cursor: pointer; -webkit-appearance: none; appearance: none; transition: transform .08s ease, border-color .12s ease; }
-.hl-prob-half.lo:not(:disabled) { border-color: rgba(240,85,76,0.35); }
-.hl-prob-half.hi:not(:disabled) { border-color: rgba(53,199,124,0.35); }
+.hl-prob-half.lo:not(:disabled), .hl-prob-half.hi:not(:disabled) { border-color: rgba(203,208,216,0.28); }
 .hl-prob-half:not(:disabled):active { transform: scale(0.98); }
 .hl-prob-half:disabled { cursor: not-allowed; opacity: 0.5; }
 .hl-prob-half .hl-prob-label { font-size: 12px; color: var(--text-dim); font-weight: 600; }
 .hl-prob-half .hl-prob-pct { font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.hl-prob-half.lo .hl-prob-pct { color: var(--bad); }
-.hl-prob-half.hi .hl-prob-pct { color: var(--good); }
+.hl-prob-half.lo .hl-prob-pct, .hl-prob-half.hi .hl-prob-pct { color: #cfd3da; }
 
 /* Mines — mine-count slider (gems <-> bombs) */
 .mines-slider-row { display: flex; align-items: center; gap: 10px; }
