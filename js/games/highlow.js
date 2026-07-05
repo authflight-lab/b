@@ -11,6 +11,7 @@
   const C = BT.games.common;
 
   const EPS = 0.05; // HighLow-specific house edge (matches api/game/highlow.py HL_EPS)
+  const HL_MAX_MULT = 25; // chain multiplier cap (matches api/game/highlow.py HL_MAX_MULT)
   const RANKS = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
   const SUITS = [
     { g: "♠", red: false },
@@ -121,18 +122,22 @@
         return;
       }
       const ph = pHi(rank), pl = pLo(rank);
-      // Only offer a side if it can actually grow the chain (step factor > 1x).
-      const canHi = stepFactor(ph) > 1, canLo = stepFactor(pl) > 1;
-      hiMult.textContent = canHi ? (mult * stepFactor(ph)).toFixed(2) + "×" : "Sure win";
-      loMult.textContent = canLo ? (mult * stepFactor(pl)).toFixed(2) + "×" : "Sure win";
+      const fHi = stepFactor(ph), fLo = stepFactor(pl);
+      // A side is playable only if it can grow the chain (factor > 1) AND would
+      // not push the multiplier past the cap.
+      const capHi = mult * fHi <= HL_MAX_MULT + 1e-9;
+      const capLo = mult * fLo <= HL_MAX_MULT + 1e-9;
+      const okHi = fHi > 1 && capHi, okLo = fLo > 1 && capLo;
+      hiMult.textContent = fHi <= 1 ? "Sure win" : !capHi ? "Max reached" : (mult * fHi).toFixed(2) + "×";
+      loMult.textContent = fLo <= 1 ? "Sure win" : !capLo ? "Max reached" : (mult * fLo).toFixed(2) + "×";
       hiPct.textContent = (ph * 100).toFixed(2) + "%";
       loPct.textContent = (pl * 100).toFixed(2) + "%";
-      hiBtn.disabled = !playable || !canHi;
-      loBtn.disabled = !playable || !canLo;
-      hiBtn.classList.toggle("locked", !playable || !canHi);
-      loBtn.classList.toggle("locked", !playable || !canLo);
-      hiProb.disabled = !playable || !canHi;
-      loProb.disabled = !playable || !canLo;
+      hiBtn.disabled = !playable || !okHi;
+      loBtn.disabled = !playable || !okLo;
+      hiBtn.classList.toggle("locked", !playable || !okHi);
+      loBtn.classList.toggle("locked", !playable || !okLo);
+      hiProb.disabled = !playable || !okHi;
+      loProb.disabled = !playable || !okLo;
     }
 
     // --- Actions ------------------------------------------------------------
@@ -171,6 +176,10 @@
       const os = resp.outcome_step || {};
       const drawn = os.drawn !== undefined ? os.drawn : os.next_card !== undefined ? os.next_card : os.card;
       const won = os.win !== undefined ? os.win : !resp.busted;
+      // On a win the server tells us the new current card; a wild reveal (Ace/King)
+      // passes through, so `current` may differ from the revealed `drawn` card.
+      const current = os.current !== undefined ? os.current : drawn;
+      const wild = won && current !== drawn;
       const newStep = step + 1;
       if (drawn !== undefined) {
         step = newStep;
@@ -178,7 +187,7 @@
         if (won) {
           mult = typeof resp.multiplier === "number" ? resp.multiplier : mult;
           history.push({ rank: drawn, step, badge: "win", label: mult.toFixed(2) + "×", dir });
-          rank = drawn;
+          rank = current;
         } else {
           history.push({ rank: drawn, step, badge: "bust", label: "0.00×", dir });
         }
@@ -186,8 +195,14 @@
       }
       if (resp.busted || resp.done) { finish(resp, won); return; }
       cashBtn.disabled = false;
-      refreshOdds(true);
       BT.ui.haptic("light");
+      if (wild) {
+        // Reveal the wild card, then flip through to the fresh current card.
+        hiBtn.disabled = loBtn.disabled = hiProb.disabled = loProb.disabled = true;
+        setTimeout(() => { if (!ended && roundId) { setCard(current, true); refreshOdds(true); } }, 550);
+      } else {
+        refreshOdds(true);
+      }
     }
 
     // Direction naming: backend expects "higher"/"lower".
@@ -220,7 +235,7 @@
     refreshOdds(false);
     root.appendChild(el("div", { class: "card" }, [
       el("h3", { class: "game-title" }, [BT.ui.icon("highlow", 22), el("span", null, "HighLow")]),
-      el("p", { class: "small muted" }, "Guess whether the next card is higher-or-same or lower-or-same than the current one. Each correct call chains your multiplier — a tie counts in your favor. Cash out any time."),
+      el("p", { class: "small muted" }, "Guess whether the next card is higher-or-same or lower-or-same. Each correct call chains your multiplier and a tie counts in your favor. Aces and Kings are wild — they pass through to a fresh card. Cash out any time."),
       histEl,
       board,
       probBar,

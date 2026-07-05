@@ -141,8 +141,9 @@
       step: 0,
     };
     // HighLow: commit a starting card at bet (mirrors real API params.start_card).
+    // The current decision card is always non-wild (Aces/Kings are wild).
     if (name === "highlow") {
-      round.__card = 1 + Math.floor(Math.random() * 13);
+      round.__card = hlDrawCurrent();
       params.start_card = round.__card;
     }
     return { ok: true, round_id: round_id, server_hash: fakeHash(), nonce: ++MOCK.nonce, balance: MOCK.profile.balance, params: params };
@@ -265,31 +266,42 @@
     }
 
     if (name === "highlow") {
-      // Mirror the real API: ranks 1..13, TIE counts as a WIN for the picked
-      // direction ("higher or same" / "lower or same"), and the per-step
-      // multiplier is (1 - EPS) / p_dir(r) so the UI's preview matches payouts.
-      // HighLow uses its own larger house edge (matches api/game/highlow.py HL_EPS).
-      const EPS = 0.05;
+      // Mirror the real API (api/game/highlow.py): TIE counts as a WIN for the
+      // picked side; the revealed card is on the full 1..13 deck while the current
+      // decision card is always non-wild (Aces/Kings are wild and pass through);
+      // the per-step factor is (1 - EPS) / p_dir(r); HighLow uses its own larger
+      // house edge and caps the chain multiplier at MAXM.
+      const EPS = 0.05, MAXM = 25;
       const dir = (body.move && body.move.guess) === "higher" ? "higher" : "lower";
-      const cur = round.__card || (round.__card = 1 + Math.floor(Math.random() * 13));
+      const cur = round.__card || (round.__card = hlDrawCurrent());
       const p = dir === "higher" ? (14 - cur) / 13 : cur / 13;
-      // Reject a pick that can't grow the chain (guaranteed win, step factor <= 1).
-      if (p <= 0 || (1 - EPS) / p <= 1) return { ok: false, error: "invalid_move" };
-      const next = 1 + Math.floor(Math.random() * 13);
+      const factor = (1 - EPS) / p;
+      // Reject picks that can't grow the chain or would exceed the multiplier cap.
+      if (p <= 0 || factor <= 1 || round.multiplier * factor > MAXM + 1e-9) {
+        return { ok: false, error: "invalid_move" };
+      }
+      const next = hlDrawCard(); // revealed card, full 1..13 deck
       const win = dir === "higher" ? next >= cur : next <= cur; // tie => win
-      round.__card = next;
       if (!win) {
         const server_seed = fakeHash();
         settlePayout(round, 0);
         return { ok: true, outcome_step: { drawn: next, prev: cur, guess: dir, win: false }, multiplier: 0.0, busted: true, done: true, payout: 0, server_seed, balance: MOCK.profile.balance };
       }
-      round.multiplier = round2(round.multiplier * ((1 - EPS) / p));
+      round.multiplier = round2(round.multiplier * factor);
       round.step++;
-      return { ok: true, outcome_step: { drawn: next, prev: cur, guess: dir, win: true }, multiplier: round.multiplier, busted: false, done: false, balance: MOCK.profile.balance };
+      // A wild reveal (Ace/King) passes through to the next non-wild card.
+      const current = (next <= 1 || next >= 13) ? hlDrawCurrent() : next;
+      round.__card = current;
+      return { ok: true, outcome_step: { drawn: next, current: current, prev: cur, guess: dir, win: true }, multiplier: round.multiplier, busted: false, done: false, balance: MOCK.profile.balance };
     }
 
     return { ok: false, error: "unknown_game" };
   }
+
+  // HighLow: Aces (1) and Kings (13) are wild; the current decision card is always
+  // non-wild (2..12). Mirrors api/game/highlow.py.
+  function hlDrawCard() { return 1 + Math.floor(Math.random() * 13); }
+  function hlDrawCurrent() { let r; do { r = hlDrawCard(); } while (r <= 1 || r >= 13); return r; }
 
   function sampleMinePositions(count) {
     const set = new Set();
