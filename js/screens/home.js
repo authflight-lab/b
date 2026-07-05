@@ -108,43 +108,6 @@
     return wrap;
   }
 
-  // ── Recent activity (framed list, matches quests/games styling) ───────────────
-  function activitySection() {
-    const wrap = el("div", { style: "margin-bottom:4px" }, [
-      el("div", { class: "section-title" }, "Recent activity"),
-    ]);
-    wrap.appendChild(el("div", {
-      id: "home-history",
-      style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden",
-    }, el("div", { class: "loading" }, "Loading…")));
-    return wrap;
-  }
-
-  function fillActivity(hist) {
-    const box = document.getElementById("home-history");
-    if (!box) return;
-    BT.ui.clear(box);
-    const rows = (hist && hist.rows) || [];
-    if (!rows.length) {
-      box.appendChild(el("div", { style: "padding:16px" }, BT.ui.notice("No activity yet. Chat, claim, and play to get started.")));
-      return;
-    }
-    const shown = rows.slice(0, 12);
-    shown.forEach((r, i) => {
-      const pos = (r.amount || 0) >= 0;
-      box.appendChild(el("div", {
-        class: "row between",
-        style: "padding:14px 16px;" + (i < shown.length - 1 ? "border-bottom:1px solid var(--border);" : ""),
-      }, [
-        el("div", { style: "min-width:0" }, [
-          el("div", { style: "font-weight:600" }, kindLabel(r.kind)),
-          el("div", { class: "small muted", style: "margin-top:1px" }, BT.ui.fmtDate(r.created_at)),
-        ]),
-        el("div", { class: "rank-val", style: pos ? "" : "color:var(--bad)" }, (pos ? "+" : "") + fmt(r.amount)),
-      ]));
-    });
-  }
-
   // ── Main render ──────────────────────────────────────────────────────────────
   async function render(root) {
     BT.ui.clear(root);
@@ -192,9 +155,6 @@
 
     root.appendChild(questList());
     root.appendChild(gamesGrid());
-    root.appendChild(activitySection());
-
-    BT.api.history().then(fillActivity);
   }
 
   // ── Preview (no API) ─────────────────────────────────────────────────────────
@@ -211,17 +171,6 @@
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
-  function kindLabel(k) {
-    const m = {
-      chat: "Chat reward", daily: "Daily claim", game_bet: "Game bet",
-      game_win: "Game win", redeem: "Redemption", redeem_refund: "Redeem refund",
-      admin: "Admin grant", migrate: "Migrated",
-      depo_out: "Sent points", depo_in: "Received points",
-      setbal_correction: "Balance correction",
-    };
-    return m[k] || k || "Activity";
-  }
-
   function isSameUtcDay(iso) {
     try {
       const d = new Date(iso), n = new Date();
