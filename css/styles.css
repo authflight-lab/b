@@ -31,7 +31,7 @@ body {
 /* Screen area */
 .screen-root {
   flex: 1 1 auto;
-  padding: calc(16px + var(--safe-top)) 16px calc(112px + var(--safe-bottom));
+  padding: calc(16px + var(--safe-top)) 16px calc(124px + var(--safe-bottom));
   max-width: 640px; width: 100%; margin: 0 auto;
 }
 
@@ -39,12 +39,12 @@ body {
 .pillnav {
   position: fixed; left: 50%; bottom: calc(18px + var(--safe-bottom)); z-index: 30;
   transform: translateX(-50%);
-  width: min(92vw, 400px);
+  width: min(94vw, 460px);
 }
 .pillnav-inner {
   position: relative;
   display: flex; align-items: center;
-  height: 52px;
+  height: 64px;
   padding: 6px;
   background: rgba(30, 37, 51, 0.55);
   border: 0.5px solid rgba(255,255,255,0.14);
@@ -56,18 +56,17 @@ body {
 
 .pillnav-links {
   flex: 1 1 auto; min-width: 0;
-  display: flex; align-items: center; justify-content: space-between; gap: 2px;
+  display: flex; align-items: center; justify-content: space-between; gap: 4px;
 }
 
 .pillnav-link {
   flex: 1 1 auto;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  display: flex; align-items: center; justify-content: center;
   background: none; border: none; color: var(--text-dim); font: inherit;
-  padding: 6px 4px; border-radius: 14px; cursor: pointer;
+  padding: 10px 6px; border-radius: 999px; cursor: pointer;
 }
-.pillnav-link.active { color: var(--accent); }
-.pillnav-ico { font-size: 17px; line-height: 1; }
-.pillnav-label { font-size: 9px; }
+.pillnav-link.active { color: var(--accent); background: rgba(255,255,255,0.08); }
+.pillnav-label { font-size: 15px; font-weight: 600; }
 
 /* Cards & sections */
 .card {
