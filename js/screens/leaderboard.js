@@ -10,7 +10,7 @@
     BT.ui.clear(root);
 
     const tabs = el("div", { class: "pilltabs" }, [
-      tab("rich", "rich", "Rich List"),
+      tab("rich", "rich", "Rich"),
       tab("chatters", "chat", "Chatters"),
     ]);
     const body = el("div", { id: "lb-body" }, BT.ui.loading("Loading rankings…"));
