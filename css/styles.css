@@ -495,14 +495,47 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
   content: ""; position: absolute; inset: 6px; border-radius: 50%; border: 1px dashed rgba(122,84,16,0.45);
 }
 
-.plinko {
-  position: relative; height: 220px; background: var(--glass-bg-2); border: 1px solid var(--glass-border);
-  border-radius: 12px; overflow: hidden; box-shadow: var(--glass-inset-hi);
+.pk-board {
+  position: relative; width: 100%; height: 310px; margin-bottom: 4px;
+  border-radius: 16px; overflow: hidden;
+  background: radial-gradient(120% 90% at 50% -10%, #1a2236 0%, transparent 60%),
+              linear-gradient(180deg, #10141e 0%, #0b0e16 100%);
+  border: 1px solid var(--glass-border); box-shadow: var(--glass-inset-hi), 0 10px 30px rgba(0,0,0,0.35);
 }
-.plinko-ball { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); transition: left .18s linear, top .18s linear; }
-.plinko-slots { display: flex; gap: 3px; margin-top: 8px; }
-.plinko-slot { flex: 1; text-align: center; font-size: 11px; padding: 6px 2px; border-radius: 8px; background: var(--glass-bg-2); border: 1px solid var(--glass-border); box-shadow: var(--glass-inset-hi); }
-.plinko-slot.hit { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 800; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4); }
+.pk-pegs { position: absolute; left: 12px; right: 12px; top: 10px; bottom: 8px; }
+.pk-peg {
+  position: absolute; width: 5px; height: 5px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 30%, #ffffff, #b9c1cf);
+  box-shadow: 0 0 4px rgba(255,255,255,0.35);
+}
+.pk-ball {
+  position: absolute; width: 13px; height: 13px; border-radius: 50%; z-index: 3;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 34% 28%, #fff3c4, #f7b733 55%, #e8890c);
+  box-shadow: 0 0 12px rgba(247,183,51,0.75), 0 2px 4px rgba(0,0,0,0.45);
+  transition: left .09s linear, top .09s linear;
+}
+.pk-ball.hidden { opacity: 0; }
+.pk-buckets { display: flex; gap: 2px; padding: 0 12px; margin-bottom: 14px; }
+.pk-bucket {
+  flex: 1 1 0; min-width: 0; text-align: center; font-size: 10px; font-weight: 800;
+  padding: 5px 0; border-radius: 6px; color: #3a1400; letter-spacing: -0.2px;
+  white-space: nowrap; overflow: hidden; text-overflow: clip;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: transform .12s ease, filter .12s ease;
+}
+.pk-buckets.dense { gap: 1px; }
+.pk-buckets.dense .pk-bucket { font-size: 8.5px; padding: 4px 0; border-radius: 5px; }
+.pk-bucket.hit { animation: pkPop .4s ease; filter: brightness(1.25); transform: translateY(2px); }
+@keyframes pkPop {
+  0% { transform: translateY(-6px) scale(1.12); filter: brightness(1.6); }
+  60% { transform: translateY(3px) scale(0.96); }
+  100% { transform: translateY(2px) scale(1); }
+}
+.plinko-opts .chips.seg { flex-wrap: nowrap; }
+.plinko-opts .chips.seg .chip { flex: 1 1 0; }
+.chips.seg.locked { opacity: 0.5; pointer-events: none; }
 
 .mult-track { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .mult-step { min-width: 46px; text-align: center; padding: 6px; border-radius: 8px; background: var(--glass-bg-2); border: 1px solid var(--glass-border); font-size: 12px; font-weight: 700; box-shadow: var(--glass-inset-hi); }
