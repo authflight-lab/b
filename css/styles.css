@@ -314,7 +314,26 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
 
 .towers { display: flex; flex-direction: column-reverse; gap: 8px; }
 .tower-floor { display: grid; gap: 8px; }
-.coin { font-size: 34px; text-align: center; margin: 6px 0; }
+.coin-flip-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 10px 0 16px; perspective: 700px; }
+.coin-shadow { width: 62px; height: 12px; margin-top: 10px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0,0,0,0.35), rgba(0,0,0,0) 70%); animation: coinShadowPulse 2.4s ease-in-out infinite; }
+@keyframes coinShadowPulse { 0%, 100% { transform: scaleX(1); opacity: 0.8; } 50% { transform: scaleX(0.82); opacity: 0.5; } }
+.coin-bob { animation: coinIdleBob 2.4s ease-in-out infinite; }
+@keyframes coinIdleBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.coin-3d {
+  position: relative; width: 92px; height: 92px; transform-style: preserve-3d;
+  transition: transform .9s cubic-bezier(.22, 1.12, .36, 1);
+}
+.coin-face {
+  position: absolute; inset: 0; border-radius: 50%; backface-visibility: hidden;
+  display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: #7a5410;
+  background: radial-gradient(circle at 35% 28%, #fff7dd 0%, #f6d571 35%, #e0ab3d 68%, #ad7a1c 100%);
+  border: 3px solid #f2d878; box-shadow: inset 0 0 12px rgba(255,255,255,0.65), inset 0 -8px 14px rgba(115,75,10,0.4), 0 5px 14px rgba(0,0,0,0.4);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+}
+.coin-face.tails { transform: rotateY(180deg); }
+.coin-face::after {
+  content: ""; position: absolute; inset: 6px; border-radius: 50%; border: 1px dashed rgba(122,84,16,0.45);
+}
 
 .plinko {
   position: relative; height: 220px; background: var(--glass-bg-2); border: 1px solid var(--glass-border);

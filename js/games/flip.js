@@ -9,7 +9,27 @@
     const bet = C.betControl(10);
     const seed = C.seedBox();
     const banner = C.resultBanner();
-    const coin = el("div", { class: "coin" }, "◎");
+    const coinFaceH = el("div", { class: "coin-face heads" }, "H");
+    const coinFaceT = el("div", { class: "coin-face tails" }, "T");
+    const coin3d = el("div", { class: "coin-3d" }, [coinFaceH, coinFaceT]);
+    const coinBob = el("div", { class: "coin-bob" }, coin3d);
+    const coinWrap = el("div", { class: "coin-flip-wrap" }, [coinBob, el("div", { class: "coin-shadow" })]);
+    let coinDeg = 0;
+    // Always spins forward to the target face (never snaps back), with two
+    // extra full turns for a satisfying flip when `animate` is true.
+    function flipCoinTo(face, animate) {
+      const targetMod = face === "tails" ? 180 : 0;
+      const currentMod = ((coinDeg % 360) + 360) % 360;
+      const delta = (targetMod - currentMod + 360) % 360;
+      coin3d.style.transition = animate ? "" : "none";
+      if (animate) {
+        coinDeg += 720 + delta;
+      } else {
+        coinDeg = targetMod; // instant resets have no transition to preserve, so snap + bound the value
+      }
+      coin3d.style.transform = "rotateY(" + coinDeg + "deg)";
+      if (!animate) void coin3d.offsetHeight; // force reflow so the instant reset never animates
+    }
     const track = el("div", { class: "mult-track" });
     let roundId = null, busy = false, streak = 0;
 
@@ -36,6 +56,7 @@
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       banner.hide(); seed.reset(); BT.ui.clear(track); streak = 0;
+      flipCoinTo("heads", false);
       const resp = await BT.api.gameBet("flip", { bet: bet.getBet(), client_seed: C.clientSeed(), params: {} });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
@@ -53,8 +74,11 @@
       busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       const os = resp.outcome_step || {};
-      const face = os.result || os.side || (os.win ? side : "?");
-      coin.textContent = face === "heads" ? "◉" : (face === "tails" ? "◯" : "◎");
+      // `coin` is the real API's authoritative outcome field (api/main.py); on
+      // a losing flip it differs from the player's own guess (`side`), so it
+      // must be checked first or the coin would wrongly land on the guess.
+      const face = os.coin || os.result || os.side || side;
+      flipCoinTo(face === "tails" ? "tails" : "heads", true);
       const busted = !!resp.busted;
       streak += 1;
       pushMult(resp.multiplier, !busted);
@@ -87,7 +111,7 @@
     root.appendChild(el("div", { class: "card" }, [
       el("h3", { class: "game-title" }, [BT.ui.icon("flip", 22), el("span", null, "Flip")]),
       el("p", { class: "small muted" }, "Pick a side each round. Every correct flip multiplies your bet by 1.98×. Cash out any time before you miss."),
-      coin,
+      coinWrap,
       track,
       bet.node,
       startBtn,
