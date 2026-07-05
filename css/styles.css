@@ -254,9 +254,61 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
 }
 
 /* Game visuals */
-.dice-face { font-size: 54px; text-align: center; margin: 8px 0; }
-.dice-meter { position: relative; height: 10px; border-radius: 999px; background: linear-gradient(90deg, var(--good), var(--bad)); margin: 14px 0 8px; }
-.dice-marker { position: absolute; top: -6px; width: 3px; height: 22px; background: #fff; border-radius: 2px; transition: left .5s ease; }
+/* Dice — roll slider. Win zone (roll < target) is GREEN on the left; lose zone
+   (roll >= target) is ORANGE on the right. Mirrors the reference "roll" slider
+   but truthful to this game's roll-UNDER rule. */
+.dice-results { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 10px; scrollbar-width: none; }
+.dice-results::-webkit-scrollbar { display: none; }
+.dice-pill { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--glass-bg-2); border: 1px solid var(--glass-border); color: var(--text-dim); }
+.dice-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #6b7688; }
+.dice-pill.win { color: #d9ffe9; }
+.dice-pill.win .dot { background: var(--good); box-shadow: 0 0 6px rgba(53, 199, 124, 0.8); }
+
+.dice-slider { position: relative; margin: 6px 0 2px; padding-top: 48px; }
+.dice-badge {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  min-width: 54px; padding: 9px 6px 12px; text-align: center; line-height: 1;
+  font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; color: #10151f;
+  background: #e8edf5; clip-path: polygon(50% 0, 100% 27%, 100% 73%, 50% 100%, 0 73%, 0 27%);
+  opacity: 0; transition: left .55s cubic-bezier(.22, 1, .36, 1), opacity .2s ease; pointer-events: none;
+}
+.dice-badge.show { opacity: 1; }
+.dice-badge.win { background: linear-gradient(180deg, #d7ffe6, #7fe6a6); }
+.dice-badge.lose { background: linear-gradient(180deg, #ffdedb, #f0918a); }
+
+.dice-ticks { position: relative; height: 16px; margin-bottom: 8px; }
+.dice-tick { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.dice-tick::after { content: ""; position: absolute; left: 50%; top: 15px; transform: translateX(-50%); border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--glass-border); }
+
+.dice-range {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 14px; border-radius: 999px; margin: 0;
+  background: linear-gradient(90deg, var(--good) 0 var(--t, 50%), #e8863a var(--t, 50%) 100%);
+  box-shadow: var(--glass-inset-hi); outline: none; cursor: pointer;
+}
+.dice-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 26px; height: 26px; border-radius: 7px;
+  background-color: #fff; background-image: repeating-linear-gradient(90deg, #aab3c2 0 2px, transparent 2px 5px);
+  background-size: 11px 12px; background-position: center; background-repeat: no-repeat;
+  border: 1px solid rgba(0, 0, 0, 0.15); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45); cursor: grab;
+}
+.dice-range::-moz-range-thumb {
+  width: 26px; height: 26px; border-radius: 7px; box-sizing: border-box;
+  background-color: #fff; background-image: repeating-linear-gradient(90deg, #aab3c2 0 2px, transparent 2px 5px);
+  background-size: 11px 12px; background-position: center; background-repeat: no-repeat;
+  border: 1px solid rgba(0, 0, 0, 0.15); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45); cursor: grab;
+}
+.dice-range::-moz-range-track { background: transparent; }
+.dice-range:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.dice-value { position: relative; height: 22px; margin-top: 10px; }
+.dice-value span { position: absolute; transform: translateX(-50%); font-size: 15px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.dice-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 4px; }
+.dice-stat { display: flex; flex-direction: column; gap: 5px; }
+.dice-stat > span { font-size: 11px; color: var(--text-dim); }
+.dice-stat-box { display: flex; align-items: center; background: var(--glass-bg-2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 10px; box-shadow: var(--glass-inset-hi); }
+.dice-stat-box input, .dice-stat-box .val { min-width: 0; border: none; background: transparent; color: var(--text); font-weight: 700; font-size: 14px; width: 100%; font-variant-numeric: tabular-nums; outline: none; }
+.dice-stat-box .unit { flex: 0 0 auto; color: var(--text-dim); font-size: 13px; margin-left: 4px; }
 
 /* Mines — mine-count slider (gems <-> bombs) */
 .mines-slider-row { display: flex; align-items: center; gap: 10px; }
