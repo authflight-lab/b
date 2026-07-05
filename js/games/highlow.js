@@ -176,6 +176,7 @@
         renderHistory();
       }
       if (resp.busted || resp.done) { finish(resp, won); return; }
+      cashBtn.disabled = false;
       refreshOdds(true);
       BT.ui.haptic("light");
     }
