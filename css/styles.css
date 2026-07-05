@@ -217,6 +217,9 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
 }
 .rank-row.you { border-color: var(--accent); box-shadow: var(--glass-inset-hi), 0 0 0 1px rgba(203,239,245,0.35), 0 0 18px rgba(0,124,143,0.25); }
 .rank-n { width: 30px; font-weight: 800; color: var(--text-dim); text-align: center; }
+.rank-n.r1 { color: #ffd24a; text-shadow: 0 0 10px rgba(255,210,74,0.45); }
+.rank-n.r2 { color: #cdd6e0; text-shadow: 0 0 10px rgba(205,214,224,0.4); }
+.rank-n.r3 { color: #e0955a; text-shadow: 0 0 10px rgba(224,149,90,0.4); }
 .rank-name { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rank-val { font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
 

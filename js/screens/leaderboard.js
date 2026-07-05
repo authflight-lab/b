@@ -57,8 +57,9 @@
   }
 
   function rankRow(rank, name, value, unit, you) {
+    const podium = rank === 1 ? " r1" : rank === 2 ? " r2" : rank === 3 ? " r3" : "";
     return el("div", { class: "rank-row" + (you ? " you" : "") }, [
-      el("div", { class: "rank-n" }, medal(rank)),
+      el("div", { class: "rank-n" + podium }, medal(rank)),
       el("div", { class: "rank-name" }, name),
       el("div", { class: "rank-val" }, fmt(value) + " " + unit),
     ]);
