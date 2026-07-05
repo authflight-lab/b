@@ -43,7 +43,7 @@ body {
 }
 .pillnav-inner {
   position: relative;
-  display: flex; align-items: center;
+  display: flex; align-items: stretch;
   height: 56px;
   padding: 6px;
   border-radius: 999px;
