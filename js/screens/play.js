@@ -44,9 +44,7 @@
     }
 
     // VERBATIM legal footer (spec §9). Do not paraphrase.
-    root.appendChild(el("div", { class: "card" }, [
-      el("div", { class: "legal-footer" }, BT.LEGAL_POINTS),
-    ]));
+    root.appendChild(el("div", { class: "legal-footer" }, BT.LEGAL_POINTS));
   }
 
   BT.screens = BT.screens || {};
