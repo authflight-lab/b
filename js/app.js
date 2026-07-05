@@ -106,7 +106,10 @@
     const root = document.getElementById("screen-root");
     if (!root) return;
     current = key;
-    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.screen === key));
+    document.querySelectorAll(".pillnav-link").forEach((t) => t.classList.toggle("active", t.dataset.screen === key));
+    const curIco = document.getElementById("pillnav-current-ico");
+    const activeLink = document.querySelector(`.pillnav-link[data-screen="${key}"] .pillnav-ico`);
+    if (curIco && activeLink) curIco.textContent = activeLink.textContent;
     const scr = BT.screens && BT.screens[key];
     if (scr && typeof scr.render === "function") {
       try { scr.render(root); }
@@ -119,9 +122,37 @@
   }
   BT.showScreen = showScreen;
 
+  // ---- Pill nav (frosted-glass dynamic-island style expanding nav) ---------
   function wireNav() {
-    document.querySelectorAll(".tab").forEach((btn) => {
-      btn.addEventListener("click", () => showScreen(btn.dataset.screen));
+    const nav = document.getElementById("pillnav");
+    const toggle = document.getElementById("pillnav-toggle");
+    const currentBtn = document.getElementById("pillnav-current");
+    if (!nav) return;
+
+    let leaveTimer = null;
+    const expand = () => { clearTimeout(leaveTimer); nav.classList.add("expanded"); };
+    const collapse = () => { nav.classList.remove("expanded"); };
+
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (nav.classList.contains("expanded")) collapse(); else expand();
+    });
+    currentBtn.addEventListener("click", (e) => { e.stopPropagation(); expand(); });
+
+    // Desktop convenience: hover to preview the expanded pill.
+    nav.addEventListener("mouseenter", expand);
+    nav.addEventListener("mouseleave", () => { leaveTimer = setTimeout(collapse, 350); });
+
+    document.querySelectorAll(".pillnav-link").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        showScreen(btn.dataset.screen);
+        collapse();
+      });
+    });
+
+    // Tapping anywhere outside the pill collapses it back down.
+    document.addEventListener("click", (e) => {
+      if (!nav.contains(e.target)) collapse();
     });
   }
 

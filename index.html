@@ -10,34 +10,36 @@
 </head>
 <body>
   <div id="app">
-    <header class="topbar">
-      <div class="topbar-brand">✦ Bartender</div>
-      <div class="topbar-balance" id="topbar-balance">
-        <span class="bal-value" id="bal-value">—</span>
-        <span class="bal-label">pts</span>
-      </div>
-    </header>
-
     <main id="screen-root" class="screen-root">
       <!-- Screens render here -->
     </main>
 
-    <nav class="tabbar" id="tabbar">
-      <button class="tab" data-screen="home">
-        <span class="tab-ico">⌂</span><span class="tab-label">Home</span>
-      </button>
-      <button class="tab" data-screen="shop">
-        <span class="tab-ico">▣</span><span class="tab-label">Shop</span>
-      </button>
-      <button class="tab" data-screen="play">
-        <span class="tab-ico">⚅</span><span class="tab-label">Play</span>
-      </button>
-      <button class="tab" data-screen="leaderboard">
-        <span class="tab-ico">♛</span><span class="tab-label">Ranks</span>
-      </button>
-      <button class="tab" data-screen="support">
-        <span class="tab-ico">?</span><span class="tab-label">Support</span>
-      </button>
+    <nav class="pillnav" id="pillnav">
+      <div class="pillnav-inner" id="pillnav-inner">
+        <button class="pillnav-current" id="pillnav-current" aria-label="Open navigation">
+          <span id="pillnav-current-ico">⌂</span>
+        </button>
+        <div class="pillnav-links" id="pillnav-links">
+          <button class="pillnav-link" data-screen="home">
+            <span class="pillnav-ico">⌂</span><span class="pillnav-label">Home</span>
+          </button>
+          <button class="pillnav-link" data-screen="shop">
+            <span class="pillnav-ico">▣</span><span class="pillnav-label">Shop</span>
+          </button>
+          <button class="pillnav-link" data-screen="play">
+            <span class="pillnav-ico">⚅</span><span class="pillnav-label">Play</span>
+          </button>
+          <button class="pillnav-link" data-screen="leaderboard">
+            <span class="pillnav-ico">♛</span><span class="pillnav-label">Ranks</span>
+          </button>
+          <button class="pillnav-link" data-screen="support">
+            <span class="pillnav-ico">?</span><span class="pillnav-label">Support</span>
+          </button>
+        </div>
+        <button class="pillnav-toggle" id="pillnav-toggle" aria-label="Toggle navigation">
+          <span class="pillnav-toggle-ico" id="pillnav-toggle-ico">≡</span>
+        </button>
+      </div>
     </nav>
   </div>
 
