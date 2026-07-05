@@ -132,14 +132,20 @@
     MOCK.profile.balance -= bet;
     pushHistory("game_bet", -bet);
     const round_id = newRoundId();
-    MOCK.rounds[round_id] = {
+    const params = (body && body.params) || {};
+    const round = MOCK.rounds[round_id] = {
       game: name,
       bet: bet,
-      params: (body && body.params) || {},
+      params: params,
       multiplier: 1,
       step: 0,
     };
-    return { ok: true, round_id: round_id, server_hash: fakeHash(), nonce: ++MOCK.nonce, balance: MOCK.profile.balance };
+    // HighLow: commit a starting card at bet (mirrors real API params.start_card).
+    if (name === "highlow") {
+      round.__card = 1 + Math.floor(Math.random() * 13);
+      params.start_card = round.__card;
+    }
+    return { ok: true, round_id: round_id, server_hash: fakeHash(), nonce: ++MOCK.nonce, balance: MOCK.profile.balance, params: params };
   }
 
   function settlePayout(round, payout) {
@@ -259,27 +265,24 @@
     }
 
     if (name === "highlow") {
-      const guess = body.move && body.move.guess;
+      // Mirror the real API: ranks 1..13, TIE counts as a loss, and the per-step
+      // multiplier is (1 - EPS) / p_dir(r) so the UI's preview matches payouts.
+      const EPS = 0.01;
+      const dir = (body.move && body.move.guess) === "higher" ? "higher" : "lower";
       const cur = round.__card || (round.__card = 1 + Math.floor(Math.random() * 13));
-      let next = 1 + Math.floor(Math.random() * 13);
-      while (next === cur) next = 1 + Math.floor(Math.random() * 13);
-      const win = (guess === "hi" && next > cur) || (guess === "lo" && next < cur);
+      const p = dir === "higher" ? (13 - cur) / 13 : (cur - 1) / 13;
+      if (p <= 0) return { ok: false, error: "invalid_move" };
+      const next = 1 + Math.floor(Math.random() * 13);
+      const win = dir === "higher" ? next > cur : next < cur; // tie => loss
       round.__card = next;
       if (!win) {
         const server_seed = fakeHash();
         settlePayout(round, 0);
-        return { ok: true, outcome_step: { next_card: next, card: next }, multiplier: round.multiplier, busted: true, payout: 0, server_seed, balance: MOCK.profile.balance };
+        return { ok: true, outcome_step: { drawn: next, prev: cur, guess: dir, win: false }, multiplier: 0.0, busted: true, done: true, payout: 0, server_seed, balance: MOCK.profile.balance };
       }
-      round.multiplier = round2(round.multiplier * 1.9);
+      round.multiplier = round2(round.multiplier * ((1 - EPS) / p));
       round.step++;
-      const done = round.step >= 10;
-      if (done) {
-        const server_seed = fakeHash();
-        const payout = Math.round(round.bet * round.multiplier);
-        settlePayout(round, payout);
-        return { ok: true, outcome_step: { next_card: next, card: next }, multiplier: round.multiplier, busted: false, done: true, payout, server_seed, balance: MOCK.profile.balance, can_hi: true, can_lo: true };
-      }
-      return { ok: true, outcome_step: { next_card: next, card: next }, multiplier: round.multiplier, busted: false, done: false, balance: MOCK.profile.balance, can_hi: next < 13, can_lo: next > 1 };
+      return { ok: true, outcome_step: { drawn: next, prev: cur, guess: dir, win: true }, multiplier: round.multiplier, busted: false, done: false, balance: MOCK.profile.balance };
     }
 
     return { ok: false, error: "unknown_game" };
