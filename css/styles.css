@@ -337,6 +337,7 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
 .cell.safe .cell-mult { opacity: 1; transform: translate(-50%, 0); }
 
 /* Tower gems: a 💎 whose hue/brightness shifts per state (green = safe) */
+.cell.tower-cell { aspect-ratio: 1 / 0.6; }
 .cell.tower-cell .cell-icon {
   transform: none; opacity: 0.38; animation: none;
   filter: grayscale(0.85) brightness(0.6);
