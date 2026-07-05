@@ -10,18 +10,18 @@
     BT.ui.clear(root);
 
     const tabs = el("div", { class: "pilltabs" }, [
-      tab("rich", "$ Rich List"),
-      tab("chatters", "✎ Chatters"),
+      tab("rich", "rich", "Rich List"),
+      tab("chatters", "chat", "Chatters"),
     ]);
     const body = el("div", { id: "lb-body" }, BT.ui.loading("Loading rankings…"));
     root.appendChild(tabs);
     root.appendChild(body);
 
-    function tab(key, label) {
+    function tab(key, ic, label) {
       return el("button", {
         class: "pilltab" + (currentTab === key ? " active" : ""),
         onclick: () => { if (currentTab !== key) { currentTab = key; render(root); } },
-      }, label);
+      }, [BT.ui.icon(ic, 20), el("span", null, label)]);
     }
 
     const data = await BT.api.leaderboard(currentTab);

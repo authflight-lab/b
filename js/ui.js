@@ -120,6 +120,15 @@
       '<circle cx="4" cy="17.5" r="1.5" fill="currentColor" stroke="none"/>' +
       '<circle cx="12" cy="17.5" r="1.5" fill="currentColor" stroke="none"/>' +
       '<circle cx="20" cy="17.5" r="1.5" fill="currentColor" stroke="none"/>',
+    rich:
+      '<ellipse cx="12" cy="6" rx="7.5" ry="3"/>' +
+      '<path d="M4.5 6v6c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3V6"/>' +
+      '<path d="M4.5 12v6c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-6"/>',
+    chat:
+      '<path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 0 1-.9-3.8A8.38 8.38 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5Z"/>' +
+      '<circle cx="9" cy="11.5" r="1" fill="currentColor" stroke="none"/>' +
+      '<circle cx="12.5" cy="11.5" r="1" fill="currentColor" stroke="none"/>' +
+      '<circle cx="16" cy="11.5" r="1" fill="currentColor" stroke="none"/>',
   };
 
   function icon(name, size) {
