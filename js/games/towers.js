@@ -14,7 +14,7 @@
     const bet = C.betControl(10);
     const seed = C.seedBox();
     const banner = C.resultBanner();
-    let roundId = null, busy = false, ended = true, curFloor = 0, cols = 3, climbedCount = 0;
+    let roundId = null, busy = false, ended = true, curFloor = 0, cols = 3, climbedCount = 0, lastBadge = null;
 
     const diffSel = el("select", null, [
       el("option", { value: "easy" }, "Easy (4 tiles)"),
@@ -26,13 +26,11 @@
     const tower = el("div", { class: "towers" });
     const shaft = el("div", { class: "tower-shaft" }, tower);
 
-    const mpValue = el("div", { class: "mp-value" }, "\u2014");
-    const multPanel = el("div", { class: "mult-panel" }, [mpValue, el("div", { class: "mp-label" }, "Current Multiplier")]);
-
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
     const cashBtn = el("button", { class: "btn primary block", style: "display:none" }, "Cash out");
 
     function buildTower() {
+      lastBadge = null;
       BT.ui.clear(tower);
       for (let f = 0; f < FLOORS; f++) {
         const floor = el("div", {
@@ -71,7 +69,6 @@
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       banner.hide(); seed.reset();
-      mpValue.textContent = "\u2014"; multPanel.classList.remove("active");
       cols = DIFF[diffSel.value] || 3; curFloor = 0; buildTower();
       const resp = await BT.api.gameBet("towers", { bet: bet.getBet(), client_seed: C.clientSeed(), params: { difficulty: diffSel.value } });
       startBtn.disabled = false; busy = false;
@@ -83,7 +80,6 @@
       // Must climb at least one floor before cashing out.
       cashBtn.disabled = true;
       bet.input.disabled = diffSel.disabled = true;
-      multPanel.classList.add("active");
       enableFloor(0);
     });
 
@@ -118,10 +114,14 @@
         chosen._icon.textContent = safe ? GEM : TRAP;
         if (!safe) chosen.classList.add("hit");
       }
-      if (resp.multiplier) {
-        const m = Math.round(resp.multiplier * 100) / 100;
-        mpValue.textContent = m + "\u00D7";
-        if (safe && chosen) chosen._badge.textContent = m + "\u00D7";
+      if (resp.multiplier && safe && chosen) {
+        if (lastBadge && lastBadge !== chosen) {
+          lastBadge.classList.remove("mult-current");
+          lastBadge._badge.textContent = "";
+        }
+        chosen._badge.textContent = resp.multiplier.toFixed(2) + "x";
+        chosen.classList.add("mult-current");
+        lastBadge = chosen;
       }
       if (resp.busted) { finish(resp); return; }
       if (resp.done || f >= FLOORS - 1) { finish(resp); return; }
@@ -141,7 +141,6 @@
       ended = true; roundId = null; enableFloor(-1);
       startBtn.style.display = "block"; cashBtn.style.display = "none";
       bet.input.disabled = diffSel.disabled = false;
-      multPanel.classList.remove("active");
       seed.revealSeed(resp.server_seed);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
@@ -155,7 +154,6 @@
       el("p", { class: "small muted" }, "Climb floor by floor. Pick a safe gem on each floor to grow your multiplier; a trap ends the run. Cash out any time."),
       el("div", { class: "field" }, [el("label", null, "Risk"), diffSel]),
       shaft,
-      multPanel,
       bet.node,
       startBtn,
       cashBtn,

@@ -603,6 +603,25 @@ input[type="number"].betbox-input:focus {
   background: radial-gradient(circle, rgba(214,222,236,0.85) 0%, rgba(120,140,175,0.55) 42%, rgba(120,140,175,0) 70%);
 }
 
+/* Towers: same neutral-grey revealed tiles as Mines — no green/red tile tint.
+   Font-size matches Mines (33px). */
+.tower-shaft .cell { font-size: 33px; }
+.tower-shaft .cell.safe,
+.tower-shaft .cell.mine {
+  border-color: var(--glass-border);
+  background: radial-gradient(circle at 50% 42%, rgba(150,180,230,0.14), rgba(6,10,18,0.5) 72%);
+  box-shadow: var(--glass-inset-hi);
+}
+.tower-shaft .cell.tower-cell.safe .cell-icon {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px rgba(150,195,245,0.65));
+  animation: cellPop .38s cubic-bezier(.34,1.56,.64,1) forwards, gemTwinkleBlue 2.4s ease-in-out .4s infinite;
+}
+.tower-shaft .cell.mine.hit .cell-icon { filter: drop-shadow(0 0 6px rgba(190,205,225,0.7)); }
+.tower-shaft .cell.mine.hit::after {
+  background: radial-gradient(circle, rgba(214,222,236,0.85) 0%, rgba(120,140,175,0.55) 42%, rgba(120,140,175,0) 70%);
+}
+
 /* Mines — post-round result overlay (matches reference: outer green-bordered
    card + inner bordered box holding the multiplier, big label below). */
 .mines-grid-wrap { position: relative; }
@@ -659,7 +678,9 @@ input[type="number"].betbox-input:focus {
   opacity: 0; transform: translate(-50%, 5px); transition: opacity .25s ease, transform .25s ease;
   pointer-events: none;
 }
-.cell.tower-cell.safe .cell-mult { opacity: 1; transform: translate(-50%, 0); }
+/* Towers: pill shows only on the last-climbed floor's chosen gem. */
+.tower-shaft .cell.mult-current .cell-mult { opacity: 1; transform: translate(-50%, 0); }
+.tower-shaft .cell-mult { background: rgba(79,147,217,0.96); color: #eaf4ff; font-size: 11px; padding: 2px 8px; }
 /* Mines: the running multiplier pill shows only under the last-clicked gem. */
 .mines-grid-wrap .cell.mult-current .cell-mult { opacity: 1; transform: translate(-50%, 0); }
 .mines-grid-wrap .cell-mult { background: rgba(79,147,217,0.96); color: #eaf4ff; font-size: 11px; padding: 2px 8px; }
