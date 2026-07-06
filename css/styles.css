@@ -54,7 +54,29 @@ body {
   background-attachment: fixed;
 }
 
-#app { display: flex; flex-direction: column; min-height: 100%; }
+#app { display: flex; flex-direction: column; min-height: 100%; position: relative; z-index: 1; }
+
+/* Multi-scale vortex grid — medium (24px) and fine (12px) layers masked
+   with radial fades so finer lines disappear toward the edges, giving
+   a sense of depth pulling toward the centre. */
+body::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    repeating-linear-gradient(rgba(255,255,255,0.025) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 24px);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 38%, black 10%, transparent 78%);
+  mask-image:         radial-gradient(ellipse 80% 70% at 50% 38%, black 10%, transparent 78%);
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    repeating-linear-gradient(rgba(255,255,255,0.022) 0 1px, transparent 1px 12px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.022) 0 1px, transparent 1px 12px);
+  -webkit-mask-image: radial-gradient(ellipse 46% 42% at 50% 38%, black 0%, transparent 72%);
+  mask-image:         radial-gradient(ellipse 46% 42% at 50% 38%, black 0%, transparent 72%);
+}
 
 /* Screen area */
 .screen-root {
