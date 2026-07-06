@@ -17,7 +17,7 @@
 
     // Mine-count slider — gems on one end, bombs on the other (arbitrary 1-24, server-validated).
     const gemsEnd = el("span", { class: "msr-end gems" }, "\uD83D\uDC8E " + (TOTAL - minesCount));
-    const bombsEnd = el("span", { class: "msr-end bombs" }, "\uD83D\uDCA3 " + minesCount);
+    const bombsEnd = el("span", { class: "msr-end bombs" }, minesCount + " \uD83D\uDCA3");
     const range = el("input", {
       type: "range", min: String(MIN_MINES), max: String(MAX_MINES), step: "1",
       value: String(minesCount), class: "mines-range",
@@ -26,7 +26,7 @@
       const pct = ((minesCount - MIN_MINES) / (MAX_MINES - MIN_MINES)) * 100;
       range.style.setProperty("--fill", pct + "%");
       gemsEnd.textContent = "\uD83D\uDC8E " + (TOTAL - minesCount);
-      bombsEnd.textContent = "\uD83D\uDCA3 " + minesCount;
+      bombsEnd.textContent = minesCount + " \uD83D\uDCA3";
     }
     syncSliderVisual();
     range.addEventListener("input", () => {
@@ -188,7 +188,7 @@
       el("h3", { class: "game-title" }, [BT.ui.icon("mines", 22), el("span", null, "Mines")]),
       el("p", { class: "small muted" }, "Reveal gems to grow your multiplier. Hit a mine and you lose. Cash out whenever."),
       bet.node,
-      el("div", { class: "field" }, [el("label", null, "Mines"), sliderRow]),
+      el("div", { class: "field" }, [el("label", null, "Number of Mines"), sliderRow]),
       gridWrap,
       startBtn,
       cashBtn,
