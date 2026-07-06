@@ -47,14 +47,8 @@
       grid.appendChild(c);
     }
 
-    // Result overlay — shown centred over the grid after each round ends.
-    const overlayMult = el("div", { class: "mro-mult" }, "");
-    const overlayInner = el("div", { class: "mro-inner" }, [overlayMult]);
-    const overlayLabel = el("div", { class: "mro-label" }, "");
-    const overlayCard = el("div", { class: "mro-card" }, [overlayInner, overlayLabel]);
-    const overlay = el("div", { class: "mines-result-overlay hidden" }, [overlayCard]);
-    const gridWrap = el("div", { class: "mines-grid-wrap" }, [grid, overlay]);
-    overlay.addEventListener("click", () => overlay.classList.add("hidden"));
+    const gridWrap = el("div", { class: "mines-grid-wrap" }, [grid]);
+    const overlay = C.resultOverlay(gridWrap);
 
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
     const cashBtn = el("button", { class: "btn primary block", style: "display:none" }, "Cash out");
@@ -77,7 +71,7 @@
 
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
-      banner.hide(); overlay.classList.add("hidden"); seed.reset();
+      banner.hide(); overlay.hide(); seed.reset();
       resetCells();
       const resp = await BT.api.gameBet("mines", { bet: bet.getBet(), client_seed: C.clientSeed(), params: { mines: minesCount } });
       startBtn.disabled = false; busy = false;
@@ -171,17 +165,13 @@
       const mult = busted ? 0
                  : (typeof resp.multiplier === "number" ? resp.multiplier
                  : (typeof o.multiplier === "number" ? o.multiplier : 0));
-      overlayMult.textContent = (Math.round(mult * 100) / 100) + "x";
       if (payout > 0) {
-        overlayLabel.textContent = "+" + BT.ui.fmt(payout) + " pts";
-        overlayCard.className = "mro-card win";
+        overlay.show("win", (Math.round(mult * 100) / 100) + "x", "+" + BT.ui.fmt(payout) + " pts");
         BT.ui.haptic("success");
       } else {
-        overlayLabel.textContent = "Hit a mine!";
-        overlayCard.className = "mro-card lose";
+        overlay.show("lose", (Math.round(mult * 100) / 100) + "x", "Hit a mine!");
         BT.ui.haptic("error");
       }
-      overlay.classList.remove("hidden");
     }
 
     root.appendChild(el("div", { class: "card" }, [

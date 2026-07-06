@@ -25,6 +25,7 @@
 
     const tower = el("div", { class: "towers" });
     const shaft = el("div", { class: "tower-shaft" }, tower);
+    const overlay = C.resultOverlay(shaft);
 
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
     const cashBtn = el("button", { class: "btn primary block", style: "display:none" }, "Cash out");
@@ -68,7 +69,7 @@
 
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
-      banner.hide(); seed.reset();
+      overlay.hide(); banner.hide(); seed.reset();
       cols = DIFF[diffSel.value] || 3; curFloor = 0; buildTower();
       const resp = await BT.api.gameBet("towers", { bet: bet.getBet(), client_seed: C.clientSeed(), params: { difficulty: diffSel.value } });
       startBtn.disabled = false; busy = false;
@@ -144,8 +145,9 @@
       seed.revealSeed(resp.server_seed);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
-      if (payout > 0) { banner.show("win", "Cashed out +" + BT.ui.fmt(payout) + " pts"); BT.ui.haptic("success"); }
-      else { banner.show("lose", "Trapped! Run over."); BT.ui.haptic("error"); }
+      const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");
+      if (payout > 0) { overlay.show("win", multText, "+" + BT.ui.fmt(payout) + " pts"); BT.ui.haptic("success"); }
+      else { overlay.show("lose", "0x", "Trapped!"); BT.ui.haptic("error"); }
     }
 
     buildTower();

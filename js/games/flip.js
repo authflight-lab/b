@@ -14,6 +14,7 @@
     const coin3d = el("div", { class: "coin-3d" }, [coinFaceH, coinFaceT]);
     const coinBob = el("div", { class: "coin-bob" }, coin3d);
     const coinWrap = el("div", { class: "coin-flip-wrap" }, [coinBob, el("div", { class: "coin-shadow" })]);
+    const overlay = C.resultOverlay(coinWrap);
     let coinDeg = 0;
     // Always spins forward to the target face (never snaps back), with two
     // extra full turns for a satisfying flip when `animate` is true.
@@ -55,7 +56,7 @@
 
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
-      banner.hide(); seed.reset(); BT.ui.clear(track); streak = 0;
+      overlay.hide(); banner.hide(); seed.reset(); BT.ui.clear(track); streak = 0;
       flipCoinTo("heads", false);
       const resp = await BT.api.gameBet("flip", { bet: bet.getBet(), client_seed: C.clientSeed(), params: {} });
       startBtn.disabled = false; busy = false;
@@ -104,8 +105,9 @@
       seed.revealSeed(resp.server_seed);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
-      if (payout > 0) { banner.show("win", "Cashed out +" + BT.ui.fmt(payout) + " pts"); BT.ui.haptic("success"); }
-      else { banner.show("lose", "Busted — better luck next time."); BT.ui.haptic("error"); }
+      const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");
+      if (payout > 0) { overlay.show("win", multText, "+" + BT.ui.fmt(payout) + " pts"); BT.ui.haptic("success"); }
+      else { overlay.show("lose", "0x", "Busted"); BT.ui.haptic("error"); }
     }
 
     root.appendChild(el("div", { class: "card" }, [

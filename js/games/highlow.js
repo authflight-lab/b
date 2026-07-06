@@ -81,6 +81,7 @@
       hiArrow, el("div", { class: "hl-dir" }, "Higher / Same"), hiMult,
     ]);
     const board = el("div", { class: "hl-board" }, [loBtn, cardEl, hiBtn]);
+    const overlay = C.resultOverlay(board);
 
     // --- Probability bar ----------------------------------------------------
     const loPct = el("span", { class: "hl-prob-pct" }, "—");
@@ -146,7 +147,7 @@
 
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
-      banner.hide(); seed.reset();
+      overlay.hide(); banner.hide(); seed.reset();
       const resp = await BT.api.gameBet("highlow", { bet: bet.getBet(), client_seed: C.clientSeed(), params: {} });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
@@ -227,8 +228,9 @@
       seed.revealSeed(resp.server_seed);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
-      if (payout > 0) { banner.show("win", "Cashed out +" + BT.ui.fmt(payout) + " pts"); BT.ui.haptic("success"); }
-      else { banner.show("lose", "Wrong call — round over."); BT.ui.haptic("error"); }
+      const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");
+      if (payout > 0) { overlay.show("win", multText, "+" + BT.ui.fmt(payout) + " pts"); BT.ui.haptic("success"); }
+      else { overlay.show("lose", "0x", "Wrong call"); BT.ui.haptic("error"); }
     }
 
     renderHistory();

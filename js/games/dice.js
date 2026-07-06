@@ -60,6 +60,7 @@
       el("div", { class: "dice-track-wrap" }, range),
       el("div", { class: "dice-value" }, valueOut),
     ]);
+    const overlay = C.resultOverlay(slider);
 
     // Stat fields.
     const multOut = el("div", { class: "val" }, "1.9800");
@@ -105,7 +106,7 @@
       betBtn.disabled = true;
       range.disabled = true;
       badge.classList.remove("show");
-      banner.hide();
+      overlay.hide(); banner.hide();
       seed.reset();
       const t = target;
 
@@ -143,11 +144,12 @@
       }
 
       C.syncBalance(s);
+      const multText = o.multiplier ? o.multiplier.toFixed(2) + "x" : (100 / target).toFixed(2) + "x";
       if (win) {
-        banner.show("win", "Win! +" + BT.ui.fmt(s.payout) + " pts" + (o.multiplier ? " (" + o.multiplier + "×)" : ""));
+        overlay.show("win", multText, "+" + BT.ui.fmt(s.payout) + " pts");
         BT.ui.haptic("success");
       } else {
-        banner.show("lose", "No win. Roll " + (roll !== undefined ? roll.toFixed(2) : "?"));
+        overlay.show("lose", "0x", "Roll " + (roll !== undefined ? roll.toFixed(2) : "?"));
         BT.ui.haptic("error");
       }
       busy = false; betBtn.disabled = false; range.disabled = false;

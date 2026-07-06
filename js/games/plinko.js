@@ -130,6 +130,7 @@
       }
     }
     rebuild();
+    const overlay = C.resultOverlay(board);
 
     const dropBtn = el("button", { class: "btn primary block" }, "Drop Ball");
 
@@ -168,7 +169,7 @@
     dropBtn.addEventListener("click", async () => {
       if (busy) return;
       setBusy(true);
-      banner.hide();
+      overlay.hide(); banner.hide();
       seed.reset();
       const n = rows.get();
       const rk = risk.get();
@@ -208,10 +209,10 @@
         const payout = s.payout || 0;
         const multTxt = o.multiplier !== undefined ? " (" + fmtMult(o.multiplier) + ")" : "";
         if (payout > 0) {
-          banner.show("win", "Win! +" + BT.ui.fmt(payout) + " pts" + multTxt);
+          overlay.show("win", o.multiplier !== undefined ? fmtMult(o.multiplier) : "Win!", "+" + BT.ui.fmt(payout) + " pts");
           BT.ui.haptic("success");
         } else {
-          banner.show("lose", "No win this drop" + multTxt + ".");
+          overlay.show("lose", o.multiplier !== undefined ? fmtMult(o.multiplier) : "0x", "No win");
           BT.ui.haptic("error");
         }
       } finally {

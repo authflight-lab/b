@@ -119,6 +119,30 @@
     };
   }
 
+  // Shared result overlay — centered over any container element.
+  // Sets position:relative on the container and appends the overlay inside it.
+  // Returns { show(kind, multText, labelText), hide() }.
+  function resultOverlay(container) {
+    container.style.position = "relative";
+    const multEl = el("div", { class: "mro-mult" }, "");
+    const innerEl = el("div", { class: "mro-inner" }, [multEl]);
+    const labelEl = el("div", { class: "mro-label" }, "");
+    const cardEl = el("div", { class: "mro-card" }, [innerEl, labelEl]);
+    const wrap = el("div", { class: "game-result-overlay hidden" }, [cardEl]);
+    container.appendChild(wrap);
+    wrap.addEventListener("click", () => wrap.classList.add("hidden"));
+    return {
+      node: wrap,
+      show(kind, multText, labelText) {
+        multEl.textContent = multText;
+        labelEl.textContent = labelText;
+        cardEl.className = "mro-card " + kind;
+        wrap.classList.remove("hidden");
+      },
+      hide() { wrap.classList.add("hidden"); },
+    };
+  }
+
   // After any settle/cashout, refresh balance from the response (fallback to /me).
   function syncBalance(resp) {
     if (resp && typeof resp.new_balance === "number") {
@@ -154,6 +178,7 @@
     betControl,
     seedBox,
     resultBanner,
+    resultOverlay,
     syncBalance,
     errText,
   };

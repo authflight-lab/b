@@ -641,12 +641,12 @@ input[type="number"].betbox-input:focus {
 /* Mines — post-round result overlay (matches reference: outer green-bordered
    card + inner bordered box holding the multiplier, big label below). */
 .mines-grid-wrap { position: relative; }
-.mines-result-overlay {
+.game-result-overlay {
   position: absolute; inset: 0; z-index: 10;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
 }
-.mines-result-overlay.hidden { display: none; }
+.game-result-overlay.hidden { display: none; }
 .mro-card {
   display: flex; flex-direction: column; align-items: center; gap: 14px;
   padding: 18px 20px 20px; border-radius: 22px; text-align: center;
