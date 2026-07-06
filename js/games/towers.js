@@ -29,6 +29,7 @@
 
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
     const cashBtn = el("button", { class: "btn primary block", style: "display:none" }, "Cash out");
+    const pickBtn = el("button", { class: "btn block", style: "display:none" }, "Pick Random");
 
     function buildTower() {
       lastBadge = null;
@@ -77,7 +78,7 @@
       roundId = resp.round_id; ended = false; climbedCount = 0;
       seed.setHash(resp.server_hash); seed.setNonce(resp.nonce);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
-      startBtn.style.display = "none"; cashBtn.style.display = "block";
+      startBtn.style.display = "none"; cashBtn.style.display = "block"; pickBtn.style.display = "block";
       // Must climb at least one floor before cashing out.
       cashBtn.disabled = true;
       bet.input.disabled = diffSel.disabled = true;
@@ -130,6 +131,21 @@
       curFloor = f + 1; enableFloor(curFloor); BT.ui.haptic("light");
     }
 
+    function pickRandom() {
+      if (busy || ended || !roundId) return;
+      const floorEl = tower.querySelector('.tower-floor[data-f="' + curFloor + '"]');
+      if (!floorEl) return;
+      const open = [];
+      floorEl.querySelectorAll(".cell").forEach((cell) => {
+        if (!cell.classList.contains("safe") && !cell.classList.contains("mine")) {
+          open.push(parseInt(cell.dataset.c, 10));
+        }
+      });
+      if (!open.length) return;
+      pick(curFloor, open[Math.floor(Math.random() * open.length)]);
+    }
+    pickBtn.addEventListener("click", pickRandom);
+
     cashBtn.addEventListener("click", async () => {
       if (busy || ended || !roundId) return; busy = true; cashBtn.disabled = true;
       const resp = await BT.api.gameCashout("towers", { round_id: roundId });
@@ -140,7 +156,7 @@
 
     function finish(resp) {
       ended = true; roundId = null; enableFloor(-1);
-      startBtn.style.display = "block"; cashBtn.style.display = "none";
+      startBtn.style.display = "block"; cashBtn.style.display = "none"; pickBtn.style.display = "none";
       bet.input.disabled = diffSel.disabled = false;
       seed.revealSeed(resp.server_seed);
       C.syncBalance(resp);
@@ -159,6 +175,7 @@
       bet.node,
       startBtn,
       cashBtn,
+      pickBtn,
       banner.node,
       seed.node,
     ]));
