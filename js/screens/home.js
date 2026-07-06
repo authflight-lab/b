@@ -106,47 +106,45 @@
     const s = me.stats;
     const mult = me.multiplier_active;
 
-    const tiles = [
-      { emoji: "💬", label: "Messages",    value: fmt(s.messages_sent),               accent: "#3b82f6" },
-      { emoji: "🎲", label: "Wagered",     value: fmt(s.amount_wagered) + " pts",      accent: "#8b5cf6" },
-      { emoji: "📊", label: "Msg Rank",    value: "#" + fmt(s.messages_rank),           accent: "#10b981" },
-      { emoji: "🏆", label: "Points Rank", value: "#" + fmt(s.rich_rank),               accent: "#f59e0b" },
+    const items = [
+      { label: "Messages",    value: fmt(s.messages_sent) },
+      { label: "Wagered",     value: fmt(s.amount_wagered) + " pts" },
+      { label: "Msg Rank",    value: "#" + fmt(s.messages_rank) },
+      { label: "Points Rank", value: "#" + fmt(s.rich_rank) },
     ];
 
-    const grid = el("div", {
-      style: "display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px",
+    // Inner 2×2 grid — its own nested card
+    const innerGrid = el("div", {
+      style: "display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);" +
+        "border-radius:calc(var(--radius) - 2px);overflow:hidden",
     });
-
-    tiles.forEach((t) => {
-      grid.appendChild(el("div", {
-        style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);" +
-          "padding:12px 14px;position:relative;overflow:hidden",
+    items.forEach((item) => {
+      innerGrid.appendChild(el("div", {
+        style: "background:var(--bg);padding:10px 12px",
       }, [
-        el("div", {
-          style: "position:absolute;top:-10px;right:-6px;font-size:44px;opacity:.1;pointer-events:none;line-height:1;user-select:none",
-        }, t.emoji),
-        el("div", { style: "font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:" + t.accent + ";margin-bottom:4px" }, t.label),
-        el("div", { style: "font-size:20px;font-weight:900;color:var(--text);line-height:1" }, t.value),
+        el("div", { style: "font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:2px" }, item.label),
+        el("div", { style: "font-size:16px;font-weight:800;color:var(--text)" }, item.value),
       ]));
     });
 
     const multRow = el("div", {
-      style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);" +
-        "display:flex;align-items:center;justify-content:space-between;padding:10px 14px",
+      style: "display:flex;align-items:center;justify-content:space-between;margin-top:10px",
     }, [
-      el("span", { style: "font-size:13px;font-weight:600;color:var(--text-dim);display:flex;align-items:center;gap:6px" }, [
-        el("span", { style: "font-size:16px" }, "⚡"),
-        document.createTextNode("Multiplier"),
-      ]),
+      el("span", { style: "font-size:13px;font-weight:500;color:var(--text-dim)" }, "Multiplier"),
       el("span", {
-        style: "font-size:12px;font-weight:800;padding:3px 12px;border-radius:999px;letter-spacing:.3px;" +
+        style: "font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;" +
           (mult
-            ? "color:#3a2c00;background:linear-gradient(135deg,#ffe58a,#f5b301)"
+            ? "color:#3a2c00;background:linear-gradient(180deg,#ffe58a,#f5b301)"
             : "color:var(--text-dim);background:var(--bg);border:1px solid var(--border)"),
       }, mult ? "Active" : "Not Active"),
     ]);
 
-    return el("div", { style: "margin-bottom:20px" }, [grid, multRow]);
+    // Outer card wraps the inner grid with padding so the grid floats inside
+    return el("div", { style: "margin-bottom:20px" }, [
+      el("div", {
+        style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);padding:12px",
+      }, [innerGrid, multRow]),
+    ]);
   }
 
   // ── Backlog card ─────────────────────────────────────────────────────────────
