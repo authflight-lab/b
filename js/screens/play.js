@@ -116,7 +116,14 @@
       if (!g) return;
       grid.appendChild(el("div", {
         class: "game-tile" + (selected === key ? " active" : ""),
-        onclick: () => { selected = key; renderGames(root); },
+        onclick: () => {
+          if (BT.activeGame && BT.activeGame.name !== key) {
+            BT.ui.toast("Cash out your current game first.", "error");
+            try { BT.ui.haptic("error"); } catch (e) {}
+            return;
+          }
+          selected = key; renderGames(root);
+        },
       }, [el("div", { class: "g-ico" }, BT.ui.icon(key, 26)), el("div", { class: "g-name" }, g.title)]));
     });
     root.appendChild(grid);

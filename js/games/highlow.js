@@ -153,6 +153,7 @@
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id; ended = false;
+      BT.setActiveGame("highlow", roundId);
       seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       rank = (resp.params && resp.params.start_card) || 1;
@@ -250,7 +251,7 @@
     skipBtn.addEventListener("click", skipCard);
 
     function finish(resp, won) {
-      ended = true; roundId = null;
+      ended = true; roundId = null; BT.clearActiveGame();
       startBtn.style.display = "block"; cashBtn.style.display = "none"; cashBtn.disabled = false;
       skipBtn.style.display = "none"; skipBtn.disabled = false;
       bet.input.disabled = false;

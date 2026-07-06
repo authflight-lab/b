@@ -9,6 +9,19 @@
 
   BT.state = { me: null, balance: 0, ageAck: false };
 
+  // ---- Active-game guard ----------------------------------------------------
+  // Set when a multi-step round starts; cleared when it ends.
+  // Blocks tab switching and game switching until the round is resolved.
+  BT.activeGame = null;
+
+  BT.setActiveGame = function (name, roundId) {
+    BT.activeGame = { name, roundId };
+  };
+
+  BT.clearActiveGame = function () {
+    BT.activeGame = null;
+  };
+
   const tg = (window.Telegram && window.Telegram.WebApp) || null;
 
   function initTelegram() {
@@ -111,6 +124,12 @@
   function showScreen(key) {
     const root = document.getElementById("screen-root");
     if (!root) return;
+    // Guard: block navigating away from an in-progress round.
+    if (BT.activeGame && key !== "play") {
+      BT.ui.toast("Cash out your current game first.", "error");
+      try { BT.ui.haptic("error"); } catch (e) {}
+      return;
+    }
     current = key;
     document.querySelectorAll(".pillnav-link").forEach((t) => t.classList.toggle("active", t.dataset.screen === key));
     moveIndicator();
@@ -142,10 +161,34 @@
     window.addEventListener("resize", moveIndicator);
   }
 
+  // ---- Session-close auto-cashout -------------------------------------------
+  // When the user leaves the WebApp mid-round (visibility:hidden / pagehide),
+  // fire a best-effort cashout so the round isn't left permanently open.
+  // Uses fetch keepalive so the request survives the page being destroyed.
+  function _beaconCashout() {
+    const ag = BT.activeGame;
+    if (!ag || !ag.roundId) return;
+    const apiBase = (window.BT_CONFIG && window.BT_CONFIG.BT_API_BASE) || "";
+    if (!apiBase) return;
+    let id = "";
+    try { id = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || ""; } catch (e) {}
+    try {
+      fetch(apiBase + "/bt/api/game/" + ag.name + "/cashout", {
+        method: "POST", keepalive: true,
+        headers: { "Content-Type": "application/json", "X-Init-Data": id },
+        body: JSON.stringify({ round_id: ag.roundId }),
+      });
+    } catch (e) {}
+  }
+
   // ---- Boot -----------------------------------------------------------------
   function boot() {
     initTelegram();
     wireNav();
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") _beaconCashout();
+    });
+    window.addEventListener("pagehide", _beaconCashout);
     BT.setBalance(0);
     showScreen("home");
     // Warm the top-bar balance in the background (best effort; home also fetches).

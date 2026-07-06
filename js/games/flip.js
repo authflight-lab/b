@@ -62,6 +62,7 @@
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id;
+      BT.setActiveGame("flip", roundId);
       seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       setPlaying(true);
@@ -101,7 +102,7 @@
     });
 
     function finish(resp) {
-      roundId = null; setPlaying(false);
+      roundId = null; BT.clearActiveGame(); setPlaying(false);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
       const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");

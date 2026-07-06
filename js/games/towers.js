@@ -76,6 +76,7 @@
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id; ended = false; climbedCount = 0;
+      BT.setActiveGame("towers", roundId);
       seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       startBtn.style.display = "none"; cashBtn.style.display = "block"; pickBtn.style.display = "block";
@@ -189,7 +190,7 @@
     });
 
     function finish(resp) {
-      ended = true; roundId = null; enableFloor(-1);
+      ended = true; roundId = null; BT.clearActiveGame(); enableFloor(-1);
       startBtn.style.display = "block"; cashBtn.style.display = "none"; pickBtn.style.display = "none";
       bet.input.disabled = diffSel.disabled = false;
       C.syncBalance(resp);
