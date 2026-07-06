@@ -58,8 +58,10 @@
     function actionBtn(label, onclick) {
       return el("button", { class: "betbox-btn", type: "button", onclick }, label);
     }
+    const curIcon = BT.ui.icon("token", 20);
+    curIcon.classList.add("betbox-cur");
     const box = el("div", { class: "betbox" }, [
-      el("span", { class: "betbox-cur" }, "$"),
+      curIcon,
       input,
       actionBtn("1/2", () => setVal(Math.floor(cur() / 2))),
       actionBtn("2x", () => setVal(cur() * 2)),
@@ -67,7 +69,7 @@
     ]);
 
     const node = el("div", { class: "field" }, [
-      el("label", null, "Bet (max " + fmt(mx) + ")"),
+      el("label", null, "Bet"),
       box,
     ]);
     function getBet() {

@@ -128,6 +128,11 @@
       '<circle cx="9" cy="11.5" r="1" fill="currentColor" stroke="none"/>' +
       '<circle cx="12.5" cy="11.5" r="1" fill="currentColor" stroke="none"/>' +
       '<circle cx="16" cy="11.5" r="1" fill="currentColor" stroke="none"/>',
+    token:
+      '<circle cx="12" cy="12" r="9"/>' +
+      '<circle cx="12" cy="12" r="5.5"/>' +
+      '<path d="M12 8.7v6.6"/>' +
+      '<path d="M10.3 10.4h2.6a1.3 1.3 0 0 1 0 2.6h-1.8a1.3 1.3 0 0 0 0 2.6h2.6"/>',
   };
 
   function icon(name, size) {
