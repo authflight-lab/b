@@ -214,7 +214,7 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
 /* Compact segmented control for the weekly / all-time period switch — small,
    inline, and visually secondary to the full-width category pills above. */
 .segtoggle {
-  display: inline-flex; gap: 2px; margin: -4px 0 14px; padding: 3px;
+  display: inline-flex; gap: 2px; margin: -4px 0 17px; padding: 3px;
   border-radius: 999px; background: var(--glass-bg-2);
   border: 1px solid var(--glass-border); box-shadow: var(--glass-inset-hi);
 }
