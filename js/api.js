@@ -472,6 +472,35 @@
   const get = (path) => request("GET", path, null);
   const post = (path, body) => request("POST", path, body || {});
 
+  // Short-lived /me memo: boot() warms the top-bar balance and the home screen
+  // renders moments later — both call me(). Sharing one in-flight promise (plus
+  // a brief result cache) collapses that burst into a single network round-trip.
+  // Any balance-changing action (claim/redeem/game*) invalidates it so the next
+  // read is always fresh.
+  const ME_TTL_MS = 2500;
+  let _me = { at: 0, val: null, inflight: null };
+  const invalidateMe = () => { _me = { at: 0, val: null, inflight: null }; };
+  const meFetch = () => (hasRealBackend() ? get("/bt/api/me") : mockMe());
+  const me = (opts) => {
+    const force = !!(opts && opts.force);
+    if (!force) {
+      if (_me.inflight) return _me.inflight;
+      if (_me.val && (Date.now() - _me.at) < ME_TTL_MS) return Promise.resolve(_me.val);
+    }
+    const p = meFetch().then((v) => {
+      if (v && v.ok !== false && !v.error && !v._unconfigured) _me = { at: Date.now(), val: v, inflight: null };
+      else _me = { at: 0, val: null, inflight: null };
+      return v;
+    }).catch((e) => { invalidateMe(); throw e; });
+    _me.inflight = p;
+    return p;
+  };
+  // Run a balance-changing call, then drop the /me memo so the next read is fresh.
+  const afterMutation = (p) => {
+    try { return p.finally(invalidateMe); }
+    catch (e) { invalidateMe(); return p; }
+  };
+
   // Endpoint helpers — all paths under /bt/api/... per contract §4.
   // Each falls back to the local mock when no real backend is configured.
   const api = {
@@ -482,11 +511,12 @@
     get,
     post,
 
-    me: () => (hasRealBackend() ? get("/bt/api/me") : mockMe()),
-    claim: () => (hasRealBackend() ? post("/bt/api/claim") : mockClaim()),
+    me,
+    invalidateMe,
+    claim: () => afterMutation(hasRealBackend() ? post("/bt/api/claim") : mockClaim()),
     ageAck: () => (hasRealBackend() ? post("/bt/api/age-ack") : mockAgeAck()),
     rewards: () => (hasRealBackend() ? get("/bt/api/rewards") : mockRewards()),
-    redeem: (reward_id) => (hasRealBackend() ? post("/bt/api/redeem", { reward_id }) : mockRedeem(reward_id)),
+    redeem: (reward_id) => afterMutation(hasRealBackend() ? post("/bt/api/redeem", { reward_id }) : mockRedeem(reward_id)),
     leaderboard: (tab, period) => (hasRealBackend()
       ? get("/bt/api/leaderboard?tab=" + encodeURIComponent(tab || "rich") + "&period=" + encodeURIComponent(period || "weekly"))
       : mockLeaderboard(tab || "rich", period || "weekly")),
@@ -495,10 +525,10 @@
     getSeedState: () => (hasRealBackend() ? get("/bt/api/game/seeds") : mockGetSeedState()),
     rotateSeed: (body) => (hasRealBackend() ? post("/bt/api/game/seeds/rotate", body || {}) : mockRotateSeed(body || {})),
 
-    gameBet: (name, body) => (hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body) : mockGameBet(name, body)),
-    gameSettle: (name, body) => (hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/settle", body) : mockGameSettle(name, body)),
-    gameStep: (name, body) => (hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/step", body) : mockGameStep(name, body)),
-    gameCashout: (name, body) => (hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/cashout", body) : mockGameCashout(name, body)),
+    gameBet: (name, body) => afterMutation(hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body) : mockGameBet(name, body)),
+    gameSettle: (name, body) => afterMutation(hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/settle", body) : mockGameSettle(name, body)),
+    gameStep: (name, body) => afterMutation(hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/step", body) : mockGameStep(name, body)),
+    gameCashout: (name, body) => afterMutation(hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/cashout", body) : mockGameCashout(name, body)),
   };
 
   BT.api = api;
