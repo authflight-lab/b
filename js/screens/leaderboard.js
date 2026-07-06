@@ -5,6 +5,7 @@
   const fmt = BT.ui.fmt;
 
   let currentTab = "rich";
+  let currentPeriod = "weekly";
 
   async function render(root) {
     BT.ui.clear(root);
@@ -13,8 +14,13 @@
       tab("rich", "rich", "Rich"),
       tab("chatters", "chat", "Chatters"),
     ]);
+    const periodTabs = el("div", { class: "pilltabs", style: "margin-top:8px" }, [
+      periodTab("weekly", "Weekly"),
+      periodTab("alltime", "All-Time"),
+    ]);
     const body = el("div", { id: "lb-body" }, BT.ui.loading("Loading rankings…"));
     root.appendChild(tabs);
+    root.appendChild(periodTabs);
     root.appendChild(body);
 
     function tab(key, ic, label) {
@@ -24,7 +30,14 @@
       }, [BT.ui.icon(ic, 20), el("span", null, label)]);
     }
 
-    const data = await BT.api.leaderboard(currentTab);
+    function periodTab(key, label) {
+      return el("button", {
+        class: "pilltab" + (currentPeriod === key ? " active" : ""),
+        onclick: () => { if (currentPeriod !== key) { currentPeriod = key; render(root); } },
+      }, [el("span", null, label)]);
+    }
+
+    const data = await BT.api.leaderboard(currentTab, currentPeriod);
     const box = document.getElementById("lb-body");
     if (!box) return;
     BT.ui.clear(box);

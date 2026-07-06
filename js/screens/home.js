@@ -16,7 +16,7 @@
   const QUESTS = [
     { n: "01", label: "Chat",   desc: "Earn points for every message in the group.", screen: null },
     { n: "02", label: "Play",   desc: "Six games live, instant payouts.",            screen: "play" },
-    { n: "03", label: "Redeem", desc: "Telegram Stars, Premium, or the $100 crypto prize.", screen: "shop" },
+    { n: "03", label: "Redeem", desc: "Telegram Stars, Premium, or crypto.", screen: "shop" },
   ];
 
   // ── Hero header ──────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@
   // ── Quest list ───────────────────────────────────────────────────────────────
   function questList() {
     const wrap = el("div", { style: "margin-bottom:16px" }, [
-      el("div", { class: "section-title" }, "Quests"),
+      el("div", { class: "section-title" }, "HOW IT WORKS"),
     ]);
     const list = el("div", {
       style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden",

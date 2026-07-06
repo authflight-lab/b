@@ -114,10 +114,10 @@
     return { ok: true, new_balance: MOCK.profile.balance };
   }
 
-  async function mockLeaderboard(tabKey) {
+  async function mockLeaderboard(tabKey, period) {
     await loadSample();
     const src = (tabKey === "chatters") ? MOCK.leaderboard.chatters : MOCK.leaderboard.rich;
-    return { ok: true, rows: src.rows, you: src.you };
+    return { ok: true, period: period || "weekly", rows: src.rows, you: src.you };
   }
 
   async function mockHistory() {
@@ -385,7 +385,9 @@
     ageAck: () => (hasRealBackend() ? post("/bt/api/age-ack") : mockAgeAck()),
     rewards: () => (hasRealBackend() ? get("/bt/api/rewards") : mockRewards()),
     redeem: (reward_id) => (hasRealBackend() ? post("/bt/api/redeem", { reward_id }) : mockRedeem(reward_id)),
-    leaderboard: (tab) => (hasRealBackend() ? get("/bt/api/leaderboard?tab=" + encodeURIComponent(tab || "rich")) : mockLeaderboard(tab || "rich")),
+    leaderboard: (tab, period) => (hasRealBackend()
+      ? get("/bt/api/leaderboard?tab=" + encodeURIComponent(tab || "rich") + "&period=" + encodeURIComponent(period || "weekly"))
+      : mockLeaderboard(tab || "rich", period || "weekly")),
     history: () => (hasRealBackend() ? get("/bt/api/history") : mockHistory()),
 
     gameBet: (name, body) => (hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body) : mockGameBet(name, body)),

@@ -12,10 +12,10 @@
     BT.games.registry[game.key] = game;
   }
 
-  // Bet range per contract §3: [1, min(500, balance)].
+  // Bet range per contract §3: [1, min(350, balance)].
   function maxBet(balance) {
     const b = Number(balance) || 0;
-    return Math.max(1, Math.min(500, b));
+    return Math.max(1, Math.min(350, b));
   }
 
   function clientSeed() {
