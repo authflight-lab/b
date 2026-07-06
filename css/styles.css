@@ -713,13 +713,9 @@ input[type="number"].betbox-input:focus {
   box-shadow: var(--glass-inset-hi), inset 0 1.5px 0 rgba(185,200,230,0.28), 0 3px 4px rgba(0,0,0,0.35);
 }
 .cell.tower-cell .cell-icon {
-  transform: none; opacity: 0.38; animation: none;
+  transform: none; opacity: 0; animation: none;
   filter: grayscale(0.85) brightness(0.6);
   transition: filter .25s ease, transform .2s ease, opacity .25s ease;
-}
-.tower-floor.active .cell.tower-cell .cell-icon {
-  opacity: 0.85; filter: grayscale(0.2) brightness(1);
-  animation: gemFloat 2.2s ease-in-out infinite;
 }
 .tower-floor.active .cell.tower-cell:not(.disabled):active { transform: translateY(0) scale(0.96); box-shadow: var(--glass-inset-hi), 0 1px 2px rgba(0,0,0,0.3); }
 .cell.tower-cell.safe .cell-icon {
@@ -729,7 +725,6 @@ input[type="number"].betbox-input:focus {
 .cell.tower-cell.mine .cell-icon {
   opacity: 1; filter: none; animation: cellPop .38s cubic-bezier(.34,1.56,.64,1);
 }
-@keyframes gemFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .coin-flip-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 10px 0 16px; perspective: 700px; }
 .coin-shadow { width: 62px; height: 12px; margin-top: 10px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0,0,0,0.35), rgba(0,0,0,0) 70%); animation: coinShadowPulse 2.4s ease-in-out infinite; }
 @keyframes coinShadowPulse { 0%, 100% { transform: scaleX(1); opacity: 0.8; } 50% { transform: scaleX(0.82); opacity: 0.5; } }
