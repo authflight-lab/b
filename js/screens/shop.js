@@ -27,9 +27,9 @@
     const balance = (me && typeof me.balance === "number") ? me.balance : (BT.state.balance || 0);
     const canRedeem = me && me.can_redeem;
 
-    root.appendChild(el("div", { class: "card row between" }, [
-      el("div", null, [el("div", { class: "small muted" }, "Your balance"), el("div", { style: "font-weight:800;font-size:20px;color:var(--accent)" }, fmt(balance) + " pts")]),
-      el("div", { class: "badge " + (canRedeem ? "good" : "bad") }, canRedeem ? "Redeem unlocked" : "Locked today"),
+    root.appendChild(el("div", { class: "card" }, [
+      el("div", { style: "font-size:18px;color:var(--text-dim);font-weight:600;margin-bottom:4px" }, "Your balance"),
+      el("div", { style: "font-weight:800;font-size:30px;color:var(--accent)" }, fmt(balance) + " pts"),
     ]));
 
     if (!canRedeem) {
@@ -44,7 +44,7 @@
 
     const list = el("div", { class: "list" });
     rewards.forEach((rw) => list.appendChild(rewardCard(rw, balance, canRedeem, root)));
-    root.appendChild(el("div", { class: "section-title" }, "Prizes • " + (data.period || "")));
+    root.appendChild(el("div", { class: "section-title" }, "Prizes"));
     root.appendChild(list);
   }
 
