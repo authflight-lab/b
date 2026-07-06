@@ -13,7 +13,7 @@
     const bet = C.betControl(10);
     const seed = C.seedBox();
     const banner = C.resultBanner();
-    let roundId = null, busy = false, ended = true, minesCount = 3, revealedCount = 0;
+    let roundId = null, busy = false, ended = true, minesCount = 3, revealedCount = 0, lastBadge = null;
 
     // Mine-count slider — gems on one end, bombs on the other (arbitrary 1-24, server-validated).
     const gemsEnd = el("span", { class: "msr-end gems" }, "\uD83D\uDC8E " + (TOTAL - minesCount));
@@ -39,8 +39,9 @@
     const grid = el("div", { class: "grid-cells", style: "grid-template-columns:repeat(5,1fr)" });
     for (let i = 0; i < TOTAL; i++) {
       const icon = el("span", { class: "cell-icon" }, "");
-      const c = el("div", { class: "cell disabled", dataset: { i: String(i) } }, [icon]);
-      c._icon = icon;
+      const badge = el("div", { class: "cell-mult" }, "");
+      const c = el("div", { class: "cell disabled", dataset: { i: String(i) } }, [icon, badge]);
+      c._icon = icon; c._badge = badge;
       c.addEventListener("click", () => reveal(i));
       cells.push(c);
       grid.appendChild(c);
@@ -55,9 +56,6 @@
     const gridWrap = el("div", { class: "mines-grid-wrap" }, [grid, overlay]);
     overlay.addEventListener("click", () => overlay.classList.add("hidden"));
 
-    const mpValue = el("div", { class: "mp-value" }, "\u2014");
-    const multPanel = el("div", { class: "mult-panel" }, [mpValue, el("div", { class: "mp-label" }, "Current Multiplier")]);
-
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
     const cashBtn = el("button", { class: "btn primary block", style: "display:none" }, "Cash out");
     const pickBtn = el("button", { class: "btn block", style: "display:none" }, "Pick Random");
@@ -71,14 +69,15 @@
       cells.forEach((c) => {
         c.className = "cell disabled";
         c._icon.textContent = "";
+        c._badge.textContent = "";
       });
+      lastBadge = null;
       grid.classList.remove("flash-bust", "flash-win");
     }
 
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       banner.hide(); overlay.classList.add("hidden"); seed.reset();
-      mpValue.textContent = "\u2014"; multPanel.classList.remove("active");
       resetCells();
       const resp = await BT.api.gameBet("mines", { bet: bet.getBet(), client_seed: C.clientSeed(), params: { mines: minesCount } });
       startBtn.disabled = false; busy = false;
@@ -90,7 +89,6 @@
       // Must reveal at least one tile before cashing out.
       cashBtn.disabled = true;
       bet.input.disabled = range.disabled = true;
-      multPanel.classList.add("active");
       lockGrid(false);
     });
 
@@ -107,9 +105,17 @@
       cells[i].classList.add(isMine ? "mine" : "safe");
       cells[i]._icon.textContent = isMine ? "\uD83D\uDCA3" : "\uD83D\uDC8E";
       if (isMine) cells[i].classList.add("hit");
-      // A busted round wins nothing — show 0×, not the last accumulated value.
-      if (resp.busted) mpValue.textContent = "0\u00D7";
-      else if (resp.multiplier) mpValue.textContent = (Math.round(resp.multiplier * 100) / 100) + "\u00D7";
+      // Show the running multiplier as a pill under the last-clicked gem only —
+      // clear the previous gem's pill so exactly one is visible at a time.
+      if (!isMine && typeof resp.multiplier === "number") {
+        if (lastBadge && lastBadge !== cells[i]) {
+          lastBadge.classList.remove("mult-current");
+          lastBadge._badge.textContent = "";
+        }
+        cells[i]._badge.textContent = resp.multiplier.toFixed(2) + "x";
+        cells[i].classList.add("mult-current");
+        lastBadge = cells[i];
+      }
       if (resp.busted || resp.done) { finish(resp); }
       else { revealedCount++; cashBtn.disabled = false; BT.ui.haptic("light"); lockGrid(false); }
     }
@@ -137,7 +143,6 @@
       ended = true; roundId = null; lockGrid(true);
       startBtn.style.display = "block"; cashBtn.style.display = "none"; pickBtn.style.display = "none";
       bet.input.disabled = range.disabled = false;
-      multPanel.classList.remove("active");
       seed.revealSeed(resp.server_seed);
       // Reveal the FULL board: the mine layout tells us every cell's truth —
       // any index not in `mines` is guaranteed safe, so we can show the whole
@@ -185,7 +190,6 @@
       bet.node,
       el("div", { class: "field" }, [el("label", null, "Mines"), sliderRow]),
       gridWrap,
-      multPanel,
       startBtn,
       cashBtn,
       pickBtn,
