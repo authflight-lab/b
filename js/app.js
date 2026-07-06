@@ -175,7 +175,7 @@
     try {
       fetch(apiBase + "/bt/api/game/" + ag.name + "/cashout", {
         method: "POST", keepalive: true,
-        headers: { "Content-Type": "application/json", "X-Init-Data": id },
+        headers: { "Content-Type": "application/json", "X-Telegram-Init-Data": id },
         body: JSON.stringify({ round_id: ag.roundId }),
       });
     } catch (e) {}

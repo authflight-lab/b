@@ -27,10 +27,10 @@
     dice:
       FAIR_PREAMBLE +
       "\n" +
-      "// Dice — one draw. Win if roll < target (target in 2..98).\n" +
+      "// Dice — one draw. Win if roll > target (target in 2..98).\n" +
       "const roll = rng(0) * 100;\n" +
-      "const win = roll < target;\n" +
-      "const multiplier = win ? (0.99 * 100 / target) : 0;   // 1% edge\n",
+      "const win = roll > target;\n" +
+      "const multiplier = win ? (0.99 * 100 / (100 - target)) : 0;   // 1% edge\n",
     flip:
       FAIR_PREAMBLE +
       "\n" +

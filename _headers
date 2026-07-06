@@ -1,0 +1,22 @@
+# Cloudflare Pages headers. Assets are NOT content-hashed, so HTML/JS/CSS use
+# revalidation (no-cache => conditional request, 304 when unchanged) to keep the
+# Mini App fresh while still fast. Images cache for a day.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: ALLOWALL
+
+/index.html
+  Cache-Control: no-cache
+
+/config.js
+  Cache-Control: no-cache
+
+/js/*
+  Cache-Control: no-cache
+
+/css/*
+  Cache-Control: no-cache
+
+/img/*
+  Cache-Control: public, max-age=86400
