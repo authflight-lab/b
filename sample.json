@@ -39,18 +39,18 @@
     },
     "chatters": {
       "rows": [
-        { "rank": 1, "display_name": "Avery Stone", "value": 3120 },
-        { "rank": 2, "display_name": "Bob Harmon", "value": 2890 },
-        { "rank": 3, "display_name": "Tim Walsh", "value": 2540 },
-        { "rank": 4, "display_name": "Nora Knox", "value": 2210 },
-        { "rank": 5, "display_name": "Damon Reed", "value": 1985 },
-        { "rank": 6, "display_name": "Gio Marín", "value": 1760 },
-        { "rank": 7, "display_name": "Steph Nash", "value": 1530 },
-        { "rank": 8, "display_name": "Zed Castro", "value": 1290 },
-        { "rank": 9, "display_name": "Rania Amir", "value": 980 },
-        { "rank": 10, "display_name": "Jill Baker", "value": 740 }
+        { "rank": 1, "display_name": "Avery Stone", "value": 842 },
+        { "rank": 2, "display_name": "Bob Harmon", "value": 731 },
+        { "rank": 3, "display_name": "Tim Walsh", "value": 655 },
+        { "rank": 4, "display_name": "Nora Knox", "value": 588 },
+        { "rank": 5, "display_name": "Damon Reed", "value": 502 },
+        { "rank": 6, "display_name": "Gio Marín", "value": 447 },
+        { "rank": 7, "display_name": "Steph Nash", "value": 390 },
+        { "rank": 8, "display_name": "Zed Castro", "value": 318 },
+        { "rank": 9, "display_name": "Rania Amir", "value": 265 },
+        { "rank": 10, "display_name": "Jill Baker", "value": 201 }
       ],
-      "you": { "rank": 15, "value": 610 }
+      "you": { "rank": 15, "value": 112 }
     }
   },
   "history": {
