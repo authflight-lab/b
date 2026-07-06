@@ -267,8 +267,8 @@
     if (name === "dice") {
       const target = Math.max(2, Math.min(98, parseInt(body.target ?? round.params.target, 10) || 50));
       const roll = round2(Math.random() * 100);
-      const win = roll < target;
-      const multiplier = win ? round2(99 / target) : 0;
+      const win = roll > target;
+      const multiplier = win ? round2(99 / (100 - target)) : 0;
       const payout = win ? capPayout(round.bet, multiplier) : 0;
       settlePayout(round, payout);
       return { ok: true, outcome: { roll, win, multiplier }, payout, balance: MOCK.profile.balance };
@@ -383,12 +383,17 @@
       const move = raw && typeof raw === "object" ? raw : { guess: raw };
       const cur = round.__card || (round.__card = hlDrawCurrent());
       // Skip: swap the current card for a fresh one, no wager, multiplier
-      // unchanged. EV-neutral, so unlimited skips are safe (mirrors backend).
+      // unchanged. Capped at 5 in a row — after that a side must be picked
+      // (mirrors backend). A real pick resets the allowance.
       if (move.skip || move.guess === "skip") {
+        const skips = round.__skips || 0;
+        if (skips >= 5) return { ok: false, error: "skip_limit" };
         const current = hlDrawCurrent();
         round.__card = current;
         round.step++;
-        return { ok: true, outcome_step: { current: current, prev: cur, guess: "skip", skipped: true, win: true }, multiplier: round.multiplier, can_cashout: true, busted: false, done: false, balance: MOCK.profile.balance };
+        round.__skips = skips + 1;
+        const picks = round.__picks || 0;
+        return { ok: true, outcome_step: { current: current, prev: cur, guess: "skip", skipped: true, win: true, skips: round.__skips }, multiplier: round.multiplier, can_cashout: picks >= 1, skips: round.__skips, busted: false, done: false, balance: MOCK.profile.balance };
       }
       const dir = move.guess === "higher" ? "higher" : "lower";
       const p = dir === "higher" ? (14 - cur) / 13 : cur / 13;
@@ -405,10 +410,12 @@
       }
       round.multiplier = round2(round.multiplier * factor);
       round.step++;
+      round.__skips = 0; // a real pick resets the skip allowance
+      round.__picks = (round.__picks || 0) + 1;
       // A wild reveal (Ace/King) passes through to the next non-wild card.
       const current = (next <= 1 || next >= 13) ? hlDrawCurrent() : next;
       round.__card = current;
-      return { ok: true, outcome_step: { drawn: next, current: current, prev: cur, guess: dir, win: true }, multiplier: round.multiplier, busted: false, done: false, balance: MOCK.profile.balance };
+      return { ok: true, outcome_step: { drawn: next, current: current, prev: cur, guess: dir, win: true }, multiplier: round.multiplier, can_cashout: true, skips: 0, busted: false, done: false, balance: MOCK.profile.balance };
     }
 
     return { ok: false, error: "unknown_game" };
@@ -433,6 +440,7 @@
     // Must take at least one step before cashing out (mirrors backend guard).
     if (name === "mines" && (round.step || 0) < 1) return { ok: false, error: "must_reveal_first" };
     if (name === "towers" && (round.step || 0) < 1) return { ok: false, error: "must_climb_first" };
+    if (name === "highlow" && (round.__picks || 0) < 1) return { ok: false, error: "must_pick_first" };
     const payout = capPayout(round.bet, round.multiplier);
     settlePayout(round, payout);
     let outcome;

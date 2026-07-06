@@ -238,6 +238,8 @@
       no_open_round: "That round has ended.",
       must_reveal_first: "Reveal at least one tile before cashing out.",
       must_climb_first: "Climb at least one floor before cashing out.",
+      must_pick_first: "Pick at least one card before cashing out.",
+      skip_limit: "You've used all 5 skips — pick a side to continue.",
       rate_limited: "Slow down a moment, then try again.",
     };
     return map[code] || ("Error: " + code);

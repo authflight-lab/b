@@ -33,6 +33,8 @@
 
     let roundId = null, busy = false, ended = true;
     let rank = 0, mult = 1.0, step = 0;
+    let picks = 0, skips = 0; // picks gate cashout; skips capped at MAX_SKIPS in a row
+    const MAX_SKIPS = 5;
     const history = []; // { rank, step, badge:"start"|"win"|"bust", label, dir }
 
     // --- History strip ------------------------------------------------------
@@ -146,6 +148,16 @@
     const cashBtn = el("button", { class: "btn primary block", style: "display:none" }, "Cash out");
     const skipBtn = el("button", { class: "btn block", style: "display:none" }, "Skip card");
 
+    // Cashout needs >= 1 real pick; skip is capped at MAX_SKIPS in a row. Called
+    // whenever the round is idle-and-active to reflect both limits in the buttons.
+    function syncActions(active) {
+      if (!active) { cashBtn.disabled = true; skipBtn.disabled = true; return; }
+      cashBtn.disabled = picks < 1;
+      const left = MAX_SKIPS - skips;
+      skipBtn.disabled = left <= 0;
+      skipBtn.textContent = left > 0 ? "Skip card · " + left + " left" : "No skips left";
+    }
+
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       overlay.hide(); banner.hide(); seed.reset();
@@ -164,7 +176,9 @@
       setCard(rank, true);
       refreshOdds(true);
       startBtn.style.display = "none"; cashBtn.style.display = "block"; bet.input.disabled = true;
-      skipBtn.style.display = "block"; skipBtn.disabled = false;
+      skipBtn.style.display = "block";
+      picks = 0; skips = 0;
+      syncActions(true);
     });
 
     async function guess(dir) {
@@ -175,7 +189,7 @@
       busy = false;
       if (!resp || resp.ok === false) {
         BT.ui.toast(C.errText(resp), "error");
-        cashBtn.disabled = false; skipBtn.disabled = false; refreshOdds(true); return;
+        syncActions(true); refreshOdds(true); return;
       }
       const os = resp.outcome_step || {};
       const drawn = os.drawn !== undefined ? os.drawn : os.next_card !== undefined ? os.next_card : os.card;
@@ -189,6 +203,7 @@
         step = newStep;
         setCard(drawn, true);
         if (won) {
+          picks += 1; skips = 0; // a real pick resets the skip allowance
           mult = typeof resp.multiplier === "number" ? resp.multiplier : mult;
           history.push({ rank: drawn, step, badge: "win", label: mult.toFixed(2) + "×", dir });
           rank = current;
@@ -198,7 +213,7 @@
         renderHistory();
       }
       if (resp.busted || resp.done) { finish(resp, won); return; }
-      cashBtn.disabled = false; skipBtn.disabled = false;
+      syncActions(true);
       BT.ui.haptic("light");
       if (wild) {
         // Reveal the wild card, then flip through to the fresh current card.
@@ -225,6 +240,7 @@
 
     // Skip: swap the current card for a fresh one without wagering. The chain
     // multiplier is unchanged; useful when the current card gives a poor edge.
+    // Capped at MAX_SKIPS in a row — after that a side must be picked.
     async function skipCard() {
       if (busy || ended || !roundId) return; busy = true;
       hiBtn.disabled = loBtn.disabled = cashBtn.disabled = skipBtn.disabled = true;
@@ -233,18 +249,19 @@
       busy = false;
       if (!resp || resp.ok === false) {
         BT.ui.toast(C.errText(resp), "error");
-        cashBtn.disabled = false; skipBtn.disabled = false; refreshOdds(true); return;
+        syncActions(true); refreshOdds(true); return;
       }
       const os = resp.outcome_step || {};
       const current = os.current;
       if (typeof current === "number") {
         step += 1;
+        skips += 1;
         rank = current;
         setCard(current, true);
         history.push({ rank: current, step, badge: "skip", label: "Skip", dir: null });
         renderHistory();
       }
-      cashBtn.disabled = false; skipBtn.disabled = false;
+      syncActions(true);
       BT.ui.haptic("light");
       refreshOdds(true);
     }
@@ -266,14 +283,14 @@
     renderHistory();
     refreshOdds(false);
     root.appendChild(el("div", { class: "card" }, [
-      C.gameHeader("highlow", "HighLow", "Guess whether the next card is higher-or-same or lower-or-same. Each correct call chains your multiplier and a tie counts in your favor. Aces and Kings are wild — they pass through to a fresh card. Skip to swap the current card without betting, or cash out any time."),
+      C.gameHeader("highlow", "HighLow", "Guess whether the next card is higher-or-same or lower-or-same. Each correct call chains your multiplier and a tie counts in your favor. Aces and Kings are wild — they pass through to a fresh card. Skip up to 5 times in a row to swap the current card without betting, then you must pick a side. Cash out any time after your first pick."),
       histEl,
       board,
       probBar,
+      skipBtn,
       bet.node,
       startBtn,
       cashBtn,
-      skipBtn,
       banner.node,
       seed.node,
     ]));

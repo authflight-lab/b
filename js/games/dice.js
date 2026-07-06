@@ -1,7 +1,7 @@
 // Dice — single settle. Client sends a target [2,98]; server rolls & pays.
-// Win if roll < target. The Multiplier / Win Chance shown are a PREVIEW using
-// the game's published formula (M = 99/target, P(win) = target%); the actual
-// payout is always computed server-side and rendered from the settle response.
+// Win if roll > target. The Multiplier / Win Chance shown are a PREVIEW using
+// the game's published formula (M = 99/(100-target), P(win) = (100-target)%); the
+// actual payout is always computed server-side and rendered from the settle response.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -71,7 +71,7 @@
         el("div", { class: "dice-stat-box" }, [multOut, el("span", { class: "unit" }, "×")]),
       ]),
       el("div", { class: "dice-stat" }, [
-        el("span", null, "Roll Under"),
+        el("span", null, ["Roll ", el("strong", null, "Over")]),
         el("div", { class: "dice-stat-box" }, rollInput),
       ]),
       el("div", { class: "dice-stat" }, [
@@ -87,8 +87,8 @@
       if (!fromInput) rollInput.value = String(target);
       valueOut.textContent = target.toFixed(2);
       valueOut.style.left = target + "%";
-      multOut.textContent = (99 / target).toFixed(4);
-      chanceOut.textContent = target.toFixed(2);
+      multOut.textContent = (99 / (100 - target)).toFixed(4);
+      chanceOut.textContent = (100 - target).toFixed(2);
     }
 
     range.addEventListener("input", () => syncTarget(parseInt(range.value, 10)));
@@ -153,7 +153,7 @@
     renderResults();
     root.appendChild(
       el("div", { class: "card" }, [
-        C.gameHeader("dice", "Dice", "Drag the slider to set your target. You win if the roll lands under it — lower target, higher payout."),
+        C.gameHeader("dice", "Dice", "Drag the slider to set your target. You win if the roll lands over it — higher target, higher payout."),
         results,
         slider,
         stats,
