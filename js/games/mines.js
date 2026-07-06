@@ -168,7 +168,7 @@
                  : (typeof o.multiplier === "number" ? o.multiplier : 0));
       overlayMult.textContent = (Math.round(mult * 100) / 100) + "x";
       if (payout > 0) {
-        overlayLabel.textContent = "Cashed out +" + BT.ui.fmt(payout) + " pts";
+        overlayLabel.textContent = "+" + BT.ui.fmt(payout) + " pts";
         overlayCard.className = "mro-card win";
         BT.ui.haptic("success");
       } else {
