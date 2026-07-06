@@ -47,9 +47,9 @@ body {
   background:
     repeating-linear-gradient(rgba(255,255,255,0.017) 0 1px, transparent 1px 48px),
     repeating-linear-gradient(90deg, rgba(255,255,255,0.017) 0 1px, transparent 1px 48px),
-    radial-gradient(1200px 860px at 12% -10%, rgba(0, 124, 143, 0.38), transparent 62%),
-    radial-gradient(1000px 700px at 108% 8%, rgba(0, 180, 210, 0.22), transparent 58%),
-    radial-gradient(700px 500px at 50% 100%, rgba(0, 80, 120, 0.18), transparent 70%),
+    radial-gradient(1200px 860px at 12% -10%, rgba(0, 124, 143, 0.27), transparent 62%),
+    radial-gradient(1000px 700px at 108% 8%, rgba(0, 180, 210, 0.15), transparent 58%),
+    radial-gradient(700px 500px at 50% 100%, rgba(0, 80, 120, 0.13), transparent 70%),
     var(--bg);
   background-attachment: fixed;
 }
