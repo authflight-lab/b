@@ -112,9 +112,14 @@
       }
       if (chosen) {
         chosen.classList.remove("gem-hidden");
-        chosen.classList.add(safe ? "safe" : "mine");
-        chosen._icon.textContent = safe ? GEM : TRAP;
-        if (!safe) chosen.classList.add("hit");
+        if (safe) {
+          chosen.classList.add("safe");
+          chosen._icon.textContent = GEM;
+        } else {
+          chosen.classList.add("mine", "hit", "collapse");
+          chosen._icon.textContent = "";
+          shatterCell(chosen);
+        }
       }
       if (resp.multiplier && safe && chosen) {
         if (lastBadge && lastBadge !== chosen) {
@@ -125,10 +130,39 @@
         chosen.classList.add("mult-current");
         lastBadge = chosen;
       }
-      if (resp.busted) { finish(resp); return; }
+      if (resp.busted) {
+        ended = true; enableFloor(-1);
+        BT.ui.haptic("error");
+        await new Promise((r) => setTimeout(r, 820));
+        finish(resp);
+        return;
+      }
       if (resp.done || f >= FLOORS - 1) { finish(resp); return; }
       climbedCount++; cashBtn.disabled = false;
       curFloor = f + 1; enableFloor(curFloor); BT.ui.haptic("light");
+    }
+
+    function shatterCell(cell) {
+      // Break the trap tile into 8 triangular shards fanned from the center
+      // that fall/rotate away, so the red tile appears to crumble and collapse.
+      const pts = [[0,0],[50,0],[100,0],[100,50],[100,100],[50,100],[0,100],[0,50]];
+      for (let k = 0; k < pts.length; k++) {
+        const p1 = pts[k], p2 = pts[(k + 1) % pts.length];
+        const poly = "polygon(50% 50%, " + p1[0] + "% " + p1[1] + "%, " + p2[0] + "% " + p2[1] + "%)";
+        const sh = document.createElement("div");
+        sh.className = "mine-shard";
+        sh.style.clipPath = poly;
+        sh.style.webkitClipPath = poly;
+        const ccx = (50 + p1[0] + p2[0]) / 3, ccy = (50 + p1[1] + p2[1]) / 3;
+        const dx = ccx - 50, dy = ccy - 50;
+        const mag = Math.hypot(dx, dy) || 1;
+        const dist = 8 + Math.random() * 10;
+        sh.style.setProperty("--tx", (dx / mag * dist).toFixed(1) + "px");
+        sh.style.setProperty("--ty", (dy / mag * dist).toFixed(1) + "px");
+        sh.style.setProperty("--rot", (Math.random() * 80 - 40).toFixed(0) + "deg");
+        sh.style.animationDelay = (Math.random() * 0.12).toFixed(2) + "s";
+        cell.appendChild(sh);
+      }
     }
 
     function pickRandom() {
