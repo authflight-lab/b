@@ -46,23 +46,14 @@
     const banner = C.resultBanner();
     let busy = false;
 
-    // Client-side rate limit: cap how many balls can be dropped in a rolling
-    // window so the bet button can't be spammed. Uses a sliding window of
-    // recent drop timestamps.
-    const RATE_MAX = 5;            // max drops...
-    const RATE_WINDOW_MS = 10000;  // ...per 10 seconds
-    let dropTimes = [];
-    function rateLimited() {
-      const now = Date.now();
-      dropTimes = dropTimes.filter((t) => now - t < RATE_WINDOW_MS);
-      if (dropTimes.length >= RATE_MAX) {
-        const waitMs = RATE_WINDOW_MS - (now - dropTimes[0]);
-        BT.ui.toast("Slow down — wait " + Math.ceil(waitMs / 1000) + "s before dropping again.", "error");
-        return true;
-      }
-      dropTimes.push(now);
-      return false;
-    }
+    // Mandatory delay between EVERY ball drop. Extra clicks are queued and
+    // fired one at a time, each separated by DROP_DELAY_MS so the user always
+    // has to wait between drops.
+    const DROP_DELAY_MS = 3000;   // enforced wait between consecutive drops
+    const QUEUE_MAX = 15;         // sanity cap on how many drops can be queued
+    let queue = [];
+    let processing = false;
+    let lastDropEndAt = 0;
 
     // ---- Segmented chip controls (rows + risk) ----
     function chipGroup(opts, initial, onChange) {
@@ -179,15 +170,29 @@
 
     function setBusy(v) {
       busy = v;
-      dropBtn.disabled = v;
       rows.node.classList.toggle("locked", v);
       risk.node.classList.toggle("locked", v);
     }
 
-    dropBtn.addEventListener("click", async () => {
-      if (busy) return;
-      if (rateLimited()) return;
-      setBusy(true);
+    function updateDropLabel() {
+      dropBtn.textContent = queue.length > 0 ? "Drop Ball (" + queue.length + " queued)" : "Drop Ball";
+    }
+
+    // Block until DROP_DELAY_MS has elapsed since the previous drop finished,
+    // showing a live countdown on the button. The first-ever drop waits 0ms.
+    async function waitBetweenDrops() {
+      const end = lastDropEndAt + DROP_DELAY_MS;
+      let remain = end - Date.now();
+      while (remain > 0) {
+        dropBtn.textContent =
+          "Next drop in " + Math.ceil(remain / 1000) + "s\u2026" +
+          (queue.length ? " (" + queue.length + " queued)" : "");
+        await frame(200);
+        remain = end - Date.now();
+      }
+    }
+
+    async function doDrop(job) {
       overlay.hide(); banner.hide();
       seed.reset();
       const n = rows.get();
@@ -195,7 +200,7 @@
       bucketEls.forEach((b) => b.classList.remove("hit"));
       try {
         const betResp = await BT.api.gameBet("plinko", {
-          bet: bet.getBet(),
+          bet: job.bet,
           params: { rows: n, risk: rk },
         });
         if (!betResp || betResp.ok === false) {
@@ -225,7 +230,6 @@
         }
         C.syncBalance(s);
         const payout = s.payout || 0;
-        const multTxt = o.multiplier !== undefined ? " (" + fmtMult(o.multiplier) + ")" : "";
         if (payout > 0) {
           overlay.show("win", o.multiplier !== undefined ? fmtMult(o.multiplier) : "Win!", "+" + BT.ui.fmt(payout) + " pts");
           BT.ui.haptic("success");
@@ -234,8 +238,39 @@
           BT.ui.haptic("error");
         }
       } finally {
-        setBusy(false);
+        lastDropEndAt = Date.now();
       }
+    }
+
+    async function processQueue() {
+      if (processing) return;
+      processing = true;
+      setBusy(true);
+      try {
+        while (queue.length) {
+          dropBtn.disabled = false; // allow queueing more during the wait
+          await waitBetweenDrops();
+          const job = queue.shift();
+          updateDropLabel();
+          dropBtn.disabled = true;  // lock while the ball is dropping
+          await doDrop(job);
+        }
+      } finally {
+        processing = false;
+        setBusy(false);
+        dropBtn.disabled = false;
+        updateDropLabel();
+      }
+    }
+
+    dropBtn.addEventListener("click", () => {
+      if (queue.length >= QUEUE_MAX) {
+        BT.ui.toast("Queue full — wait for a few drops to finish.", "error");
+        return;
+      }
+      queue.push({ bet: bet.getBet() });
+      updateDropLabel();
+      processQueue();
     });
 
     root.appendChild(

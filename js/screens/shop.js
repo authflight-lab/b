@@ -27,7 +27,7 @@
     const balance = (me && typeof me.balance === "number") ? me.balance : (BT.state.balance || 0);
     const canRedeem = me && me.can_redeem;
 
-    root.appendChild(el("div", { class: "card" }, [
+    root.appendChild(el("div", { style: "margin-bottom:16px" }, [
       el("div", { style: "font-size:18px;color:var(--text-dim);font-weight:600;margin-bottom:4px" }, "Your balance"),
       el("div", { style: "font-weight:800;font-size:30px;color:var(--accent)" }, fmt(balance) + " pts"),
     ]));
