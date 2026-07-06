@@ -100,9 +100,14 @@
       BT.ui.icon("shield", 16),
       el("span", null, "Provably Fair"),
     ]);
+    // Live balance chip beside the Provably Fair pill; kept in sync by BT.setBalance.
+    const balChip = el("div", { class: "fair-bal", title: "Your balance" }, [
+      BT.ui.icon("token", 14),
+      el("span", { id: "play-bal-value" }, BT.ui.fmt(BT.state.balance)),
+    ]);
     root.appendChild(el("div", { class: "play-head" }, [
       el("span", { class: "play-head-title" }, "Games"),
-      fairBtn,
+      el("div", { class: "play-head-right" }, [balChip, fairBtn]),
     ]));
 
     const grid = el("div", { class: "game-grid" });

@@ -31,6 +31,8 @@
     if (typeof n === "number" && !isNaN(n)) BT.state.balance = n;
     const bv = document.getElementById("bal-value");
     if (bv) bv.textContent = BT.ui.fmt(BT.state.balance);
+    const pbv = document.getElementById("play-bal-value");
+    if (pbv) pbv.textContent = BT.ui.fmt(BT.state.balance);
   };
 
   BT.applyMe = function (me) {
