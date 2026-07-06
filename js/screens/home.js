@@ -110,7 +110,7 @@
       "@keyframes bt-shimmer{0%{background-position:-200% center}100%{background-position:200% center}}",
       ".bt-shimmer{background:linear-gradient(90deg,var(--text) 20%,var(--accent) 50%,var(--text) 80%);",
       "background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;",
-      "background-clip:text;animation:bt-shimmer 2.4s linear infinite;}",
+      "background-clip:text;animation:bt-shimmer 5s linear infinite;}",
     ].join("");
     document.head.appendChild(s);
   })();
