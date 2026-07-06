@@ -37,7 +37,7 @@
       for (let f = 0; f < FLOORS; f++) {
         const floor = el("div", {
           class: "tower-floor dim",
-          style: "grid-template-columns:repeat(" + cols + ",1fr)",
+          style: "grid-template-columns:repeat(" + cols + ",minmax(0,1fr))",
           dataset: { f: String(f) },
         });
         for (let c = 0; c < cols; c++) {
