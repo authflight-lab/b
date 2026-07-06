@@ -148,11 +148,11 @@
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       overlay.hide(); banner.hide(); seed.reset();
-      const resp = await BT.api.gameBet("highlow", { bet: bet.getBet(), client_seed: C.clientSeed(), params: {} });
+      const resp = await BT.api.gameBet("highlow", { bet: bet.getBet(), params: {} });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id; ended = false;
-      seed.setHash(resp.server_hash); seed.setNonce(resp.nonce);
+      seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       rank = (resp.params && resp.params.start_card) || 1;
       mult = 1.0; step = 0;
@@ -225,7 +225,6 @@
       startBtn.style.display = "block"; cashBtn.style.display = "none"; cashBtn.disabled = false;
       bet.input.disabled = false;
       refreshOdds(false);
-      seed.revealSeed(resp.server_seed);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
       const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");

@@ -112,7 +112,6 @@
 
       const betResp = await BT.api.gameBet("dice", {
         bet: bet.getBet(),
-        client_seed: C.clientSeed(),
         params: { target: t },
       });
       if (!betResp || betResp.ok === false) {
@@ -121,6 +120,7 @@
       }
       seed.setHash(betResp.server_hash);
       seed.setNonce(betResp.nonce);
+      BT.fair.noteBet(betResp);
       if (typeof betResp.balance === "number") BT.setBalance(betResp.balance);
 
       const s = await BT.api.gameSettle("dice", { round_id: betResp.round_id, target: t });
@@ -128,7 +128,6 @@
         BT.ui.toast(C.errText(s), "error");
         busy = false; betBtn.disabled = false; range.disabled = false; return;
       }
-      seed.revealSeed(s.server_seed);
       const o = s.outcome || {};
       const roll = o.roll !== undefined ? o.roll : o.result;
       const win = o.win !== undefined ? o.win : (s.payout || 0) > 0;

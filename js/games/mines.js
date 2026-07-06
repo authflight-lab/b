@@ -73,11 +73,11 @@
       if (busy) return; busy = true; startBtn.disabled = true;
       banner.hide(); overlay.hide(); seed.reset();
       resetCells();
-      const resp = await BT.api.gameBet("mines", { bet: bet.getBet(), client_seed: C.clientSeed(), params: { mines: minesCount } });
+      const resp = await BT.api.gameBet("mines", { bet: bet.getBet(), params: { mines: minesCount } });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id; ended = false; revealedCount = 0;
-      seed.setHash(resp.server_hash); seed.setNonce(resp.nonce);
+      seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       startBtn.style.display = "none"; cashBtn.style.display = "block"; pickBtn.style.display = "block";
       // Must reveal at least one tile before cashing out.
@@ -137,7 +137,6 @@
       ended = true; roundId = null; lockGrid(true);
       startBtn.style.display = "block"; cashBtn.style.display = "none"; pickBtn.style.display = "none";
       bet.input.disabled = range.disabled = false;
-      seed.revealSeed(resp.server_seed);
       // Reveal the FULL board: the mine layout tells us every cell's truth —
       // any index not in `mines` is guaranteed safe, so we can show the whole
       // board (like Rainbet's post-round reveal), dimming cells the player

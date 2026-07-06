@@ -34,7 +34,7 @@
     leaderboard: null,
     history: null,
     rounds: {},
-    nonce: 0,
+    seedPair: null,
   };
 
   // Economy guards — mirror the real backend (api/game/__init__.py). MULT_CAP
@@ -91,6 +91,61 @@
   function fakeHash() { return rndHex(64); }
   function newRoundId() { return "mock_" + Date.now().toString(36) + "_" + rndHex(6); }
   function round2(n) { return Math.round(n * 100) / 100; }
+
+  // ---- Provably-fair seed pair (Rainbet-style reuse) ------------------------
+  // Mirrors the server: one active pair reused across bets with a per-pair nonce
+  // and a pre-committed next server seed. Hashes are REAL sha256 of the seeds, so
+  // a revealed (rotated-out) server seed genuinely verifies against the hash the
+  // panel showed while it was active. The active server seed is never returned
+  // by a bet/settle — only on rotation.
+  async function sha256hex(s) {
+    try {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+      return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+    } catch (e) {
+      return fakeHash(); // preview fallback where SubtleCrypto is unavailable
+    }
+  }
+  async function makeSeedPair(clientSeed) {
+    const cs = (clientSeed && String(clientSeed).trim()) || rndHex(16);
+    const ss = rndHex(64), nx = rndHex(64);
+    return {
+      client_seed: cs,
+      server_seed: ss,
+      server_hash: await sha256hex(ss),
+      nonce: 0,
+      next_server_seed: nx,
+      next_server_hash: await sha256hex(nx),
+    };
+  }
+  async function ensureSeedPair() {
+    if (!MOCK.seedPair) MOCK.seedPair = await makeSeedPair();
+    return MOCK.seedPair;
+  }
+  async function mockGetSeedState() {
+    await loadSample();
+    const p = await ensureSeedPair();
+    return { ok: true, client_seed: p.client_seed, nonce: p.nonce, server_hash: p.server_hash, next_server_hash: p.next_server_hash };
+  }
+  async function mockRotateSeed(body) {
+    await loadSample();
+    // Block rotation mid-round so a revealed seed can't leak an open round.
+    if (Object.keys(MOCK.rounds).length) return { ok: false, error: "open_round_exists" };
+    const p = await ensureSeedPair();
+    const revealed = p.server_seed;
+    const nx = rndHex(64);
+    const cs = (body && body.client_seed && String(body.client_seed).trim()) || p.client_seed;
+    MOCK.seedPair = {
+      client_seed: cs,
+      server_seed: p.next_server_seed,   // promote the pre-committed next seed
+      server_hash: p.next_server_hash,   // whose hash was already shown
+      nonce: 0,
+      next_server_seed: nx,
+      next_server_hash: await sha256hex(nx),
+    };
+    const np = MOCK.seedPair;
+    return { ok: true, server_seed: revealed, client_seed: np.client_seed, nonce: np.nonce, server_hash: np.server_hash, next_server_hash: np.next_server_hash };
+  }
 
   function pushHistory(kind, amount) {
     MOCK.history.unshift({ kind: kind, amount: amount, created_at: new Date().toISOString() });
@@ -170,7 +225,13 @@
       round.__card = hlDrawCurrent();
       params.start_card = round.__card;
     }
-    return { ok: true, round_id: round_id, server_hash: fakeHash(), nonce: ++MOCK.nonce, balance: MOCK.profile.balance, params: params };
+    // Reuse the active seed pair: return its committed hash and the current
+    // nonce, then advance the nonce for the next bet. The active server seed is
+    // never disclosed here — only on rotation.
+    const p = await ensureSeedPair();
+    const usedNonce = p.nonce;
+    p.nonce += 1;
+    return { ok: true, round_id: round_id, server_hash: p.server_hash, nonce: usedNonce, balance: MOCK.profile.balance, params: params };
   }
 
   function settlePayout(round, payout) {
@@ -184,7 +245,6 @@
     const round = MOCK.rounds[body.round_id];
     if (!round) return { ok: false, error: "no_open_round" };
     round.__id = body.round_id;
-    const server_seed = fakeHash();
 
     if (name === "dice") {
       const target = Math.max(2, Math.min(98, parseInt(body.target ?? round.params.target, 10) || 50));
@@ -193,7 +253,7 @@
       const multiplier = win ? round2(99 / target) : 0;
       const payout = win ? capPayout(round.bet, multiplier) : 0;
       settlePayout(round, payout);
-      return { ok: true, server_seed, outcome: { roll, win, multiplier }, payout, balance: MOCK.profile.balance };
+      return { ok: true, outcome: { roll, win, multiplier }, payout, balance: MOCK.profile.balance };
     }
 
     if (name === "plinko") {
@@ -214,7 +274,7 @@
       const multiplier = base[idx];
       const payout = capPayout(round.bet, multiplier);
       settlePayout(round, payout);
-      return { ok: true, server_seed, outcome: { path, slot, bucket: slot, multiplier }, payout, balance: MOCK.profile.balance };
+      return { ok: true, outcome: { path, slot, bucket: slot, multiplier }, payout, balance: MOCK.profile.balance };
     }
 
     return { ok: false, error: "unknown_game" };
@@ -231,9 +291,8 @@
       const result = Math.random() < 0.5 ? "heads" : "tails";
       const win = move === result;
       if (!win) {
-        const server_seed = fakeHash();
         settlePayout(round, 0);
-        return { ok: true, outcome_step: { result }, multiplier: round.multiplier, busted: true, payout: 0, server_seed, balance: MOCK.profile.balance };
+        return { ok: true, outcome_step: { result }, multiplier: round.multiplier, busted: true, payout: 0, balance: MOCK.profile.balance };
       }
       round.multiplier = round2(round.multiplier * 1.98);
       round.step++;
@@ -251,9 +310,8 @@
       const layout = Array.from(round.__mineSet).sort((a, b) => a - b);
       const cell = body.move && typeof body.move.cell === "number" ? body.move.cell : -1;
       if (round.__mineSet.has(cell)) {
-        const server_seed = fakeHash();
         settlePayout(round, 0);
-        return { ok: true, outcome_step: { cell, is_mine: true }, multiplier: round.multiplier, busted: true, payout: 0, server_seed, outcome: { mines: layout, hit: cell }, balance: MOCK.profile.balance };
+        return { ok: true, outcome_step: { cell, is_mine: true }, multiplier: round.multiplier, busted: true, payout: 0, outcome: { mines: layout, hit: cell }, balance: MOCK.profile.balance };
       }
       round.step++;
       const k = round.step;
@@ -265,10 +323,9 @@
       // Auto-cash on a full clear OR once the cap is reached (mirrors backend).
       const done = k >= (totalCells - mines) || raw >= MULT_CAP;
       if (done) {
-        const server_seed = fakeHash();
         const payout = capPayout(round.bet, round.multiplier);
         settlePayout(round, payout);
-        return { ok: true, outcome_step: { cell, is_mine: false }, multiplier: round.multiplier, busted: false, done: true, payout, server_seed, outcome: { mines: layout, cleared: true }, balance: MOCK.profile.balance };
+        return { ok: true, outcome_step: { cell, is_mine: false }, multiplier: round.multiplier, busted: false, done: true, payout, outcome: { mines: layout, cleared: true }, balance: MOCK.profile.balance };
       }
       return { ok: true, outcome_step: { cell, is_mine: false }, multiplier: round.multiplier, busted: false, done: false, balance: MOCK.profile.balance };
     }
@@ -278,9 +335,8 @@
       const cols = DIFF[round.params.difficulty] || 3;
       const safe = Math.random() >= (1 / cols);
       if (!safe) {
-        const server_seed = fakeHash();
         settlePayout(round, 0);
-        return { ok: true, outcome_step: { safe: false }, multiplier: round.multiplier, busted: true, payout: 0, server_seed, balance: MOCK.profile.balance };
+        return { ok: true, outcome_step: { safe: false }, multiplier: round.multiplier, busted: true, payout: 0, balance: MOCK.profile.balance };
       }
       const raw = round2(round.multiplier * (cols / (cols - 1)));
       round.multiplier = Math.min(raw, MULT_CAP);
@@ -289,10 +345,9 @@
       // keeps hard's doubling ladder from running away past the ceiling.
       const done = round.step >= 8 || raw >= MULT_CAP;
       if (done) {
-        const server_seed = fakeHash();
         const payout = capPayout(round.bet, round.multiplier);
         settlePayout(round, payout);
-        return { ok: true, outcome_step: { safe: true }, multiplier: round.multiplier, busted: false, done: true, payout, server_seed, balance: MOCK.profile.balance };
+        return { ok: true, outcome_step: { safe: true }, multiplier: round.multiplier, busted: false, done: true, payout, balance: MOCK.profile.balance };
       }
       return { ok: true, outcome_step: { safe: true }, multiplier: round.multiplier, busted: false, done: false, balance: MOCK.profile.balance };
     }
@@ -315,9 +370,8 @@
       const next = hlDrawCard(); // revealed card, full 1..13 deck
       const win = dir === "higher" ? next >= cur : next <= cur; // tie => win
       if (!win) {
-        const server_seed = fakeHash();
         settlePayout(round, 0);
-        return { ok: true, outcome_step: { drawn: next, prev: cur, guess: dir, win: false }, multiplier: 0.0, busted: true, done: true, payout: 0, server_seed, balance: MOCK.profile.balance };
+        return { ok: true, outcome_step: { drawn: next, prev: cur, guess: dir, win: false }, multiplier: 0.0, busted: true, done: true, payout: 0, balance: MOCK.profile.balance };
       }
       round.multiplier = round2(round.multiplier * factor);
       round.step++;
@@ -349,21 +403,20 @@
     // Must take at least one step before cashing out (mirrors backend guard).
     if (name === "mines" && (round.step || 0) < 1) return { ok: false, error: "must_reveal_first" };
     if (name === "towers" && (round.step || 0) < 1) return { ok: false, error: "must_climb_first" };
-    const server_seed = fakeHash();
     const payout = capPayout(round.bet, round.multiplier);
     settlePayout(round, payout);
     let outcome;
     if (name === "mines") {
       const minesCount = parseInt(round.params.mines, 10) || 3;
-      // Mirror the real API: cashout reveals server_seed anyway, so the mine
-      // layout is already derivable — commit one if the player cashed out
-      // before any reveal, otherwise reuse the committed layout.
+      // Mirror the real API: cashout discloses the mine layout so the UI can
+      // reveal the board — commit one if the player cashed out before any reveal,
+      // otherwise reuse the committed layout. (The server seed stays secret.)
       if (!round.__mineSet) round.__mineSet = new Set(sampleMinePositions(minesCount));
       outcome = { mines: Array.from(round.__mineSet).sort((a, b) => a - b), multiplier: round.multiplier };
     }
     // Return the cashed-out multiplier at top level (mirrors step responses) so
     // the UI shows the real value instead of 0×; also nested in outcome for mines.
-    return { ok: true, server_seed, multiplier: round.multiplier, payout, outcome, balance: MOCK.profile.balance };
+    return { ok: true, multiplier: round.multiplier, payout, outcome, balance: MOCK.profile.balance };
   }
   // ---- END MOCK MODE ---------------------------------------------------------
 
@@ -426,6 +479,9 @@
       ? get("/bt/api/leaderboard?tab=" + encodeURIComponent(tab || "rich") + "&period=" + encodeURIComponent(period || "weekly"))
       : mockLeaderboard(tab || "rich", period || "weekly")),
     history: () => (hasRealBackend() ? get("/bt/api/history") : mockHistory()),
+
+    getSeedState: () => (hasRealBackend() ? get("/bt/api/game/seeds") : mockGetSeedState()),
+    rotateSeed: (body) => (hasRealBackend() ? post("/bt/api/game/seeds/rotate", body || {}) : mockRotateSeed(body || {})),
 
     gameBet: (name, body) => (hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body) : mockGameBet(name, body)),
     gameSettle: (name, body) => (hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/settle", body) : mockGameSettle(name, body)),

@@ -364,6 +364,31 @@ input[type="number"].betbox-input:focus {
 }
 .copy-btn:hover { border-color: var(--accent); }
 
+/* Provably Fair: seed-pair sections (Seeds + Rotate) */
+.fair-section {
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border);
+  border-radius: 12px; padding: 12px; margin-bottom: 12px;
+}
+.fair-section-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.fair-note { font-size: 11.5px; color: var(--text-dim); margin: 4px 0 10px; line-height: 1.5; }
+.fair-seed-row { margin-bottom: 8px; }
+.fair-seed-row .k { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 3px; }
+.fair-seed-val { display: flex; align-items: center; gap: 8px; }
+.fair-seed-val .mono {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; color: #cfd8e3;
+}
+.copy-btn.mini {
+  position: static; flex: none; padding: 4px 9px; font-size: 11px;
+}
+.fair-rotate-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.fair-rotate-input {
+  flex: 1; min-width: 0; background: #0b0e14; border: 1px solid var(--glass-border);
+  color: var(--text); border-radius: 8px; padding: 8px 10px; font-size: 12.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.fair-rotate-input:focus { outline: none; border-color: var(--accent); }
+
 /* Result banners */
 .result { border-radius: 12px; padding: 12px; margin: 12px 0; text-align: center; font-weight: 700; }
 .result.win { background: rgba(53,199,124,0.15); color: var(--good); border: 1px solid rgba(53,199,124,0.4); }

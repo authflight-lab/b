@@ -196,7 +196,6 @@
       try {
         const betResp = await BT.api.gameBet("plinko", {
           bet: bet.getBet(),
-          client_seed: C.clientSeed(),
           params: { rows: n, risk: rk },
         });
         if (!betResp || betResp.ok === false) {
@@ -205,6 +204,7 @@
         }
         seed.setHash(betResp.server_hash);
         seed.setNonce(betResp.nonce);
+        BT.fair.noteBet(betResp);
         if (typeof betResp.balance === "number") BT.setBalance(betResp.balance);
 
         const s = await BT.api.gameSettle("plinko", { round_id: betResp.round_id });
@@ -212,7 +212,6 @@
           BT.ui.toast(C.errText(s), "error");
           return;
         }
-        seed.revealSeed(s.server_seed);
         const o = s.outcome || {};
         await animatePath(o.path, n);
         const slot = o.slot !== undefined ? o.slot : o.bucket;

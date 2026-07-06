@@ -132,37 +132,102 @@
     root.appendChild(el("div", { class: "legal-footer" }, BT.LEGAL_POINTS));
   }
 
-  // Provably Fair panel: server_hash / nonce / server_seed for the current
-  // round of the selected game + the code that reproduces its outcome.
-  function openFair() {
+  // Provably Fair panel (Rainbet-style seed pair). Two sections:
+  //   • Seeds  — the ACTIVE pair's client_seed / nonce / server_hash (the active
+  //     server seed is never shown; only its hash). If a previous pair has been
+  //     rotated out, its revealed server_seed is shown so it can be verified.
+  //   • Rotate — set a new client seed (or randomize) and rotate: this reveals
+  //     the current server seed and commits the pre-shown next server hash.
+  // The panel is driven entirely by BT.fair, not by any per-round game state.
+  async function openFair() {
     const g = BT.games.registry[selected];
-    const state = (BT.games.activeFair && BT.games.activeFair.getState())
-      || { hash: "—", nonce: "—", seed: "hidden until settle" };
 
     const overlay = el("div", { class: "overlay" });
     const close = () => overlay.remove();
     overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
 
-    const seedRow = (label, value) => el("div", { class: "fair-seed" }, [
-      el("span", { class: "k" }, label),
-      el("div", { class: "mono" }, value),
-    ]);
+    // A copyable value row with a small inline Copy button.
+    const seedRow = (label, value) => {
+      const val = el("div", { class: "mono" }, value || "—");
+      const btn = el("button", { class: "copy-btn mini" }, "Copy");
+      btn.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(value || ""); btn.textContent = "Copied"; }
+        catch (e) { btn.textContent = "Failed"; }
+        setTimeout(() => (btn.textContent = "Copy"), 1200);
+      });
+      return el("div", { class: "fair-seed-row" }, [
+        el("span", { class: "k" }, label),
+        el("div", { class: "fair-seed-val" }, [val, btn]),
+      ]);
+    };
 
-    // Collapsible code section with a Copy button (matches reference layout).
+    // --- Section 1: active seeds (re-rendered after a rotation) ---------------
+    const seedsBox = el("div", { class: "fair-section" });
+    // --- Section 2: rotation controls ----------------------------------------
+    const rotateBox = el("div", { class: "fair-section" });
+
+    function renderSeeds() {
+      const s = BT.fair.getState() || { clientSeed: "", nonce: 0, serverHash: "", nextServerHash: "", revealed: null };
+      BT.ui.clear(seedsBox);
+      seedsBox.appendChild(el("div", { class: "fair-section-title" }, "Active Seeds"));
+      seedsBox.appendChild(seedRow("client_seed", s.clientSeed));
+      seedsBox.appendChild(seedRow("nonce", String(s.nonce)));
+      seedsBox.appendChild(seedRow("server_hash (committed)", s.serverHash));
+      if (s.revealed) {
+        seedsBox.appendChild(el("p", { class: "fair-note" },
+          "Previous server_seed (rotated out — verify past bets against it):"));
+        seedsBox.appendChild(seedRow("prev server_seed", s.revealed));
+      }
+    }
+
+    function renderRotate() {
+      const s = BT.fair.getState() || { clientSeed: "", nextServerHash: "" };
+      BT.ui.clear(rotateBox);
+      rotateBox.appendChild(el("div", { class: "fair-section-title" }, "Rotate Seeds"));
+      rotateBox.appendChild(el("p", { class: "fair-note" },
+        "Rotating reveals your current server seed and activates a new pair. The next server hash below is committed in advance."));
+
+      const input = el("input", {
+        type: "text", class: "fair-rotate-input", placeholder: "New client seed (optional)",
+        value: s.clientSeed || "",
+      });
+      const randBtn = el("button", { class: "btn ghost" }, "Randomize");
+      randBtn.addEventListener("click", () => { input.value = BT.fair.randomSeed(); });
+
+      rotateBox.appendChild(el("div", { class: "fair-rotate-row" }, [input, randBtn]));
+      rotateBox.appendChild(seedRow("next_server_hash", s.nextServerHash));
+
+      const confirm = el("button", { class: "btn primary block" }, "Confirm Rotate");
+      confirm.addEventListener("click", async () => {
+        confirm.disabled = true; confirm.textContent = "Rotating…";
+        const r = await BT.fair.rotate(input.value);
+        confirm.disabled = false; confirm.textContent = "Confirm Rotate";
+        if (!r || r.ok === false) {
+          const code = (r && r.error) || "unknown_error";
+          const msg = code === "open_round_exists"
+            ? "Finish your current round before rotating seeds."
+            : "Couldn't rotate seeds — please try again.";
+          BT.ui.toast(msg, "error");
+          return;
+        }
+        BT.ui.toast("Seeds rotated. Previous server seed revealed.", "success");
+        renderSeeds();
+        renderRotate();
+      });
+      rotateBox.appendChild(el("div", { class: "spacer" }));
+      rotateBox.appendChild(confirm);
+    }
+
+    // --- Collapsible verification code (unchanged logic reference) ------------
     const codeText = FAIR_CODE[selected] || FAIR_PREAMBLE;
     const pre = el("pre", null, codeText);
     const copyBtn = el("button", { class: "copy-btn" }, "Copy");
     copyBtn.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(codeText);
-        copyBtn.textContent = "Copied";
-      } catch (e) {
-        copyBtn.textContent = "Copy failed";
-      }
+      try { await navigator.clipboard.writeText(codeText); copyBtn.textContent = "Copied"; }
+      catch (e) { copyBtn.textContent = "Copy failed"; }
       setTimeout(() => (copyBtn.textContent = "Copy"), 1400);
     });
     const codeBlock = el("div", { class: "code-block" }, [copyBtn, pre]);
-
     const logicHead = el("button", { class: "logic-head" }, [
       el("span", null, [BT.ui.icon("shield", 15), el("span", null, "Current Logic")]),
       el("span", { class: "chev" }, "▾"),
@@ -172,8 +237,6 @@
       const open = logicBody.classList.toggle("open");
       logicHead.classList.toggle("open", open);
     });
-    logicBody.classList.add("open");
-    logicHead.classList.add("open");
 
     overlay.appendChild(el("div", { class: "overlay-card fair-card" }, [
       el("div", { class: "fair-top" }, [
@@ -181,16 +244,20 @@
         el("button", { class: "fair-x", onclick: close }, "✕"),
       ]),
       el("p", { class: "fair-sub" },
-        (g ? g.title : "This game") + " — verify the outcome yourself from the seeds below."),
-      seedRow("server_hash", state.hash),
-      seedRow("nonce", state.nonce),
-      seedRow("server_seed", state.seed),
+        (g ? g.title : "This game") + " — one seed pair is reused across bets. Verify outcomes with the seeds below."),
+      seedsBox,
+      rotateBox,
       el("div", { class: "spacer" }),
       logicHead,
       logicBody,
     ]));
-
     document.body.appendChild(overlay);
+
+    // Load the live seed state, then populate both sections.
+    seedsBox.appendChild(el("p", { class: "fair-note" }, "Loading seeds…"));
+    await BT.fair.load(true);
+    renderSeeds();
+    renderRotate();
   }
 
   // Open the Play screen focused on a specific game (used by the home grid so a

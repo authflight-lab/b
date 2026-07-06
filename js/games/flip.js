@@ -58,11 +58,11 @@
       if (busy) return; busy = true; startBtn.disabled = true;
       overlay.hide(); banner.hide(); seed.reset(); BT.ui.clear(track); streak = 0;
       flipCoinTo("heads", false);
-      const resp = await BT.api.gameBet("flip", { bet: bet.getBet(), client_seed: C.clientSeed(), params: {} });
+      const resp = await BT.api.gameBet("flip", { bet: bet.getBet(), params: {} });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id;
-      seed.setHash(resp.server_hash); seed.setNonce(resp.nonce);
+      seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       setPlaying(true);
     });
@@ -102,7 +102,6 @@
 
     function finish(resp) {
       roundId = null; setPlaying(false);
-      seed.revealSeed(resp.server_seed);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
       const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");

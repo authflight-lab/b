@@ -26,6 +26,57 @@
     return Array.from(a, (x) => x.toString(16).padStart(2, "0")).join("");
   }
 
+  // Provably-fair seed pair (Rainbet-style reuse). The SERVER owns the active
+  // client + server seeds; one pair is reused across bets with a per-pair nonce,
+  // and it rotates only on demand. Games no longer mint a fresh client seed per
+  // bet — this module mirrors the server's public view and drives the Provably
+  // Fair panel + rotation. The active server_seed is never exposed here (only its
+  // hash); it becomes verifiable only after the pair is rotated out.
+  const fair = (function () {
+    let state = null;   // { clientSeed, nonce, serverHash, nextServerHash, revealed }
+    let loading = null;
+
+    function apply(resp) {
+      if (!resp || resp.ok === false) return state;
+      state = {
+        clientSeed: resp.client_seed || "",
+        nonce: typeof resp.nonce === "number" ? resp.nonce : 0,
+        serverHash: resp.server_hash || "",
+        nextServerHash: resp.next_server_hash || "",
+        // A rotate response reveals the retired server seed; keep it for verify.
+        revealed: resp.server_seed || (state && state.revealed) || null,
+      };
+      return state;
+    }
+
+    async function load(force) {
+      if (state && !force) return state;
+      if (!loading) {
+        loading = BT.api.getSeedState()
+          .then((r) => { loading = null; return apply(r); })
+          .catch(() => { loading = null; return state; });
+      }
+      return loading;
+    }
+
+    return {
+      getState: () => state,
+      load,
+      clientSeed: () => (state ? state.clientSeed : ""),
+      // Reflect the nonce advancing after a bet without a round-trip.
+      noteBet(resp) {
+        if (state && resp && typeof resp.nonce === "number") state.nonce = resp.nonce + 1;
+      },
+      async rotate(newClientSeed) {
+        const r = await BT.api.rotateSeed({ client_seed: newClientSeed || "" });
+        if (r && r.ok !== false) apply(r);
+        return r;
+      },
+      randomSeed: clientSeed,
+    };
+  })();
+  BT.fair = fair;
+
   // Standard bet control row shared by all games. Returns { node, getBet }.
   // The 1/2 / 2x / Max buttons edit the value directly in the bet field:
   //   1/2 halves it (floored), 2x doubles it, Max jumps to the cap; both
@@ -79,31 +130,22 @@
     return { node, getBet, input };
   }
 
-  // Provably-fair state holder. The seed values (server_hash pre-round,
-  // server_seed after settle) are no longer shown inline in the game panel —
-  // they live in the "Provably Fair" panel opened from the Play screen. Each
-  // game still owns a seedBox and feeds it via the same setHash/setNonce/
-  // revealSeed/reset API; the active box registers itself so the Provably Fair
-  // panel can read whatever the currently-selected game has committed.
+  // Provably-fair anchor. The seed pair (client_seed / nonce / server_hash, and
+  // any revealed prev server_seed) is owned by BT.fair and shown in the
+  // "Provably Fair" panel opened from the Play screen — NOT inline in the game.
+  // Games still hold a seedBox and call setHash/setNonce/reset so their existing
+  // flow is unchanged, but the values are no longer rendered here; the node is a
+  // hidden placeholder kept only so `root.appendChild(seed.node)` stays valid.
   function seedBox() {
-    const state = { hash: "—", nonce: "—", seed: "hidden until settle" };
-    // Hidden anchor: games still append `seed.node`, but nothing renders here.
+    const state = { hash: "—", nonce: "—" };
     const node = el("div", { class: "fair-anchor", "aria-hidden": "true" });
-    const api = {
+    return {
       node,
       getState: () => state,
       setHash: (h) => (state.hash = h || "—"),
       setNonce: (n) => (state.nonce = n === undefined || n === null ? "—" : String(n)),
-      revealSeed: (s) => (state.seed = s || "(not revealed)"),
-      reset: () => {
-        state.hash = "—";
-        state.nonce = "—";
-        state.seed = "hidden until settle";
-      },
+      reset: () => { state.hash = "—"; state.nonce = "—"; },
     };
-    // The last-created box belongs to the game currently rendered in the panel.
-    BT.games.activeFair = api;
-    return api;
   }
 
   function resultBanner() {
@@ -174,7 +216,6 @@
   BT.games.common = {
     register,
     maxBet,
-    clientSeed,
     betControl,
     seedBox,
     resultBanner,

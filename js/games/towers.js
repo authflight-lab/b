@@ -72,11 +72,11 @@
       if (busy) return; busy = true; startBtn.disabled = true;
       overlay.hide(); banner.hide(); seed.reset();
       cols = DIFF[diffSel.value] || 3; curFloor = 0; buildTower();
-      const resp = await BT.api.gameBet("towers", { bet: bet.getBet(), client_seed: C.clientSeed(), params: { difficulty: diffSel.value } });
+      const resp = await BT.api.gameBet("towers", { bet: bet.getBet(), params: { difficulty: diffSel.value } });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id; ended = false; climbedCount = 0;
-      seed.setHash(resp.server_hash); seed.setNonce(resp.nonce);
+      seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       startBtn.style.display = "none"; cashBtn.style.display = "block"; pickBtn.style.display = "block";
       // Must climb at least one floor before cashing out.
@@ -192,7 +192,6 @@
       ended = true; roundId = null; enableFloor(-1);
       startBtn.style.display = "block"; cashBtn.style.display = "none"; pickBtn.style.display = "none";
       bet.input.disabled = diffSel.disabled = false;
-      seed.revealSeed(resp.server_seed);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
       const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");
