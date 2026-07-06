@@ -102,6 +102,19 @@
   }
 
   // ── Activity stats card ──────────────────────────────────────────────────────
+  (function _injectStatsStyles() {
+    if (document.getElementById("bt-stats-styles")) return;
+    const s = document.createElement("style");
+    s.id = "bt-stats-styles";
+    s.textContent = [
+      "@keyframes bt-shimmer{0%{background-position:-200% center}100%{background-position:200% center}}",
+      ".bt-shimmer{background:linear-gradient(90deg,var(--text) 20%,var(--accent) 50%,var(--text) 80%);",
+      "background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;",
+      "background-clip:text;animation:bt-shimmer 2.4s linear infinite;}",
+    ].join("");
+    document.head.appendChild(s);
+  })();
+
   function statsCard(me) {
     const s = me.stats;
     const mult = me.multiplier_active;
@@ -119,11 +132,13 @@
         "border-radius:calc(var(--radius) - 2px);overflow:hidden",
     });
     items.forEach((item) => {
+      const numEl = el("div", { style: "font-size:16px;font-weight:800;line-height:1" }, item.value);
+      numEl.classList.add("bt-shimmer");
       innerGrid.appendChild(el("div", {
         style: "background:var(--bg);padding:10px 12px",
       }, [
-        el("div", { style: "font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:2px" }, item.label),
-        el("div", { style: "font-size:16px;font-weight:800;color:var(--text)" }, item.value),
+        el("div", { style: "font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:4px" }, item.label),
+        numEl,
       ]));
     });
 
@@ -135,7 +150,7 @@
         style: "font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;" +
           (mult
             ? "color:#3a2c00;background:linear-gradient(180deg,#ffe58a,#f5b301)"
-            : "color:var(--text-dim);background:var(--bg);border:1px solid var(--border)"),
+            : "color:#fff;background:#ef4444"),
       }, mult ? "Active" : "Not Active"),
     ]);
 
