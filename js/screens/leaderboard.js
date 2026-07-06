@@ -109,7 +109,7 @@
         el("span", { class: "rc-name" }, name),
       ]),
       el("div", { class: "rc-value" }, fmt(value)),
-      el("div", { class: "rc-reward" }, reward ? "+" + fmt(reward) : "—"),
+      el("div", { class: "rc-reward" }, reward ? "+" + fmt(reward) : ""),
     ]);
   }
 
