@@ -1,6 +1,6 @@
-// Leaderboard — "Race" redesign. Golden prize-pool hero with a live reset
-// countdown, category tabs (Rich / Chatters), a period toggle, and a ranked
-// table with hexagon rank badges and a reward column for the paid places.
+// Leaderboard — category tabs (Rich / Chatters), a period toggle (Weekly /
+// All-Time), and a ranked table with hexagon rank badges and a reward column
+// for the paid places.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -8,7 +8,6 @@
 
   let currentTab = "rich";
   let currentPeriod = "weekly";
-  let countdownTimer = null;
 
   // Weekly bonuses paid to the top 3 each Monday (mirrors bot/bartender/weekly.py
   // CHATTERS_BONUS / RICH_BONUS). Keep in sync if those payouts change.
@@ -19,84 +18,16 @@
     chatters: { icon: "chat", label: "Chatters", col: "Messages" },
   };
 
-  function poolTotal(tab) {
-    return (PRIZES[tab] || []).reduce((a, b) => a + b, 0);
-  }
-
-  // Weekly race resets Monday 00:00 UTC (matches the weekly payout cadence).
-  function msUntilWeeklyReset() {
-    const now = new Date();
-    const next = new Date(now);
-    next.setUTCHours(0, 0, 0, 0);
-    // Days until next Monday (getUTCDay: 0=Sun..1=Mon..6=Sat).
-    let add = (1 - now.getUTCDay() + 7) % 7;
-    if (add === 0) add = 7; // already Monday -> next Monday
-    next.setUTCDate(next.getUTCDate() + add);
-    return next.getTime() - now.getTime();
-  }
-
   function render(root) {
     BT.ui.clear(root);
-    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
 
-    root.appendChild(hero());
     root.appendChild(tabRow(root));
     root.appendChild(periodRow(root));
 
     const body = el("div", { id: "lb-body" }, BT.ui.loading("Loading rankings…"));
     root.appendChild(body);
 
-    if (currentPeriod === "weekly") startCountdown();
-
     loadRows(root);
-  }
-
-  // ---- Hero prize-pool banner ----------------------------------------------
-  function hero() {
-    const pool = poolTotal(currentTab);
-    const isWeekly = currentPeriod === "weekly";
-    return el("div", { class: "race-hero" }, [
-      el("div", { class: "race-hero-glow" }),
-      el("div", { class: "race-hero-top" }, [
-        el("div", { class: "race-pool" }, [
-          el("span", { class: "race-pool-amt" }, fmt(pool)),
-          el("span", { class: "race-pool-unit" }, "pts"),
-        ]),
-        el("div", { class: "race-title" }, [
-          el("span", { class: "race-title-lead" }, isWeekly ? "WEEKLY" : "ALL-TIME"),
-          el("span", { class: "race-title-main" }, "RACE"),
-        ]),
-      ]),
-      el("div", { class: "race-hero-bottom" }, [
-        el("span", { class: "race-reset-label" }, isWeekly ? "Resets in" : "Lifetime standings"),
-        isWeekly ? el("div", { id: "race-clock", class: "race-clock" }) : el("span"),
-      ]),
-    ]);
-  }
-
-  function startCountdown() {
-    const tick = () => {
-      const box = document.getElementById("race-clock");
-      if (!box) { if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; } return; }
-      let ms = msUntilWeeklyReset();
-      if (ms < 0) ms = 0;
-      const totalMin = Math.floor(ms / 60000);
-      const days = Math.floor(totalMin / 1440);
-      const hours = Math.floor((totalMin % 1440) / 60);
-      const mins = totalMin % 60;
-      const parts = days > 0
-        ? [[days, "D"], [hours, "H"], [mins, "M"]]
-        : [[hours, "H"], [mins, "M"]];
-      BT.ui.clear(box);
-      parts.forEach(([n, u]) => {
-        box.appendChild(el("span", { class: "clock-cell" }, [
-          el("span", { class: "clock-n" }, String(n).padStart(2, "0")),
-          el("span", { class: "clock-u" }, u),
-        ]));
-      });
-    };
-    tick();
-    countdownTimer = setInterval(tick, 30000);
   }
 
   // ---- Tabs -----------------------------------------------------------------

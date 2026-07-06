@@ -229,50 +229,6 @@ input[type="number"].betbox-input:focus {
   --race-bronze: #e0955a;
 }
 
-/* Golden prize-pool hero banner. */
-.race-hero {
-  position: relative; overflow: hidden;
-  border-radius: 18px; padding: 20px 22px; margin-bottom: 16px;
-  background:
-    radial-gradient(120% 160% at 85% -20%, rgba(244,199,82,0.30), transparent 55%),
-    linear-gradient(135deg, rgba(80,58,18,0.55), rgba(24,20,12,0.65));
-  border: 1px solid rgba(244,199,82,0.35);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
-}
-.race-hero-glow {
-  position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(60% 120% at 15% 0%, rgba(244,199,82,0.12), transparent 60%);
-}
-.race-hero-top { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.race-pool { display: flex; align-items: baseline; gap: 6px; }
-.race-pool-amt {
-  font-size: 34px; font-weight: 900; letter-spacing: -0.02em; line-height: 1;
-  color: #fff8e6; text-shadow: 0 2px 14px rgba(244,199,82,0.5);
-  font-variant-numeric: tabular-nums;
-}
-.race-pool-unit { font-size: 14px; font-weight: 800; color: var(--race-gold); }
-.race-title { display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
-.race-title-lead { font-size: 12px; font-weight: 800; letter-spacing: 0.18em; color: rgba(255,248,230,0.7); }
-.race-title-main {
-  font-size: 24px; font-weight: 900; font-style: italic; letter-spacing: 0.04em;
-  background: linear-gradient(180deg, #ffe9a8, var(--race-gold) 55%, var(--race-gold-deep));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-.race-hero-bottom {
-  position: relative; margin-top: 16px; padding-top: 12px;
-  border-top: 1px solid rgba(244,199,82,0.18);
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-}
-.race-reset-label { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: rgba(255,248,230,0.72); }
-.race-clock { display: inline-flex; gap: 6px; }
-.clock-cell {
-  display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
-  min-width: 40px; padding: 5px 8px; border-radius: 9px;
-  background: rgba(0,0,0,0.28); border: 1px solid rgba(244,199,82,0.4);
-}
-.clock-n { font-size: 16px; font-weight: 900; color: #fff8e6; font-variant-numeric: tabular-nums; line-height: 1; }
-.clock-u { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; color: var(--race-gold); }
-
 /* Category tabs. */
 .race-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
 .race-tab {
@@ -283,9 +239,9 @@ input[type="number"].betbox-input:focus {
 }
 .race-tab .icon svg { display: block; }
 .race-tab.active {
-  color: #241a05; border-color: transparent;
-  background: linear-gradient(180deg, #ffe9a8, var(--race-gold) 55%, var(--race-gold-deep));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 4px 14px rgba(244,199,82,0.3);
+  color: #f2feff; border-color: transparent;
+  background: linear-gradient(180deg, #0a9db3, var(--accent-deep));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 14px rgba(0,124,143,0.3);
 }
 
 /* Weekly / all-time segmented switch. */
@@ -299,7 +255,7 @@ input[type="number"].betbox-input:focus {
   color: var(--text-dim); font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
   cursor: pointer; transition: color 0.15s, background 0.15s;
 }
-.race-seg.active { background: rgba(244,199,82,0.16); color: var(--race-gold); }
+.race-seg.active { background: rgba(0,124,143,0.18); color: var(--accent); }
 
 /* Ranked table. */
 .race-table { display: flex; flex-direction: column; }
@@ -314,13 +270,13 @@ input[type="number"].betbox-input:focus {
   padding: 11px 12px; border-radius: 12px; margin-bottom: 8px;
   background: var(--glass-bg-2); border: 1px solid var(--glass-border); box-shadow: var(--glass-inset-hi);
 }
-.race-row.you { border-color: var(--race-gold); box-shadow: var(--glass-inset-hi), 0 0 0 1px rgba(244,199,82,0.4), 0 0 18px rgba(244,199,82,0.22); }
+.race-row.you { border-color: var(--accent); box-shadow: var(--glass-inset-hi), 0 0 0 1px rgba(203,239,245,0.35), 0 0 18px rgba(0,124,143,0.25); }
 .rc-rank { display: flex; justify-content: center; }
 .rc-player { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.rc-player .icon { color: var(--race-gold); flex: 0 0 auto; }
+.rc-player .icon { color: var(--accent); flex: 0 0 auto; }
 .rc-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rc-value { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); }
-.rc-reward { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--race-gold); text-shadow: 0 0 10px rgba(244,199,82,0.35); min-width: 56px; }
+.rc-reward { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); text-shadow: 0 0 10px rgba(0,124,143,0.35); min-width: 56px; }
 
 /* Hexagon rank badge. */
 .hexbadge {
