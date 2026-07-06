@@ -37,6 +37,15 @@
     nonce: 0,
   };
 
+  // Economy guards — mirror the real backend (api/game/__init__.py). MULT_CAP
+  // is the global ceiling on any round's win multiplier; P_MAX caps the final
+  // payout in points. Kept in lockstep with the server so the preview matches.
+  const MULT_CAP = 25;
+  const P_MAX = 2000;
+  function capPayout(bet, mult) {
+    return Math.min(Math.round(bet * mult), P_MAX);
+  }
+
   function loadSample() {
     if (!MOCK.dataPromise) {
       MOCK.dataPromise = fetch("sample.json")
@@ -167,7 +176,7 @@
       const roll = round2(Math.random() * 100);
       const win = roll < target;
       const multiplier = win ? round2(99 / target) : 0;
-      const payout = win ? Math.round(round.bet * multiplier) : 0;
+      const payout = win ? capPayout(round.bet, multiplier) : 0;
       settlePayout(round, payout);
       return { ok: true, server_seed, outcome: { roll, win, multiplier }, payout, balance: MOCK.profile.balance };
     }
@@ -188,7 +197,7 @@
       const base = risk === "high" ? [0, 0.2, 0.5, 1, 2, 5, 12] : [0.3, 0.5, 0.8, 1, 1.3, 1.8, 3];
       const idx = Math.min(base.length - 1, Math.floor(dist * (base.length - 1)));
       const multiplier = base[idx];
-      const payout = Math.round(round.bet * multiplier);
+      const payout = capPayout(round.bet, multiplier);
       settlePayout(round, payout);
       return { ok: true, server_seed, outcome: { path, slot, bucket: slot, multiplier }, payout, balance: MOCK.profile.balance };
     }
@@ -232,12 +241,14 @@
         return { ok: true, outcome_step: { cell, is_mine: true }, multiplier: round.multiplier, busted: true, payout: 0, server_seed, outcome: { mines: layout, hit: cell }, balance: MOCK.profile.balance };
       }
       const remaining = totalCells - round.step;
-      round.multiplier = round2(round.multiplier * (remaining / (remaining - mines)));
+      const raw = round2(round.multiplier * (remaining / (remaining - mines)));
+      round.multiplier = Math.min(raw, MULT_CAP);
       round.step++;
-      const done = round.step >= (totalCells - mines);
+      // Auto-cash on a full clear OR once the cap is reached (mirrors backend).
+      const done = round.step >= (totalCells - mines) || raw >= MULT_CAP;
       if (done) {
         const server_seed = fakeHash();
-        const payout = Math.round(round.bet * round.multiplier);
+        const payout = capPayout(round.bet, round.multiplier);
         settlePayout(round, payout);
         return { ok: true, outcome_step: { cell, is_mine: false }, multiplier: round.multiplier, busted: false, done: true, payout, server_seed, outcome: { mines: layout, cleared: true }, balance: MOCK.profile.balance };
       }
@@ -253,12 +264,15 @@
         settlePayout(round, 0);
         return { ok: true, outcome_step: { safe: false }, multiplier: round.multiplier, busted: true, payout: 0, server_seed, balance: MOCK.profile.balance };
       }
-      round.multiplier = round2(round.multiplier * (cols / (cols - 1)));
+      const raw = round2(round.multiplier * (cols / (cols - 1)));
+      round.multiplier = Math.min(raw, MULT_CAP);
       round.step++;
-      const done = round.step >= 8;
+      // Auto-cash on the top floor OR once the cap is reached (mirrors backend);
+      // keeps hard's doubling ladder from running away past the ceiling.
+      const done = round.step >= 8 || raw >= MULT_CAP;
       if (done) {
         const server_seed = fakeHash();
-        const payout = Math.round(round.bet * round.multiplier);
+        const payout = capPayout(round.bet, round.multiplier);
         settlePayout(round, payout);
         return { ok: true, outcome_step: { safe: true }, multiplier: round.multiplier, busted: false, done: true, payout, server_seed, balance: MOCK.profile.balance };
       }
@@ -271,7 +285,7 @@
       // decision card is always non-wild (Aces/Kings are wild and pass through);
       // the per-step factor is (1 - EPS) / p_dir(r); HighLow uses its own larger
       // house edge and caps the chain multiplier at MAXM.
-      const EPS = 0.05, MAXM = 25;
+      const EPS = 0.05, MAXM = MULT_CAP;
       const dir = (body.move && body.move.guess) === "higher" ? "higher" : "lower";
       const cur = round.__card || (round.__card = hlDrawCurrent());
       const p = dir === "higher" ? (14 - cur) / 13 : cur / 13;
@@ -315,7 +329,7 @@
     if (!round) return { ok: false, error: "no_open_round" };
     round.__id = body.round_id;
     const server_seed = fakeHash();
-    const payout = Math.round(round.bet * round.multiplier);
+    const payout = capPayout(round.bet, round.multiplier);
     settlePayout(round, payout);
     let outcome;
     if (name === "mines") {
