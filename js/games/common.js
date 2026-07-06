@@ -27,49 +27,52 @@
   }
 
   // Standard bet control row shared by all games. Returns { node, getBet }.
+  // The 1/2 / 2x / Max buttons edit the value directly in the bet field:
+  //   1/2 halves it (floored), 2x doubles it, Max jumps to the cap; both
+  //   2x and Max clamp to min(350, balance).
   function betControl(defaultBet) {
     const bal = (BT.state && BT.state.balance) || 0;
     const mx = maxBet(bal);
     const input = el("input", {
       type: "number",
+      class: "betbox-input",
       min: "1",
       max: String(mx),
       step: "1",
       value: String(Math.min(defaultBet || 10, mx)),
     });
-    const chips = el(
-      "div",
-      { class: "chips" },
-      [10, 25, 50, 100, 250].map((v) =>
-        el("button", {
-          class: "chip",
-          type: "button",
-          onclick: () => {
-            input.value = String(Math.min(v, maxBet((BT.state && BT.state.balance) || 0)));
-          },
-        }, fmt(v))
-      ).concat([
-        el("button", {
-          class: "chip",
-          type: "button",
-          onclick: () => {
-            input.value = String(maxBet((BT.state && BT.state.balance) || 0));
-          },
-        }, "Max"),
-      ])
-    );
-    const node = el("div", { class: "field" }, [
-      el("label", null, "Bet (max " + fmt(mx) + ")"),
-      input,
-      chips,
-    ]);
-    function getBet() {
+
+    // Current value in the field, coerced to a valid integer (>= 1).
+    function cur() {
       let v = parseInt(input.value, 10);
       if (isNaN(v) || v < 1) v = 1;
+      return v;
+    }
+    function setVal(v) {
       const cap = maxBet((BT.state && BT.state.balance) || 0);
+      if (isNaN(v) || v < 1) v = 1;
       if (v > cap) v = cap;
       input.value = String(v);
-      return v;
+    }
+
+    function actionBtn(label, onclick) {
+      return el("button", { class: "betbox-btn", type: "button", onclick }, label);
+    }
+    const box = el("div", { class: "betbox" }, [
+      el("span", { class: "betbox-cur" }, "$"),
+      input,
+      actionBtn("1/2", () => setVal(Math.floor(cur() / 2))),
+      actionBtn("2x", () => setVal(cur() * 2)),
+      actionBtn("Max", () => setVal(maxBet((BT.state && BT.state.balance) || 0))),
+    ]);
+
+    const node = el("div", { class: "field" }, [
+      el("label", null, "Bet (max " + fmt(mx) + ")"),
+      box,
+    ]);
+    function getBet() {
+      setVal(cur());
+      return parseInt(input.value, 10);
     }
     return { node, getBet, input };
   }

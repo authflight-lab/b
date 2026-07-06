@@ -190,6 +190,36 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
 }
 .chip.active { background: var(--accent); color: var(--accent-ink); border-color: transparent; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4); }
 
+/* Bet field: $ + amount input with inline 1/2 / 2x / Max value editors. */
+.betbox {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border);
+  border-radius: 14px; padding: 6px 6px 6px 14px; box-shadow: var(--glass-inset-hi);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.betbox:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--glass-inset-hi), 0 0 0 3px rgba(0, 124, 143, 0.28);
+}
+.betbox-cur { color: var(--text-dim); font-size: 18px; font-weight: 600; }
+input[type="number"].betbox-input {
+  flex: 1 1 auto; min-width: 0; width: auto;
+  background: transparent; border: none; box-shadow: none;
+  padding: 6px 2px; font-size: 18px; font-weight: 600;
+}
+input[type="number"].betbox-input:focus {
+  outline: none; border: none; box-shadow: none;
+}
+.betbox-btn {
+  flex: 0 0 auto; cursor: pointer;
+  background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text);
+  border-radius: 10px; padding: 9px 14px; font-size: 14px; font-weight: 600;
+  box-shadow: var(--glass-inset-hi);
+  transition: background .15s ease, border-color .15s ease;
+}
+.betbox-btn:hover { border-color: var(--accent); }
+.betbox-btn:active { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+
 /* Lists */
 .list { display: flex; flex-direction: column; gap: 10px; }
 .list-item {
