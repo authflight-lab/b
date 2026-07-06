@@ -276,7 +276,7 @@ input[type="number"].betbox-input:focus {
 .rc-player .icon { color: var(--accent); flex: 0 0 auto; }
 .rc-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rc-value { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); }
-.rc-reward { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); text-shadow: 0 0 10px rgba(0,124,143,0.35); min-width: 56px; }
+.rc-reward { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--race-gold); text-shadow: 0 0 10px rgba(244,199,82,0.35); min-width: 56px; }
 
 /* Hexagon rank badge. */
 .hexbadge {
