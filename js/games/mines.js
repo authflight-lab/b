@@ -48,8 +48,9 @@
 
     // Result overlay — shown centred over the grid after each round ends.
     const overlayMult = el("div", { class: "mro-mult" }, "");
+    const overlayInner = el("div", { class: "mro-inner" }, [overlayMult]);
     const overlayLabel = el("div", { class: "mro-label" }, "");
-    const overlayCard = el("div", { class: "mro-card" }, [overlayMult, overlayLabel]);
+    const overlayCard = el("div", { class: "mro-card" }, [overlayInner, overlayLabel]);
     const overlay = el("div", { class: "mines-result-overlay hidden" }, [overlayCard]);
     const gridWrap = el("div", { class: "mines-grid-wrap" }, [grid, overlay]);
     overlay.addEventListener("click", () => overlay.classList.add("hidden"));
@@ -157,14 +158,16 @@
       grid.classList.add(busted ? "flash-bust" : "flash-win");
       C.syncBalance(resp);
       const payout = resp.payout || 0;
-      const mult = resp.multiplier || 0;
+      // Cashout responses carry the multiplier inside `outcome`, while step-driven
+      // auto-cashouts include it at the top level — prefer whichever is present.
+      const mult = typeof resp.multiplier === "number" ? resp.multiplier
+                 : (typeof o.multiplier === "number" ? o.multiplier : 0);
+      overlayMult.textContent = (Math.round(mult * 100) / 100) + "x";
       if (payout > 0) {
-        overlayMult.textContent = (Math.round(mult * 100) / 100) + "\u00D7";
         overlayLabel.textContent = "Cashed out +" + BT.ui.fmt(payout) + " pts";
         overlayCard.className = "mro-card win";
         BT.ui.haptic("success");
       } else {
-        overlayMult.textContent = "💣";
         overlayLabel.textContent = "Hit a mine!";
         overlayCard.className = "mro-card lose";
         BT.ui.haptic("error");
