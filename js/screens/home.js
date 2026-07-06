@@ -19,14 +19,27 @@
     { n: "03", label: "Redeem", desc: "Telegram Stars, Premium, or crypto.", screen: "shop" },
   ];
 
+  // Gold "multiplier active" badge shown next to the name for @partygc reppers.
+  function multiplierBadge() {
+    return el("span", {
+      style: "display:inline-flex;align-items:center;gap:4px;margin-left:8px;" +
+        "padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;" +
+        "white-space:nowrap;color:#3a2c00;background:linear-gradient(180deg,#ffe58a,#f5b301);" +
+        "box-shadow:0 0 0 1px rgba(245,179,1,.5)",
+    }, "★ Multiplier");
+  }
+
   // ── Hero header ──────────────────────────────────────────────────────────────
-  function heroSection(name, balance, streakDays, memberStatus) {
+  function heroSection(name, balance, streakDays, memberStatus, multiplierActive) {
     return el("div", { style: "padding:4px 0 18px" }, [
       // Top row: welcome + name (left) / streak + status (right)
       el("div", { class: "row between", style: "align-items:flex-start;margin-bottom:14px;gap:12px" }, [
         el("div", { style: "min-width:0" }, [
           el("div", { class: "small muted" }, "Welcome back"),
-          el("div", { style: "font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, name),
+          el("div", { style: "font-weight:700;font-size:16px;display:flex;align-items:center;min-width:0" }, [
+            el("span", { style: "overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, name),
+            multiplierActive ? multiplierBadge() : null,
+          ]),
         ]),
         el("div", { style: "text-align:right;flex:0 0 auto" }, [
           el("div", { style: "font-weight:700;font-size:14px" }, fmt(streakDays) + " Day Streak"),
@@ -133,7 +146,7 @@
     const quest = me.quest || {};
     const canClaim = !(me.last_claim_at && isSameUtcDay(me.last_claim_at)) && !quest.claimed;
 
-    root.appendChild(heroSection(name, me.balance, me.streak_days, me.member_status));
+    root.appendChild(heroSection(name, me.balance, me.streak_days, me.member_status, me.multiplier_active));
 
     root.appendChild(ctaRow(
       canClaim,
