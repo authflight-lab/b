@@ -153,7 +153,16 @@
 
   async function mockMe() {
     await loadSample();
-    return Object.assign({ ok: true }, MOCK.profile);
+    const base = Object.assign({ ok: true }, MOCK.profile);
+    if (!(base.backlog_pts > 0)) {
+      base.stats = base.stats || {
+        messages_sent: 248,
+        amount_wagered: 1200,
+        messages_rank: 7,
+        rich_rank: 3,
+      };
+    }
+    return base;
   }
 
   async function mockClaim() {
