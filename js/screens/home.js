@@ -150,7 +150,7 @@
         style: "font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;" +
           (mult
             ? "color:#3a2c00;background:linear-gradient(180deg,#ffe58a,#f5b301)"
-            : "color:#fff;background:#ef4444"),
+            : "color:#f87171;background:rgba(239,68,68,.1);border:1px solid #b91c1c"),
       }, mult ? "Active" : "Not Active"),
     ]);
 
