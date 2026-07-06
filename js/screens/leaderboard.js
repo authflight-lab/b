@@ -25,7 +25,7 @@
     const body = el("div", { id: "lb-body" }, BT.ui.loading("Loading rankings…"));
     root.appendChild(tabs);
     root.appendChild(periodTabs);
-    root.appendChild(prizeCard());
+    if (currentPeriod === "weekly") root.appendChild(prizeCard());
     root.appendChild(body);
 
     function tab(key, ic, label) {
@@ -78,7 +78,6 @@
   // at the end of each week so players know what they're competing for.
   function prizeCard() {
     const prizes = PRIZES[currentTab] || [];
-    const cat = currentTab === "rich" ? "Rich List" : "Chatters";
     const unit = "pts";
     const rows = prizes.map((amt, i) =>
       el("div", { class: "prize-row" }, [
@@ -88,8 +87,8 @@
     );
     return el("div", { class: "prizecard" }, [
       el("div", { class: "prizecard-head" }, [
-        el("span", { class: "prizecard-title" }, "Weekly Prizes · " + cat),
-        el("span", { class: "prizecard-sub" }, "Paid every Monday"),
+        el("span", { class: "prizecard-title" }, "Prizes"),
+        el("span", { class: "prizecard-sub" }, "Weekly"),
       ]),
       el("div", { class: "prize-rows" }, rows),
     ]);
