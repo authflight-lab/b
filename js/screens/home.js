@@ -101,7 +101,7 @@
         el("div", { class: "g-ico" }, BT.ui.icon(g.key, 26)),
         el("div", { class: "g-name" }, g.label),
       ]);
-      tile.addEventListener("click", () => BT.showScreen("play"));
+      tile.addEventListener("click", () => BT.openGame(g.key));
       grid.appendChild(tile);
     });
     wrap.appendChild(grid);

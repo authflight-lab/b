@@ -221,6 +221,26 @@ input[type="number"].betbox-input:focus {
 .betbox-btn:hover { border-color: var(--accent); }
 .betbox-btn:active { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 
+/* Weekly prize breakdown on the Ranks page. */
+.prizecard {
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px;
+}
+.prizecard-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.prizecard-title { font-size: 13px; font-weight: 700; }
+.prizecard-sub { font-size: 11px; color: var(--text-dim); flex: 0 0 auto; }
+.prize-rows { display: flex; gap: 8px; }
+.prize-row {
+  flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border);
+  border-radius: 10px; padding: 8px 6px; box-shadow: var(--glass-inset-hi);
+}
+.prize-rank { font-weight: 800; font-size: 14px; color: var(--text-dim); }
+.prize-rank.r1 { color: #ffd24a; text-shadow: 0 0 10px rgba(255,210,74,0.45); }
+.prize-rank.r2 { color: #cdd6e0; text-shadow: 0 0 10px rgba(205,214,224,0.4); }
+.prize-rank.r3 { color: #e0955a; text-shadow: 0 0 10px rgba(224,149,90,0.4); }
+.prize-amt { font-weight: 700; font-size: 13px; color: var(--accent); font-variant-numeric: tabular-nums; }
+
 /* Lists */
 .list { display: flex; flex-direction: column; gap: 10px; }
 .list-item {

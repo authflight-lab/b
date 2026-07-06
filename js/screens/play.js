@@ -47,6 +47,14 @@
     root.appendChild(el("div", { class: "legal-footer" }, BT.LEGAL_POINTS));
   }
 
+  // Open the Play screen focused on a specific game (used by the home grid so a
+  // tile opens that exact game rather than whatever was last selected).
+  function openGame(key) {
+    if (BT.games.registry[key]) selected = key;
+    BT.showScreen("play");
+  }
+  BT.openGame = openGame;
+
   BT.screens = BT.screens || {};
   BT.screens.play = { render };
 })();

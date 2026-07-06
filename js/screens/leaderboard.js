@@ -7,6 +7,10 @@
   let currentTab = "rich";
   let currentPeriod = "weekly";
 
+  // Weekly bonuses paid to the top 3 each Monday (mirrors bot/bartender/weekly.py
+  // CHATTERS_BONUS / RICH_BONUS). Keep in sync if those payouts change.
+  const PRIZES = { rich: [300, 200, 100], chatters: [500, 300, 200] };
+
   async function render(root) {
     BT.ui.clear(root);
 
@@ -21,6 +25,7 @@
     const body = el("div", { id: "lb-body" }, BT.ui.loading("Loading rankings…"));
     root.appendChild(tabs);
     root.appendChild(periodTabs);
+    root.appendChild(prizeCard());
     root.appendChild(body);
 
     function tab(key, ic, label) {
@@ -67,6 +72,27 @@
       box.appendChild(el("div", { class: "section-title", style: "margin-top:14px" }, "Your position"));
       box.appendChild(rankRow(data.you.rank, "You", data.you.value, unit, true));
     }
+  }
+
+  // Weekly prize breakdown for the current category — shows what the top 3 earn
+  // at the end of each week so players know what they're competing for.
+  function prizeCard() {
+    const prizes = PRIZES[currentTab] || [];
+    const cat = currentTab === "rich" ? "Rich List" : "Chatters";
+    const unit = currentTab === "rich" ? "pts" : "chat pts";
+    const rows = prizes.map((amt, i) =>
+      el("div", { class: "prize-row" }, [
+        el("span", { class: "prize-rank r" + (i + 1) }, "#" + (i + 1)),
+        el("span", { class: "prize-amt" }, "+" + fmt(amt) + " " + unit),
+      ])
+    );
+    return el("div", { class: "prizecard" }, [
+      el("div", { class: "prizecard-head" }, [
+        el("span", { class: "prizecard-title" }, "Weekly Prizes · " + cat),
+        el("span", { class: "prizecard-sub" }, "Paid every Monday"),
+      ]),
+      el("div", { class: "prize-rows" }, rows),
+    ]);
   }
 
   function rankRow(rank, name, value, unit, you) {
