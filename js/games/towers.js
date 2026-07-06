@@ -14,7 +14,7 @@
     const bet = C.betControl(10);
     const seed = C.seedBox();
     const banner = C.resultBanner();
-    let roundId = null, busy = false, ended = true, curFloor = 0, cols = 3;
+    let roundId = null, busy = false, ended = true, curFloor = 0, cols = 3, climbedCount = 0;
 
     const diffSel = el("select", null, [
       el("option", { value: "easy" }, "Easy (4 tiles)"),
@@ -26,7 +26,7 @@
     const tower = el("div", { class: "towers" });
     const shaft = el("div", { class: "tower-shaft" }, tower);
 
-    const mpValue = el("div", { class: "mp-value" }, "1.00\u00D7");
+    const mpValue = el("div", { class: "mp-value" }, "\u2014");
     const multPanel = el("div", { class: "mult-panel" }, [mpValue, el("div", { class: "mp-label" }, "Current Multiplier")]);
 
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
@@ -71,15 +71,17 @@
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       banner.hide(); seed.reset();
-      mpValue.textContent = "1.00\u00D7"; multPanel.classList.remove("active");
+      mpValue.textContent = "\u2014"; multPanel.classList.remove("active");
       cols = DIFF[diffSel.value] || 3; curFloor = 0; buildTower();
       const resp = await BT.api.gameBet("towers", { bet: bet.getBet(), client_seed: C.clientSeed(), params: { difficulty: diffSel.value } });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
-      roundId = resp.round_id; ended = false;
+      roundId = resp.round_id; ended = false; climbedCount = 0;
       seed.setHash(resp.server_hash); seed.setNonce(resp.nonce);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       startBtn.style.display = "none"; cashBtn.style.display = "block";
+      // Must climb at least one floor before cashing out.
+      cashBtn.disabled = true;
       bet.input.disabled = diffSel.disabled = true;
       multPanel.classList.add("active");
       enableFloor(0);
@@ -123,6 +125,7 @@
       }
       if (resp.busted) { finish(resp); return; }
       if (resp.done || f >= FLOORS - 1) { finish(resp); return; }
+      climbedCount++; cashBtn.disabled = false;
       curFloor = f + 1; enableFloor(curFloor); BT.ui.haptic("light");
     }
 

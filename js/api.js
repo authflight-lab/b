@@ -46,6 +46,21 @@
     return Math.min(Math.round(bet * mult), P_MAX);
   }
 
+  // Mines front-loads its house edge so early cash-outs (esp. at low mine counts)
+  // start below 1x and only profit after a few reveals — mirrors api/game/mines.py.
+  const MINES_EPS = 0.01, MINES_EDGE_RAMP = 0.13, MINES_EDGE_DECAY = 0.6;
+  // Flat 10% reduction on every mines multiplier (mirrors MULT_SCALE in mines.py).
+  const MINES_MULT_SCALE = 0.90;
+  function minesEdge(k) {
+    if (k <= 0) return 0;
+    return MINES_EPS + MINES_EDGE_RAMP * Math.pow(MINES_EDGE_DECAY, k - 1);
+  }
+  function minesMultiplier(k, m) {
+    let prod = 1;
+    for (let i = 0; i < k; i++) prod *= (25 - i) / (25 - m - i);
+    return MINES_MULT_SCALE * (1 - minesEdge(k)) * prod;
+  }
+
   function loadSample() {
     if (!MOCK.dataPromise) {
       MOCK.dataPromise = fetch("sample.json")
@@ -240,12 +255,15 @@
         settlePayout(round, 0);
         return { ok: true, outcome_step: { cell, is_mine: true }, multiplier: round.multiplier, busted: true, payout: 0, server_seed, outcome: { mines: layout, hit: cell }, balance: MOCK.profile.balance };
       }
-      const remaining = totalCells - round.step;
-      const raw = round2(round.multiplier * (remaining / (remaining - mines)));
-      round.multiplier = Math.min(raw, MULT_CAP);
       round.step++;
+      const k = round.step;
+      // Compute from the reveal count k using the front-loaded edge (mirrors
+      // api/game/mines.py) rather than a flat per-step incremental factor, so
+      // early reveals at low mine counts start below 1x.
+      const raw = round2(minesMultiplier(k, mines));
+      round.multiplier = Math.min(raw, MULT_CAP);
       // Auto-cash on a full clear OR once the cap is reached (mirrors backend).
-      const done = round.step >= (totalCells - mines) || raw >= MULT_CAP;
+      const done = k >= (totalCells - mines) || raw >= MULT_CAP;
       if (done) {
         const server_seed = fakeHash();
         const payout = capPayout(round.bet, round.multiplier);
@@ -328,6 +346,9 @@
     const round = MOCK.rounds[body.round_id];
     if (!round) return { ok: false, error: "no_open_round" };
     round.__id = body.round_id;
+    // Must take at least one step before cashing out (mirrors backend guard).
+    if (name === "mines" && (round.step || 0) < 1) return { ok: false, error: "must_reveal_first" };
+    if (name === "towers" && (round.step || 0) < 1) return { ok: false, error: "must_climb_first" };
     const server_seed = fakeHash();
     const payout = capPayout(round.bet, round.multiplier);
     settlePayout(round, payout);

@@ -13,7 +13,7 @@
     const bet = C.betControl(10);
     const seed = C.seedBox();
     const banner = C.resultBanner();
-    let roundId = null, busy = false, ended = true, minesCount = 3;
+    let roundId = null, busy = false, ended = true, minesCount = 3, revealedCount = 0;
 
     // Mine-count slider — gems on one end, bombs on the other (arbitrary 1-24, server-validated).
     const gemsEnd = el("span", { class: "msr-end gems" }, "\uD83D\uDC8E " + (TOTAL - minesCount));
@@ -46,7 +46,7 @@
       grid.appendChild(c);
     }
 
-    const mpValue = el("div", { class: "mp-value" }, "1.00\u00D7");
+    const mpValue = el("div", { class: "mp-value" }, "\u2014");
     const multPanel = el("div", { class: "mult-panel" }, [mpValue, el("div", { class: "mp-label" }, "Current Multiplier")]);
 
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
@@ -69,15 +69,17 @@
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       banner.hide(); seed.reset();
-      mpValue.textContent = "1.00\u00D7"; multPanel.classList.remove("active");
+      mpValue.textContent = "\u2014"; multPanel.classList.remove("active");
       resetCells();
       const resp = await BT.api.gameBet("mines", { bet: bet.getBet(), client_seed: C.clientSeed(), params: { mines: minesCount } });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
-      roundId = resp.round_id; ended = false;
+      roundId = resp.round_id; ended = false; revealedCount = 0;
       seed.setHash(resp.server_hash); seed.setNonce(resp.nonce);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       startBtn.style.display = "none"; cashBtn.style.display = "block"; pickBtn.style.display = "block";
+      // Must reveal at least one tile before cashing out.
+      cashBtn.disabled = true;
       bet.input.disabled = range.disabled = true;
       multPanel.classList.add("active");
       lockGrid(false);
@@ -98,7 +100,7 @@
       if (isMine) cells[i].classList.add("hit");
       if (resp.multiplier) mpValue.textContent = (Math.round(resp.multiplier * 100) / 100) + "\u00D7";
       if (resp.busted || resp.done) { finish(resp); }
-      else { BT.ui.haptic("light"); lockGrid(false); }
+      else { revealedCount++; cashBtn.disabled = false; BT.ui.haptic("light"); lockGrid(false); }
     }
 
     function pickRandom() {
