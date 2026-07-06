@@ -201,8 +201,7 @@
 
     buildTower();
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", { class: "game-title" }, [BT.ui.icon("towers", 22), el("span", null, "Towers")]),
-      el("p", { class: "small muted" }, "Climb floor by floor. Pick a safe gem on each floor to grow your multiplier; a trap ends the run. Cash out any time."),
+      C.gameHeader("towers", "Towers", "Climb floor by floor. Pick a safe gem on each floor to grow your multiplier; a trap ends the run. Cash out any time."),
       el("div", { class: "field" }, [el("label", null, "Risk"), diffSel]),
       shaft,
       bet.node,

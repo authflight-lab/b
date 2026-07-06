@@ -153,8 +153,7 @@
     renderResults();
     root.appendChild(
       el("div", { class: "card" }, [
-        el("h3", { class: "game-title" }, [BT.ui.icon("dice", 22), el("span", null, "Dice")]),
-        el("p", { class: "small muted" }, "Drag the slider to set your target. You win if the roll lands under it — lower target, higher payout."),
+        C.gameHeader("dice", "Dice", "Drag the slider to set your target. You win if the roll lands under it — lower target, higher payout."),
         results,
         slider,
         stats,

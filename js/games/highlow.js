@@ -265,8 +265,7 @@
     renderHistory();
     refreshOdds(false);
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", { class: "game-title" }, [BT.ui.icon("highlow", 22), el("span", null, "HighLow")]),
-      el("p", { class: "small muted" }, "Guess whether the next card is higher-or-same or lower-or-same. Each correct call chains your multiplier and a tie counts in your favor. Aces and Kings are wild — they pass through to a fresh card. Skip to swap the current card without betting, or cash out any time."),
+      C.gameHeader("highlow", "HighLow", "Guess whether the next card is higher-or-same or lower-or-same. Each correct call chains your multiplier and a tie counts in your favor. Aces and Kings are wild — they pass through to a fresh card. Skip to swap the current card without betting, or cash out any time."),
       histEl,
       board,
       probBar,

@@ -240,12 +240,7 @@
 
     root.appendChild(
       el("div", { class: "card" }, [
-        el("h3", { class: "game-title" }, [BT.ui.icon("plinko", 22), el("span", null, "Plinko")]),
-        el(
-          "p",
-          { class: "small muted" },
-          "Drop the ball through the pegs — where it lands sets your multiplier. Edges pay big but are rare; the center is safe. More rows and higher risk spread the payouts wider."
-        ),
+        C.gameHeader("plinko", "Plinko", "Drop the ball through the pegs — where it lands sets your multiplier. Edges pay big but are rare; the center is safe. More rows and higher risk spread the payouts wider."),
         board,
         buckets,
         el("div", { class: "row plinko-opts" }, [

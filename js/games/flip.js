@@ -110,8 +110,7 @@
     }
 
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", { class: "game-title" }, [BT.ui.icon("flip", 22), el("span", null, "Flip")]),
-      el("p", { class: "small muted" }, "Pick a side each round. Every correct flip multiplies your bet by 1.98×. Cash out any time before you miss."),
+      C.gameHeader("flip", "Flip", "Pick a side each round. Every correct flip multiplies your bet by 1.98×. Cash out any time before you miss."),
       coinWrap,
       track,
       bet.node,

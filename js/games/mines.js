@@ -174,8 +174,7 @@
     }
 
     root.appendChild(el("div", { class: "card" }, [
-      el("h3", { class: "game-title" }, [BT.ui.icon("mines", 22), el("span", null, "Mines")]),
-      el("p", { class: "small muted" }, "Reveal gems to grow your multiplier. Hit a mine and you lose. Cash out whenever."),
+      C.gameHeader("mines", "Mines", "Reveal gems to grow your multiplier. Hit a mine and you lose. Cash out whenever."),
       bet.node,
       el("div", { class: "field" }, [el("label", null, "Number of Mines"), sliderRow]),
       gridWrap,

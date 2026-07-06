@@ -357,6 +357,27 @@ input[type="number"].betbox-input:focus {
 /* Game screen title with leading icon */
 .game-title { display: flex; align-items: center; gap: 8px; }
 
+/* Game panel header: title (left) + ⓘ info button (right) */
+.game-title-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.game-title-wrap .game-title { margin: 0; }
+.game-info-btn {
+  background: transparent; border: 1px solid var(--glass-border); color: var(--text-dim);
+  border-radius: 50%; width: 26px; height: 26px; font-size: 14px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: color .15s, border-color .15s;
+}
+.game-info-btn:hover { color: var(--text); border-color: var(--accent); }
+
+/* Game description overlay card */
+.game-desc-card { max-width: 420px; }
+.game-desc-top {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+}
+.game-desc-body { font-size: 14px; line-height: 1.65; color: var(--text-dim); margin: 0; }
+
 /* Hidden per-game fairness anchor (state lives in the Provably Fair panel) */
 .fair-anchor { display: none; }
 

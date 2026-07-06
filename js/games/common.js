@@ -196,6 +196,36 @@
     }
   }
 
+  // Game panel header: icon + title on the left, ⓘ info button on the right.
+  // Clicking ⓘ opens a full-screen overlay with the game description, exactly
+  // like the Provably Fair panel — nothing shown until the icon is tapped.
+  function gameHeader(iconKey, title, desc) {
+    const infoBtn = el("button", {
+      class: "game-info-btn",
+      type: "button",
+      "aria-label": "About this game",
+    }, "ⓘ");
+    infoBtn.addEventListener("click", () => {
+      const overlay = el("div", { class: "overlay" });
+      const close = () => overlay.remove();
+      overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+      overlay.appendChild(
+        el("div", { class: "overlay-card game-desc-card" }, [
+          el("div", { class: "game-desc-top" }, [
+            el("div", { class: "fair-title" }, [BT.ui.icon(iconKey, 20), el("h2", null, title)]),
+            el("button", { class: "fair-x", type: "button", onclick: close }, "✕"),
+          ]),
+          el("p", { class: "game-desc-body" }, desc),
+        ])
+      );
+      document.body.appendChild(overlay);
+    });
+    return el("div", { class: "game-title-wrap" }, [
+      el("h3", { class: "game-title" }, [BT.ui.icon(iconKey, 22), el("span", null, title)]),
+      infoBtn,
+    ]);
+  }
+
   // Common failure-to-message mapping.
   function errText(resp) {
     const code = (resp && resp.error) || "unknown_error";
@@ -217,6 +247,7 @@
     register,
     maxBet,
     betControl,
+    gameHeader,
     seedBox,
     resultBanner,
     resultOverlay,
