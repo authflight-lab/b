@@ -101,6 +101,30 @@
     return wrap;
   }
 
+  // ── Backlog card ─────────────────────────────────────────────────────────────
+  function backlogCard(pts, onRedeem) {
+    const btn = el("button", {
+      class: "btn primary",
+      style: "white-space:nowrap;padding:0 16px;height:36px;font-size:13px;flex:0 0 auto",
+    }, "Redeem");
+    btn.addEventListener("click", () => {
+      btn.disabled = true;
+      onRedeem();
+    });
+    return el("div", {
+      style: "display:flex;align-items:center;justify-content:space-between;gap:12px;" +
+        "background:var(--bg-elev);border:1px solid var(--accent);border-radius:var(--radius);" +
+        "padding:10px 14px;margin-bottom:20px",
+    }, [
+      el("div", { style: "flex:1;min-width:0" }, [
+        el("div", {
+          style: "font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis",
+        }, "You have " + fmt(pts) + " unclaimed points"),
+      ]),
+      btn,
+    ]);
+  }
+
   // ── Games grid ───────────────────────────────────────────────────────────────
   function gamesGrid() {
     const wrap = el("div", { style: "margin-bottom:16px" }, [
@@ -165,6 +189,21 @@
         }
       }
     ));
+
+    if ((me.backlog_pts || 0) > 0) {
+      root.appendChild(backlogCard(me.backlog_pts, async () => {
+        const r = await BT.api.backlogClaim();
+        if (r && r.ok) {
+          BT.setBalance(r.new_balance);
+          BT.ui.toast("+" + fmt(r.awarded) + " pts claimed!", "success");
+          BT.ui.haptic("success");
+          render(root);
+        } else {
+          BT.ui.toast("Could not claim backlog. Try again.", "error");
+          render(root);
+        }
+      }));
+    }
 
     root.appendChild(questList());
     root.appendChild(gamesGrid());

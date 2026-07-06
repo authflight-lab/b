@@ -168,6 +168,15 @@
     return { ok: true, new_balance: MOCK.profile.balance, awarded: awarded, streak_days: MOCK.profile.streak_days };
   }
 
+  async function mockBacklogClaim() {
+    await loadSample();
+    const raw = MOCK.profile.backlog_pts || 0;
+    const awarded = Math.floor(raw * 0.75);
+    MOCK.profile.balance += awarded;
+    MOCK.profile.backlog_pts = 0;
+    return { ok: true, awarded: awarded, new_balance: MOCK.profile.balance };
+  }
+
   async function mockAgeAck() {
     await loadSample();
     MOCK.profile.age_ack = true;
@@ -524,6 +533,8 @@
 
     getSeedState: () => (hasRealBackend() ? get("/bt/api/game/seeds") : mockGetSeedState()),
     rotateSeed: (body) => (hasRealBackend() ? post("/bt/api/game/seeds/rotate", body || {}) : mockRotateSeed(body || {})),
+
+    backlogClaim: () => afterMutation(hasRealBackend() ? post("/bt/api/backlog/claim") : mockBacklogClaim()),
 
     gameBet: (name, body) => afterMutation(hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body) : mockGameBet(name, body)),
     gameSettle: (name, body) => afterMutation(hasRealBackend() ? post("/bt/api/game/" + encodeURIComponent(name) + "/settle", body) : mockGameSettle(name, body)),
