@@ -625,9 +625,11 @@ input[type="number"].betbox-input:focus {
 .tower-shaft .cell { font-size: 50px; }
 .tower-shaft .cell.safe,
 .tower-shaft .cell.mine {
-  border-color: var(--glass-border);
-  background: radial-gradient(circle at 50% 42%, rgba(150,180,230,0.14), rgba(6,10,18,0.5) 72%);
-  box-shadow: var(--glass-inset-hi), 0 3px 4px rgba(0,0,0,0.35);
+  border-color: rgba(120,140,180,0.4);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(150,180,230,0.16), rgba(6,10,18,0.42) 72%),
+    url("../img/tower-brick.png") center / cover no-repeat, #1a2036;
+  box-shadow: var(--glass-inset-hi), inset 0 1.5px 0 rgba(185,200,230,0.28), 0 3px 4px rgba(0,0,0,0.35);
 }
 .tower-shaft .cell.tower-cell.safe .cell-icon {
   opacity: 1;
@@ -703,7 +705,13 @@ input[type="number"].betbox-input:focus {
 .mines-grid-wrap .cell-mult { background: rgba(79,147,217,0.96); color: #eaf4ff; font-size: 11px; padding: 2px 8px; }
 
 /* Tower gems: a 💎 whose hue/brightness shifts per state (green = safe) */
-.cell.tower-cell { aspect-ratio: 1 / 0.6; }
+.cell.tower-cell {
+  aspect-ratio: 1 / 0.6;
+  border-radius: 14px;
+  background: url("../img/tower-brick.png") center / cover no-repeat, #1a2036;
+  border: 1.5px solid rgba(120,140,180,0.4);
+  box-shadow: var(--glass-inset-hi), inset 0 1.5px 0 rgba(185,200,230,0.28), 0 3px 4px rgba(0,0,0,0.35);
+}
 .cell.tower-cell .cell-icon {
   transform: none; opacity: 0.38; animation: none;
   filter: grayscale(0.85) brightness(0.6);
