@@ -359,9 +359,11 @@
       // layout is already derivable — commit one if the player cashed out
       // before any reveal, otherwise reuse the committed layout.
       if (!round.__mineSet) round.__mineSet = new Set(sampleMinePositions(minesCount));
-      outcome = { mines: Array.from(round.__mineSet).sort((a, b) => a - b) };
+      outcome = { mines: Array.from(round.__mineSet).sort((a, b) => a - b), multiplier: round.multiplier };
     }
-    return { ok: true, server_seed, payout, outcome, balance: MOCK.profile.balance };
+    // Return the cashed-out multiplier at top level (mirrors step responses) so
+    // the UI shows the real value instead of 0×; also nested in outcome for mines.
+    return { ok: true, server_seed, multiplier: round.multiplier, payout, outcome, balance: MOCK.profile.balance };
   }
   // ---- END MOCK MODE ---------------------------------------------------------
 
