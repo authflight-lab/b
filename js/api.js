@@ -359,8 +359,20 @@
       // the per-step factor is (1 - EPS) / p_dir(r); HighLow uses its own larger
       // house edge and caps the chain multiplier at MAXM.
       const EPS = 0.05, MAXM = MULT_CAP;
-      const dir = (body.move && body.move.guess) === "higher" ? "higher" : "lower";
+      // Accept object-shaped moves ({guess}/{skip}) or a bare string, matching
+      // the real API (api/game highlow step).
+      const raw = body.move;
+      const move = raw && typeof raw === "object" ? raw : { guess: raw };
       const cur = round.__card || (round.__card = hlDrawCurrent());
+      // Skip: swap the current card for a fresh one, no wager, multiplier
+      // unchanged. EV-neutral, so unlimited skips are safe (mirrors backend).
+      if (move.skip || move.guess === "skip") {
+        const current = hlDrawCurrent();
+        round.__card = current;
+        round.step++;
+        return { ok: true, outcome_step: { current: current, prev: cur, guess: "skip", skipped: true, win: true }, multiplier: round.multiplier, can_cashout: true, busted: false, done: false, balance: MOCK.profile.balance };
+      }
+      const dir = move.guess === "higher" ? "higher" : "lower";
       const p = dir === "higher" ? (14 - cur) / 13 : cur / 13;
       const factor = (1 - EPS) / p;
       // Reject picks that can't grow the chain or would exceed the multiplier cap.

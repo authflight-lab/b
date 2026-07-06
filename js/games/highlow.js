@@ -144,6 +144,7 @@
     // --- Actions ------------------------------------------------------------
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
     const cashBtn = el("button", { class: "btn primary block", style: "display:none" }, "Cash out");
+    const skipBtn = el("button", { class: "btn block", style: "display:none" }, "Skip card");
 
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
@@ -162,17 +163,18 @@
       setCard(rank, true);
       refreshOdds(true);
       startBtn.style.display = "none"; cashBtn.style.display = "block"; bet.input.disabled = true;
+      skipBtn.style.display = "block"; skipBtn.disabled = false;
     });
 
     async function guess(dir) {
       if (busy || ended || !roundId) return; busy = true;
-      hiBtn.disabled = loBtn.disabled = cashBtn.disabled = true;
+      hiBtn.disabled = loBtn.disabled = cashBtn.disabled = skipBtn.disabled = true;
       hiProb.disabled = loProb.disabled = true;
       const resp = await BT.api.gameStep("highlow", { round_id: roundId, move: { guess: dir } });
       busy = false;
       if (!resp || resp.ok === false) {
         BT.ui.toast(C.errText(resp), "error");
-        cashBtn.disabled = false; refreshOdds(true); return;
+        cashBtn.disabled = false; skipBtn.disabled = false; refreshOdds(true); return;
       }
       const os = resp.outcome_step || {};
       const drawn = os.drawn !== undefined ? os.drawn : os.next_card !== undefined ? os.next_card : os.card;
@@ -195,7 +197,7 @@
         renderHistory();
       }
       if (resp.busted || resp.done) { finish(resp, won); return; }
-      cashBtn.disabled = false;
+      cashBtn.disabled = false; skipBtn.disabled = false;
       BT.ui.haptic("light");
       if (wild) {
         // Reveal the wild card, then flip through to the fresh current card.
@@ -220,9 +222,37 @@
       finish(resp, true);
     });
 
+    // Skip: swap the current card for a fresh one without wagering. The chain
+    // multiplier is unchanged; useful when the current card gives a poor edge.
+    async function skipCard() {
+      if (busy || ended || !roundId) return; busy = true;
+      hiBtn.disabled = loBtn.disabled = cashBtn.disabled = skipBtn.disabled = true;
+      hiProb.disabled = loProb.disabled = true;
+      const resp = await BT.api.gameStep("highlow", { round_id: roundId, move: { skip: true } });
+      busy = false;
+      if (!resp || resp.ok === false) {
+        BT.ui.toast(C.errText(resp), "error");
+        cashBtn.disabled = false; skipBtn.disabled = false; refreshOdds(true); return;
+      }
+      const os = resp.outcome_step || {};
+      const current = os.current;
+      if (typeof current === "number") {
+        step += 1;
+        rank = current;
+        setCard(current, true);
+        history.push({ rank: current, step, badge: "skip", label: "Skip", dir: null });
+        renderHistory();
+      }
+      cashBtn.disabled = false; skipBtn.disabled = false;
+      BT.ui.haptic("light");
+      refreshOdds(true);
+    }
+    skipBtn.addEventListener("click", skipCard);
+
     function finish(resp, won) {
       ended = true; roundId = null;
       startBtn.style.display = "block"; cashBtn.style.display = "none"; cashBtn.disabled = false;
+      skipBtn.style.display = "none"; skipBtn.disabled = false;
       bet.input.disabled = false;
       refreshOdds(false);
       C.syncBalance(resp);
@@ -236,13 +266,14 @@
     refreshOdds(false);
     root.appendChild(el("div", { class: "card" }, [
       el("h3", { class: "game-title" }, [BT.ui.icon("highlow", 22), el("span", null, "HighLow")]),
-      el("p", { class: "small muted" }, "Guess whether the next card is higher-or-same or lower-or-same. Each correct call chains your multiplier and a tie counts in your favor. Aces and Kings are wild — they pass through to a fresh card. Cash out any time."),
+      el("p", { class: "small muted" }, "Guess whether the next card is higher-or-same or lower-or-same. Each correct call chains your multiplier and a tie counts in your favor. Aces and Kings are wild — they pass through to a fresh card. Skip to swap the current card without betting, or cash out any time."),
       histEl,
       board,
       probBar,
       bet.node,
       startBtn,
       cashBtn,
+      skipBtn,
       banner.node,
       seed.node,
     ]));
