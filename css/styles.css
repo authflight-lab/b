@@ -13,8 +13,8 @@
   --accent-ink:    #06333b;  /* ink for text sitting on light-cyan fills */
   --accent-2:      #007c8f;  /* alias kept for legacy references */
 
-  --good:          #35c77c;
-  --bad:           #f0554c;
+  --good:          #16c954;
+  --bad:           #ef2b2b;
   --radius:        14px;
 
   /* Liquid-glass surface tokens (aligned with the pill nav) */
@@ -522,8 +522,8 @@ input[type="number"].betbox-input:focus {
   opacity: 0; transition: left .55s cubic-bezier(.22, 1, .36, 1), opacity .2s ease; pointer-events: none;
 }
 .dice-badge.show { opacity: 1; }
-.dice-badge.win { background: linear-gradient(180deg, #d7ffe6, #7fe6a6); }
-.dice-badge.lose { background: linear-gradient(180deg, #ffdedb, #f0918a); }
+.dice-badge.win { background: linear-gradient(180deg, #bbf7d0, #4ade80); }
+.dice-badge.lose { background: linear-gradient(180deg, #fecaca, #f87171); }
 
 .dice-ticks { position: relative; height: 16px; margin-bottom: 8px; }
 .dice-tick { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
@@ -531,7 +531,7 @@ input[type="number"].betbox-input:focus {
 
 .dice-range {
   -webkit-appearance: none; appearance: none; width: 100%; height: 14px; border-radius: 999px; margin: 0;
-  background: linear-gradient(90deg, var(--good) 0 var(--t, 50%), #e8863a var(--t, 50%) 100%);
+  background: linear-gradient(90deg, var(--good) 0 var(--t, 50%), #e8252a var(--t, 50%) 100%);
   box-shadow: var(--glass-inset-hi); outline: none; cursor: pointer;
 }
 .dice-range::-webkit-slider-thumb {
