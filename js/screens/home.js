@@ -105,41 +105,36 @@
   function statsCard(me) {
     const s = me.stats;
     const mult = me.multiplier_active;
-    const items = [
-      { label: "Messages", value: fmt(s.messages_sent) },
-      { label: "Wagered",  value: fmt(s.amount_wagered) + " pts" },
-      { label: "Msg Rank", value: "#" + fmt(s.messages_rank) },
-      { label: "Rich Rank",value: "#" + fmt(s.rich_rank) },
+    const rows = [
+      { label: "Messages sent",  value: fmt(s.messages_sent) },
+      { label: "Amount wagered", value: fmt(s.amount_wagered) + " pts" },
+      { label: "Msg rank",       value: "#" + fmt(s.messages_rank) },
+      { label: "Points rank",    value: "#" + fmt(s.rich_rank) },
+      {
+        label: "Multiplier",
+        valueEl: el("span", {
+          style: "font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px;" +
+            (mult
+              ? "color:#3a2c00;background:linear-gradient(180deg,#ffe58a,#f5b301)"
+              : "color:var(--text-dim);background:var(--bg);border:1px solid var(--border)"),
+        }, mult ? "Active" : "Not Active"),
+      },
     ];
-    const grid = el("div", {
-      style: "display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-radius:calc(var(--radius) - 1px);overflow:hidden",
+
+    const list = el("div", {
+      style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden",
     });
-    items.forEach((item) => {
-      grid.appendChild(el("div", {
-        style: "background:var(--bg-elev);padding:10px 12px",
+    rows.forEach((row, i) => {
+      list.appendChild(el("div", {
+        style: "display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;" +
+          (i < rows.length - 1 ? "border-bottom:1px solid var(--border);" : ""),
       }, [
-        el("div", { style: "font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);margin-bottom:2px" }, item.label),
-        el("div", { style: "font-size:16px;font-weight:800;color:var(--text)" }, item.value),
+        el("span", { style: "font-size:14px;color:var(--text-dim);font-weight:500" }, row.label),
+        row.valueEl || el("span", { style: "font-size:14px;font-weight:700;color:var(--text)" }, row.value),
       ]));
     });
 
-    const multPill = el("div", {
-      style: "display:flex;align-items:center;justify-content:space-between;padding:8px 12px 10px",
-    }, [
-      el("span", { style: "font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)" }, "Multiplier"),
-      el("span", {
-        style: "font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;" +
-          (mult
-            ? "color:#3a2c00;background:linear-gradient(180deg,#ffe58a,#f5b301)"
-            : "color:var(--text-dim);background:var(--bg-elev);border:1px solid var(--border)"),
-      }, mult ? "★ Active" : "Off"),
-    ]);
-
-    return el("div", { style: "margin-bottom:20px" }, [
-      el("div", {
-        style: "border:1px solid var(--border);border-radius:var(--radius);overflow:hidden",
-      }, [grid, multPill]),
-    ]);
+    return el("div", { style: "margin-bottom:20px" }, [list]);
   }
 
   // ── Backlog card ─────────────────────────────────────────────────────────────
