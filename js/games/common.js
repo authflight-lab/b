@@ -79,32 +79,31 @@
     return { node, getBet, input };
   }
 
-  // Fairness display: shows server_hash pre-round, reveals server_seed after.
+  // Provably-fair state holder. The seed values (server_hash pre-round,
+  // server_seed after settle) are no longer shown inline in the game panel —
+  // they live in the "Provably Fair" panel opened from the Play screen. Each
+  // game still owns a seedBox and feeds it via the same setHash/setNonce/
+  // revealSeed/reset API; the active box registers itself so the Provably Fair
+  // panel can read whatever the currently-selected game has committed.
   function seedBox() {
-    const hashEl = el("div", { class: "mono" }, "—");
-    const seedEl = el("div", { class: "mono" }, "hidden until settle");
-    const nonceEl = el("div", { class: "mono" }, "—");
-    const node = el("div", { class: "seedbox" }, [
-      el("div", { class: "row between" }, [el("span", { class: "k" }, "server_hash"), null]),
-      hashEl,
-      el("div", { class: "spacer" }),
-      el("div", { class: "row between" }, [el("span", { class: "k" }, "nonce"), null]),
-      nonceEl,
-      el("div", { class: "spacer" }),
-      el("div", { class: "row between" }, [el("span", { class: "k" }, "server_seed"), null]),
-      seedEl,
-    ]);
-    return {
+    const state = { hash: "—", nonce: "—", seed: "hidden until settle" };
+    // Hidden anchor: games still append `seed.node`, but nothing renders here.
+    const node = el("div", { class: "fair-anchor", "aria-hidden": "true" });
+    const api = {
       node,
-      setHash: (h) => (hashEl.textContent = h || "—"),
-      setNonce: (n) => (nonceEl.textContent = n === undefined || n === null ? "—" : String(n)),
-      revealSeed: (s) => (seedEl.textContent = s || "(not revealed)"),
+      getState: () => state,
+      setHash: (h) => (state.hash = h || "—"),
+      setNonce: (n) => (state.nonce = n === undefined || n === null ? "—" : String(n)),
+      revealSeed: (s) => (state.seed = s || "(not revealed)"),
       reset: () => {
-        hashEl.textContent = "—";
-        nonceEl.textContent = "—";
-        seedEl.textContent = "hidden until settle";
+        state.hash = "—";
+        state.nonce = "—";
+        state.seed = "hidden until settle";
       },
     };
+    // The last-created box belongs to the game currently rendered in the panel.
+    BT.games.activeFair = api;
+    return api;
   }
 
   function resultBanner() {

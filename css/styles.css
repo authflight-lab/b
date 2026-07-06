@@ -307,11 +307,62 @@ input[type="number"].betbox-input:focus {
 /* Game screen title with leading icon */
 .game-title { display: flex; align-items: center; gap: 8px; }
 
-/* Seed / fairness box */
-.seedbox {
-  background: var(--glass-bg-2); border: 1px dashed var(--glass-border); border-radius: 12px; padding: 10px 12px; margin: 12px 0;
+/* Hidden per-game fairness anchor (state lives in the Provably Fair panel) */
+.fair-anchor { display: none; }
+
+/* Play header row with the Provably Fair pill on the right */
+.play-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.play-head-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.fair-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border); color: var(--text);
+  padding: 7px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  box-shadow: var(--glass-inset-hi); transition: border-color .2s ease, box-shadow .2s ease;
 }
-.seedbox .k { font-size: 11px; color: var(--text-dim); }
+.fair-btn:hover { border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(0,124,143,0.4); }
+.fair-btn .icon { color: var(--accent); }
+
+/* Provably Fair panel */
+.fair-card { max-width: 560px; }
+.fair-top { display: flex; align-items: center; justify-content: space-between; }
+.fair-title { display: flex; align-items: center; gap: 8px; }
+.fair-title .icon { color: var(--accent); }
+.fair-title h2 { margin: 0; }
+.fair-x {
+  background: transparent; border: none; color: var(--text-dim); font-size: 16px; cursor: pointer; line-height: 1; padding: 4px;
+}
+.fair-sub { font-size: 12.5px; color: var(--text-dim); margin: 6px 0 14px; }
+.fair-seed {
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px;
+}
+.fair-seed .k { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 3px; }
+
+/* Current Logic collapsible + code block */
+.logic-head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border); border-radius: 10px;
+  color: var(--text); font-size: 13px; font-weight: 600; padding: 10px 12px; cursor: pointer;
+}
+.logic-head > span:first-child { display: inline-flex; align-items: center; gap: 8px; }
+.logic-head .icon { color: var(--good); }
+.logic-head .chev { color: var(--text-dim); transition: transform .2s ease; }
+.logic-head.open .chev { transform: rotate(180deg); }
+.logic-body { display: none; margin-top: 10px; }
+.logic-body.open { display: block; }
+.code-block {
+  position: relative; background: #0b0e14; border: 1px solid var(--glass-border); border-radius: 12px;
+  padding: 14px; overflow: auto; max-height: 320px;
+}
+.code-block pre {
+  margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px; line-height: 1.55; color: #cfd8e3; white-space: pre;
+}
+.copy-btn {
+  position: absolute; top: 10px; right: 10px; z-index: 1;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border); color: var(--text);
+  padding: 5px 10px; border-radius: 8px; font-size: 11.5px; cursor: pointer;
+}
+.copy-btn:hover { border-color: var(--accent); }
 
 /* Result banners */
 .result { border-radius: 12px; padding: 12px; margin: 12px 0; text-align: center; font-weight: 700; }
