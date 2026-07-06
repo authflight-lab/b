@@ -107,7 +107,9 @@
       cells[i].classList.add(isMine ? "mine" : "safe");
       cells[i]._icon.textContent = isMine ? "\uD83D\uDCA3" : "\uD83D\uDC8E";
       if (isMine) cells[i].classList.add("hit");
-      if (resp.multiplier) mpValue.textContent = (Math.round(resp.multiplier * 100) / 100) + "\u00D7";
+      // A busted round wins nothing — show 0×, not the last accumulated value.
+      if (resp.busted) mpValue.textContent = "0\u00D7";
+      else if (resp.multiplier) mpValue.textContent = (Math.round(resp.multiplier * 100) / 100) + "\u00D7";
       if (resp.busted || resp.done) { finish(resp); }
       else { revealedCount++; cashBtn.disabled = false; BT.ui.haptic("light"); lockGrid(false); }
     }
@@ -158,10 +160,12 @@
       grid.classList.add(busted ? "flash-bust" : "flash-win");
       C.syncBalance(resp);
       const payout = resp.payout || 0;
-      // Cashout responses carry the multiplier inside `outcome`, while step-driven
-      // auto-cashouts include it at the top level — prefer whichever is present.
-      const mult = typeof resp.multiplier === "number" ? resp.multiplier
-                 : (typeof o.multiplier === "number" ? o.multiplier : 0);
+      // A bust wins nothing, so force 0× regardless of the last accumulated value.
+      // Otherwise: cashout responses carry the multiplier inside `outcome`, while
+      // step-driven auto-cashouts include it at the top level — prefer either.
+      const mult = busted ? 0
+                 : (typeof resp.multiplier === "number" ? resp.multiplier
+                 : (typeof o.multiplier === "number" ? o.multiplier : 0));
       overlayMult.textContent = (Math.round(mult * 100) / 100) + "x";
       if (payout > 0) {
         overlayLabel.textContent = "Cashed out +" + BT.ui.fmt(payout) + " pts";
