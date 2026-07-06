@@ -554,18 +554,19 @@ input[type="number"].betbox-input:focus {
 .cell {
   position: relative; aspect-ratio: 1 / 1; border-radius: 10px; background: var(--glass-bg-2); border: 1px solid var(--glass-border);
   display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; user-select: none;
-  box-shadow: var(--glass-inset-hi); transition: transform .12s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease, opacity .3s ease;
+  transform: translateY(-2px);
+  box-shadow: var(--glass-inset-hi), 0 3px 4px rgba(0,0,0,0.35); transition: transform .12s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease, opacity .3s ease;
 }
-.cell:not(.disabled):not(.safe):not(.mine):active { transform: scale(0.92); }
+.cell:not(.disabled):not(.safe):not(.mine):active { transform: translateY(0) scale(0.96); box-shadow: var(--glass-inset-hi), 0 1px 2px rgba(0,0,0,0.3); }
 .cell .cell-icon { display: inline-block; transform: scale(0); opacity: 0; }
 .cell.safe .cell-icon, .cell.mine .cell-icon { animation: cellPop .38s cubic-bezier(.34,1.56,.64,1) forwards; }
 @keyframes cellPop { 0% { transform: scale(0) rotate(-8deg); opacity: 0; } 60% { transform: scale(1.28) rotate(4deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
-.cell.safe { background: rgba(53,199,124,0.16); border-color: rgba(53,199,124,0.55); box-shadow: var(--glass-inset-hi), 0 0 14px rgba(53,199,124,0.35); }
-.cell.mine { background: rgba(240,85,76,0.16); border-color: rgba(240,85,76,0.6); box-shadow: var(--glass-inset-hi), 0 0 14px rgba(240,85,76,0.4); }
+.cell.safe { background: rgba(53,199,124,0.16); border-color: rgba(53,199,124,0.55); box-shadow: var(--glass-inset-hi), 0 3px 4px rgba(0,0,0,0.35), 0 0 14px rgba(53,199,124,0.35); }
+.cell.mine { background: rgba(240,85,76,0.16); border-color: rgba(240,85,76,0.6); box-shadow: var(--glass-inset-hi), 0 3px 4px rgba(0,0,0,0.35), 0 0 14px rgba(240,85,76,0.4); }
 .cell.mine.hit { animation: cellShake .45s ease; }
-@keyframes cellShake { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(2px); } 30%, 50%, 70% { transform: translateX(-4px); } 40%, 60% { transform: translateX(4px); } }
+@keyframes cellShake { 10%, 90% { transform: translateY(-2px) translateX(-1px); } 20%, 80% { transform: translateY(-2px) translateX(2px); } 30%, 50%, 70% { transform: translateY(-2px) translateX(-4px); } 40%, 60% { transform: translateY(-2px) translateX(4px); } }
 .cell.disabled { pointer-events: none; opacity: 0.85; }
-.cell.reveal-only { pointer-events: none; opacity: 0.38; box-shadow: none; }
+.cell.reveal-only { pointer-events: none; opacity: 0.38; box-shadow: none; transform: none; }
 .cell.reveal-only .cell-icon { animation: none; transform: scale(1); opacity: 1; filter: grayscale(35%); }
 
 /* Motion over the emoji symbols (pure CSS — no external art).
@@ -602,7 +603,7 @@ input[type="number"].betbox-input:focus {
 .mines-grid-wrap .cell.mine {
   border-color: var(--glass-border);
   background: radial-gradient(circle at 50% 42%, rgba(150,180,230,0.14), rgba(6,10,18,0.5) 72%);
-  box-shadow: var(--glass-inset-hi);
+  box-shadow: var(--glass-inset-hi), 0 3px 4px rgba(0,0,0,0.35);
 }
 .mines-grid-wrap .cell.reveal-only { box-shadow: none; }
 .mines-grid-wrap .cell.safe:not(.reveal-only) .cell-icon {
@@ -626,7 +627,7 @@ input[type="number"].betbox-input:focus {
 .tower-shaft .cell.mine {
   border-color: var(--glass-border);
   background: radial-gradient(circle at 50% 42%, rgba(150,180,230,0.14), rgba(6,10,18,0.5) 72%);
-  box-shadow: var(--glass-inset-hi);
+  box-shadow: var(--glass-inset-hi), 0 3px 4px rgba(0,0,0,0.35);
 }
 .tower-shaft .cell.tower-cell.safe .cell-icon {
   opacity: 1;
@@ -712,7 +713,7 @@ input[type="number"].betbox-input:focus {
   opacity: 0.85; filter: grayscale(0.2) brightness(1);
   animation: gemFloat 2.2s ease-in-out infinite;
 }
-.tower-floor.active .cell.tower-cell:not(.disabled):active { transform: scale(0.92); }
+.tower-floor.active .cell.tower-cell:not(.disabled):active { transform: translateY(0) scale(0.96); box-shadow: var(--glass-inset-hi), 0 1px 2px rgba(0,0,0,0.3); }
 .cell.tower-cell.safe .cell-icon {
   opacity: 1; animation: cellPop .38s cubic-bezier(.34,1.56,.64,1);
   filter: hue-rotate(85deg) saturate(1.5) brightness(1.15) drop-shadow(0 0 6px rgba(53,199,124,0.7));
