@@ -44,10 +44,12 @@ body {
   font-size: 15px;
   line-height: 1.45;
   overscroll-behavior: none;
-  /* Faint ambient light so frosted glass has something to refract. Subtle. */
   background:
-    radial-gradient(1100px 760px at 12% -12%, rgba(0, 124, 143, 0.16), transparent 60%),
-    radial-gradient(900px 680px at 112% 6%, rgba(203, 239, 245, 0.07), transparent 55%),
+    repeating-linear-gradient(rgba(255,255,255,0.017) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.017) 0 1px, transparent 1px 48px),
+    radial-gradient(1200px 860px at 12% -10%, rgba(0, 124, 143, 0.38), transparent 62%),
+    radial-gradient(1000px 700px at 108% 8%, rgba(0, 180, 210, 0.22), transparent 58%),
+    radial-gradient(700px 500px at 50% 100%, rgba(0, 80, 120, 0.18), transparent 70%),
     var(--bg);
   background-attachment: fixed;
 }
