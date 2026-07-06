@@ -46,6 +46,14 @@
       grid.appendChild(c);
     }
 
+    // Result overlay — shown centred over the grid after each round ends.
+    const overlayMult = el("div", { class: "mro-mult" }, "");
+    const overlayLabel = el("div", { class: "mro-label" }, "");
+    const overlayCard = el("div", { class: "mro-card" }, [overlayMult, overlayLabel]);
+    const overlay = el("div", { class: "mines-result-overlay hidden" }, [overlayCard]);
+    const gridWrap = el("div", { class: "mines-grid-wrap" }, [grid, overlay]);
+    overlay.addEventListener("click", () => overlay.classList.add("hidden"));
+
     const mpValue = el("div", { class: "mp-value" }, "\u2014");
     const multPanel = el("div", { class: "mult-panel" }, [mpValue, el("div", { class: "mp-label" }, "Current Multiplier")]);
 
@@ -68,7 +76,7 @@
 
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
-      banner.hide(); seed.reset();
+      banner.hide(); overlay.classList.add("hidden"); seed.reset();
       mpValue.textContent = "\u2014"; multPanel.classList.remove("active");
       resetCells();
       const resp = await BT.api.gameBet("mines", { bet: bet.getBet(), client_seed: C.clientSeed(), params: { mines: minesCount } });
@@ -149,8 +157,19 @@
       grid.classList.add(busted ? "flash-bust" : "flash-win");
       C.syncBalance(resp);
       const payout = resp.payout || 0;
-      if (payout > 0) { banner.show("win", "Cashed out +" + BT.ui.fmt(payout) + " pts"); BT.ui.haptic("success"); }
-      else { banner.show("lose", "Boom! Hit a mine."); BT.ui.haptic("error"); }
+      const mult = resp.multiplier || 0;
+      if (payout > 0) {
+        overlayMult.textContent = (Math.round(mult * 100) / 100) + "\u00D7";
+        overlayLabel.textContent = "Cashed out +" + BT.ui.fmt(payout) + " pts";
+        overlayCard.className = "mro-card win";
+        BT.ui.haptic("success");
+      } else {
+        overlayMult.textContent = "💣";
+        overlayLabel.textContent = "Hit a mine!";
+        overlayCard.className = "mro-card lose";
+        BT.ui.haptic("error");
+      }
+      overlay.classList.remove("hidden");
     }
 
     root.appendChild(el("div", { class: "card" }, [
@@ -158,7 +177,7 @@
       el("p", { class: "small muted" }, "Reveal gems to grow your multiplier. Hit a mine and you lose. Cash out whenever."),
       bet.node,
       el("div", { class: "field" }, [el("label", null, "Mines"), sliderRow]),
-      grid,
+      gridWrap,
       multPanel,
       startBtn,
       cashBtn,
