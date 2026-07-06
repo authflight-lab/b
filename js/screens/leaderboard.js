@@ -14,7 +14,7 @@
       tab("rich", "rich", "Rich"),
       tab("chatters", "chat", "Chatters"),
     ]);
-    const periodTabs = el("div", { class: "pilltabs", style: "margin-top:8px" }, [
+    const periodTabs = el("div", { class: "segtoggle" }, [
       periodTab("weekly", "Weekly"),
       periodTab("alltime", "All-Time"),
     ]);
@@ -32,7 +32,7 @@
 
     function periodTab(key, label) {
       return el("button", {
-        class: "pilltab" + (currentPeriod === key ? " active" : ""),
+        class: "segtoggle-btn" + (currentPeriod === key ? " active" : ""),
         onclick: () => { if (currentPeriod !== key) { currentPeriod = key; render(root); } },
       }, [el("span", null, label)]);
     }
