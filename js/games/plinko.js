@@ -46,6 +46,24 @@
     const banner = C.resultBanner();
     let busy = false;
 
+    // Client-side rate limit: cap how many balls can be dropped in a rolling
+    // window so the bet button can't be spammed. Uses a sliding window of
+    // recent drop timestamps.
+    const RATE_MAX = 5;            // max drops...
+    const RATE_WINDOW_MS = 10000;  // ...per 10 seconds
+    let dropTimes = [];
+    function rateLimited() {
+      const now = Date.now();
+      dropTimes = dropTimes.filter((t) => now - t < RATE_WINDOW_MS);
+      if (dropTimes.length >= RATE_MAX) {
+        const waitMs = RATE_WINDOW_MS - (now - dropTimes[0]);
+        BT.ui.toast("Slow down — wait " + Math.ceil(waitMs / 1000) + "s before dropping again.", "error");
+        return true;
+      }
+      dropTimes.push(now);
+      return false;
+    }
+
     // ---- Segmented chip controls (rows + risk) ----
     function chipGroup(opts, initial, onChange) {
       let value = initial;
@@ -168,6 +186,7 @@
 
     dropBtn.addEventListener("click", async () => {
       if (busy) return;
+      if (rateLimited()) return;
       setBusy(true);
       overlay.hide(); banner.hide();
       seed.reset();
