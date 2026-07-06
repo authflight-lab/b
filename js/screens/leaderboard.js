@@ -9,7 +9,7 @@
 
   // Weekly bonuses paid to the top 3 each Monday (mirrors bot/bartender/weekly.py
   // CHATTERS_BONUS / RICH_BONUS). Keep in sync if those payouts change.
-  const PRIZES = { rich: [300, 200, 100], chatters: [500, 300, 200] };
+  const PRIZES = { rich: [75, 50, 25], chatters: [100, 60, 40] };
 
   async function render(root) {
     BT.ui.clear(root);
@@ -58,7 +58,7 @@
       return;
     }
 
-    const unit = currentTab === "rich" ? "pts" : "chat pts";
+    const unit = "pts";
     const rows = (data.rows || []);
     if (!rows.length) {
       box.appendChild(BT.ui.notice("No one is on the board yet."));
@@ -79,7 +79,7 @@
   function prizeCard() {
     const prizes = PRIZES[currentTab] || [];
     const cat = currentTab === "rich" ? "Rich List" : "Chatters";
-    const unit = currentTab === "rich" ? "pts" : "chat pts";
+    const unit = "pts";
     const rows = prizes.map((amt, i) =>
       el("div", { class: "prize-row" }, [
         el("span", { class: "prize-rank r" + (i + 1) }, "#" + (i + 1)),
