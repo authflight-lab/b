@@ -232,7 +232,7 @@
     const map = {
       api_not_configured: "The game server isn't set up yet.",
       network_error: "Network error — please try again.",
-      insufficient_balance: "Not enough points for that bet.",
+      insufficient_balance: "Balance too low.",
       bad_init_data: "Open this from Telegram to play.",
       round_open: "You already have a round in progress.",
       no_open_round: "That round has ended.",
