@@ -46,10 +46,10 @@
     const banner = C.resultBanner();
     let busy = false;
 
-    // Mandatory delay between EVERY ball drop. Extra clicks are queued and
-    // fired one at a time, each separated by DROP_DELAY_MS so the user always
-    // has to wait between drops.
-    const DROP_DELAY_MS = 3000;   // enforced wait between consecutive drops
+    // Extra clicks are queued and fired one at a time. DROP_DELAY_MS is the
+    // enforced wait between consecutive drops; 0 disables it entirely so drops
+    // fire back-to-back (only the ball animation itself paces them).
+    const DROP_DELAY_MS = 0;      // no enforced wait between consecutive drops
     const QUEUE_MAX = 15;         // sanity cap on how many drops can be queued
     let queue = [];
     let processing = false;
