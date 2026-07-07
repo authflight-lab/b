@@ -31,6 +31,15 @@
       coin3d.style.transform = "rotateY(" + coinDeg + "deg)";
       if (!animate) void coin3d.offsetHeight; // force reflow so the instant reset never animates
     }
+    // Kick the coin forward the instant the user taps — outcome-free motion
+    // that keeps spinning while /step is in flight. The real face is landed by
+    // flipCoinTo() when the response returns; because coinDeg only ever grows
+    // forward, that lands smoothly wherever this pre-spin left it.
+    function spinCoin() {
+      coin3d.style.transition = "";
+      coinDeg += 540;
+      coin3d.style.transform = "rotateY(" + coinDeg + "deg)";
+    }
     const track = el("div", { class: "mult-track" });
     let roundId = null, busy = false, streak = 0;
 
@@ -71,6 +80,8 @@
     async function step(side) {
       if (busy || !roundId) return; busy = true;
       headsBtn.disabled = tailsBtn.disabled = cashBtn.disabled = true;
+      // Start the flip on tap; the real face lands when /step returns.
+      spinCoin();
       const resp = await BT.api.gameStep("flip", { round_id: roundId, move: side });
       headsBtn.disabled = tailsBtn.disabled = cashBtn.disabled = false;
       busy = false;

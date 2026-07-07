@@ -257,6 +257,19 @@
     return map[code] || ("Error: " + code);
   }
 
+  // --- Snappy-reveal motion helpers --------------------------------------
+  // Games start outcome-free motion the instant the user taps and fire the
+  // network request behind it. We NEVER know the result ahead of the server
+  // (the active server seed is secret, so the client cannot compute the roll),
+  // so the pre-reveal window is pure motion — there is nothing predicted to
+  // roll back. When the response lands we reveal the real frame with an
+  // ease-out. `nowMs` is a monotonic clock; `frame(ms)` resolves after ms;
+  // `hold(startedAt, minMs)` waits out whatever remains of a minimum motion
+  // window so a fast network never cuts the animation short.
+  const nowMs = () => (window.performance && performance.now ? performance.now() : Date.now());
+  const frame = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms || 0)));
+  const hold = (startedAt, minMs) => frame((minMs || 0) - (nowMs() - startedAt));
+
   BT.games.common = {
     register,
     maxBet,
@@ -267,5 +280,8 @@
     resultOverlay,
     syncBalance,
     errText,
+    nowMs,
+    frame,
+    hold,
   };
 })();

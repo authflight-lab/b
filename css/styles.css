@@ -522,9 +522,12 @@ input[type="number"].betbox-input:focus {
   min-width: 54px; padding: 9px 6px 12px; text-align: center; line-height: 1;
   font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; color: #10151f;
   background: #e8edf5; clip-path: polygon(50% 0, 100% 27%, 100% 73%, 50% 100%, 0 73%, 0 27%);
-  opacity: 0; transition: left .55s cubic-bezier(.22, 1, .36, 1), opacity .2s ease; pointer-events: none;
+  opacity: 0; transition: left .32s cubic-bezier(.22, 1, .36, 1), opacity .16s ease; pointer-events: none;
 }
 .dice-badge.show { opacity: 1; }
+/* While rolling, the position is driven frame-by-frame (rAF) — drop the CSS
+   `left` transition so the sweep stays crisp; the ease-out returns on reveal. */
+.dice-badge.rolling { transition: opacity .16s ease; }
 .dice-badge.win { background: linear-gradient(180deg, #bbf7d0, #4ade80); }
 .dice-badge.lose { background: linear-gradient(180deg, #fecaca, #f87171); }
 
@@ -881,7 +884,7 @@ input[type="number"].betbox-input:focus {
 @keyframes coinIdleBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 .coin-3d {
   position: relative; width: 92px; height: 92px; transform-style: preserve-3d;
-  transition: transform .9s cubic-bezier(.22, 1.12, .36, 1);
+  transition: transform .5s cubic-bezier(.22, 1, .36, 1);
 }
 .coin-face {
   position: absolute; inset: 0; border-radius: 50%; backface-visibility: hidden;

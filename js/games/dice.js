@@ -99,55 +99,100 @@
     const betBtn = el("button", { class: "btn primary block" }, "Roll");
     let busy = false;
 
+    // Instant-game reveal floor: the roll spins for at least this long so it
+    // reads as snappy-but-satisfying even when the network beats it.
+    const REVEAL_MIN_MS = 480;
+    let rollRaf = 0;
+
+    // Start the roll the instant the user taps: the badge sweeps the track and
+    // its number spins — pure, outcome-free motion — while /bet + /settle fly
+    // behind it. Returns { t0, stop }.
+    function startRolling() {
+      if (rollRaf) cancelAnimationFrame(rollRaf);
+      badge.textContent = "";
+      // `rolling` drops the CSS `left` transition so the rAF sweep stays crisp.
+      badge.className = "dice-badge show rolling";
+      const t0 = C.nowMs();
+      function tick() {
+        const t = C.nowMs() - t0;
+        badge.textContent = (2 + Math.random() * 96).toFixed(2);
+        const pos = 50 + Math.sin(t / 55) * 36;
+        badge.style.left = Math.max(2, Math.min(98, pos)) + "%";
+        rollRaf = requestAnimationFrame(tick);
+      }
+      rollRaf = requestAnimationFrame(tick);
+      return {
+        t0,
+        stop() { if (rollRaf) { cancelAnimationFrame(rollRaf); rollRaf = 0; } },
+      };
+    }
+
+    function stopRolling(anim) {
+      if (anim) anim.stop(); else if (rollRaf) { cancelAnimationFrame(rollRaf); rollRaf = 0; }
+      badge.classList.remove("show", "rolling");
+    }
+
+    // Reveal the true roll with an ease-out: hold out the rest of the motion
+    // window, then hand the badge to the CSS `left` transition to settle home.
+    async function revealRoll(anim, roll, win) {
+      anim.stop();
+      await C.hold(anim.t0, REVEAL_MIN_MS);
+      const pos = Math.max(0, Math.min(100, roll));
+      badge.textContent = roll.toFixed(2);
+      badge.className = "dice-badge show " + (win ? "win" : "lose");
+      void badge.offsetWidth; // re-enable the transition before moving to `pos`
+      badge.style.left = pos + "%";
+    }
+
     betBtn.addEventListener("click", async () => {
       if (busy) return;
       busy = true;
       betBtn.disabled = true;
       range.disabled = true;
-      badge.classList.remove("show");
       banner.hide();
       seed.reset();
       const t = target;
 
-      const betResp = await BT.api.gameBet("dice", {
-        bet: bet.getBet(),
-        params: { target: t },
-      });
-      if (!betResp || betResp.ok === false) {
-        BT.ui.toast(C.errText(betResp), "error");
-        busy = false; betBtn.disabled = false; range.disabled = false; return;
-      }
-      seed.setHash(betResp.server_hash);
-      seed.setNonce(betResp.nonce);
-      BT.fair.noteBet(betResp);
-      if (typeof betResp.balance === "number") BT.setBalance(betResp.balance);
+      const anim = startRolling();
+      try {
+        const betResp = await BT.api.gameBet("dice", {
+          bet: bet.getBet(),
+          params: { target: t },
+        });
+        if (!betResp || betResp.ok === false) {
+          BT.ui.toast(C.errText(betResp), "error");
+          return;
+        }
+        seed.setHash(betResp.server_hash);
+        seed.setNonce(betResp.nonce);
+        BT.fair.noteBet(betResp);
+        if (typeof betResp.balance === "number") BT.setBalance(betResp.balance);
 
-      const s = await BT.api.gameSettle("dice", { round_id: betResp.round_id, target: t });
-      if (!s || s.ok === false) {
-        BT.ui.toast(C.errText(s), "error");
-        busy = false; betBtn.disabled = false; range.disabled = false; return;
-      }
-      const o = s.outcome || {};
-      const roll = o.roll !== undefined ? o.roll : o.result;
-      const win = o.win !== undefined ? o.win : (s.payout || 0) > 0;
+        const s = await BT.api.gameSettle("dice", { round_id: betResp.round_id, target: t });
+        if (!s || s.ok === false) {
+          BT.ui.toast(C.errText(s), "error");
+          return;
+        }
+        const o = s.outcome || {};
+        const roll = o.roll !== undefined ? o.roll : o.result;
+        const win = o.win !== undefined ? o.win : (s.payout || 0) > 0;
 
-      if (typeof roll === "number") {
-        const pos = Math.max(0, Math.min(100, roll));
-        badge.textContent = roll.toFixed(2);
-        badge.style.left = pos + "%";
-        badge.className = "dice-badge show " + (win ? "win" : "lose");
-        history.unshift({ roll, win });
-        if (history.length > 12) history.pop();
-        renderResults();
+        if (typeof roll === "number") {
+          await revealRoll(anim, roll, win);
+          history.unshift({ roll, win });
+          if (history.length > 12) history.pop();
+          renderResults();
+        }
+        C.syncBalance(s);
+        BT.ui.haptic(win ? "success" : "error");
+      } finally {
+        // Whatever the exit (early return, error toast, or unexpected throw):
+        // if the roll never reached its reveal (rAF still live) cancel it and
+        // clear the badge; a completed reveal already stopped it and kept its
+        // final frame. Always unlock the controls so the UI can't get stuck.
+        if (rollRaf) stopRolling(anim);
+        busy = false; betBtn.disabled = false; range.disabled = false;
       }
-
-      C.syncBalance(s);
-      if (win) {
-        BT.ui.haptic("success");
-      } else {
-        BT.ui.haptic("error");
-      }
-      busy = false; betBtn.disabled = false; range.disabled = false;
     });
 
     renderResults();
