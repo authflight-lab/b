@@ -70,37 +70,40 @@
       return;
     }
 
+    // Reward column only appears on the Weekly board (all-time pays nothing).
+    const showReward = currentPeriod === "weekly";
     const rows = data.rows || [];
-    const table = el("div", { class: "race-table" });
-    table.appendChild(el("div", { class: "race-thead" }, [
+    const table = el("div", { class: "race-table" + (showReward ? "" : " no-reward") });
+    const head = [
       el("span", { class: "rc-rank" }, "#"),
       el("span", { class: "rc-player" }, "Player"),
       el("span", { class: "rc-value" }, TAB_META[currentTab].col),
-      el("span", { class: "rc-reward" }, "Reward"),
-    ]));
+    ];
+    if (showReward) head.push(el("span", { class: "rc-reward" }, "Reward"));
+    table.appendChild(el("div", { class: "race-thead" }, head));
 
     if (!rows.length) {
       table.appendChild(BT.ui.notice("No one is on the board yet."));
     } else {
-      const prizes = currentPeriod === "weekly" ? (PRIZES[currentTab] || []) : [];
+      const prizes = showReward ? (PRIZES[currentTab] || []) : [];
       rows.forEach((r) => {
         const name = r.display_name || r.username || ("User " + r.tg_id);
-        table.appendChild(raceRow(r.rank, name, r.value, prizes[r.rank - 1], false));
+        table.appendChild(raceRow(r.rank, name, r.value, prizes[r.rank - 1], false, showReward));
       });
     }
     box.appendChild(table);
 
     if (data.you) {
       box.appendChild(el("div", { class: "race-you-label" }, "Your position"));
-      const youTable = el("div", { class: "race-table" });
-      youTable.appendChild(raceRow(data.you.rank, "You", data.you.value, null, true));
+      const youTable = el("div", { class: "race-table" + (showReward ? "" : " no-reward") });
+      youTable.appendChild(raceRow(data.you.rank, "You", data.you.value, null, true, showReward));
       box.appendChild(youTable);
     }
   }
 
-  function raceRow(rank, name, value, reward, you) {
+  function raceRow(rank, name, value, reward, you, showReward) {
     const tier = rank === 1 ? " r1" : rank === 2 ? " r2" : rank === 3 ? " r3" : "";
-    return el("div", { class: "race-row" + (you ? " you" : "") }, [
+    const cells = [
       el("div", { class: "rc-rank" }, [
         el("span", { class: "hexbadge" + tier }, String(rank == null ? "?" : rank)),
       ]),
@@ -109,8 +112,11 @@
         el("span", { class: "rc-name" }, name),
       ]),
       el("div", { class: "rc-value" }, fmt(value)),
-      el("div", { class: "rc-reward" }, reward ? "+" + fmt(reward) : ""),
-    ]);
+    ];
+    if (showReward) {
+      cells.push(el("div", { class: "rc-reward" }, reward ? "+" + fmt(reward) : ""));
+    }
+    return el("div", { class: "race-row" + (you ? " you" : "") }, cells);
   }
 
   BT.screens = BT.screens || {};
