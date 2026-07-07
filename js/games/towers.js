@@ -12,6 +12,7 @@
   function render(root) {
     BT.ui.clear(root);
     const bet = C.betControl(10);
+    let stake = 0;
     const seed = C.seedBox();
     const banner = C.resultBanner();
     let roundId = null, busy = false, ended = true, curFloor = 0, cols = 3, climbedCount = 0, lastBadge = null;
@@ -72,7 +73,8 @@
       if (busy) return; busy = true; startBtn.disabled = true;
       overlay.hide(); banner.hide(); seed.reset();
       cols = DIFF[diffSel.value] || 3; curFloor = 0; buildTower();
-      const resp = await BT.api.gameBet("towers", { bet: bet.getBet(), params: { difficulty: diffSel.value } });
+      stake = bet.getBet();
+      const resp = await BT.api.gameBet("towers", { bet: stake, params: { difficulty: diffSel.value } });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id; ended = false; climbedCount = 0;
@@ -195,8 +197,7 @@
       bet.setDisabled(false); diffSel.disabled = false;
       C.syncBalance(resp);
       const payout = resp.payout || 0;
-      const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");
-      if (payout > 0) { overlay.show("win", multText, "+" + BT.ui.fmt(payout) + " pts"); BT.ui.haptic("success"); }
+      if (payout > 0) { overlay.show("win", C.winMult(resp.multiplier, payout, stake), C.winLines(payout, stake)); BT.ui.haptic("success"); }
       else { overlay.show("lose", "0x", "Trapped!"); BT.ui.haptic("error"); }
     }
 

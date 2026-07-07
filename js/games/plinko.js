@@ -231,7 +231,7 @@
         C.syncBalance(s);
         const payout = s.payout || 0;
         if (payout > 0) {
-          overlay.show("win", o.multiplier !== undefined ? fmtMult(o.multiplier) : "Win!", "+" + BT.ui.fmt(payout) + " pts");
+          overlay.show("win", C.winMult(o.multiplier, payout, job.bet), C.winLines(payout, job.bet));
           BT.ui.haptic("success");
         } else {
           overlay.show("lose", o.multiplier !== undefined ? fmtMult(o.multiplier) : "0x", "No win");

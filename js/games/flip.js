@@ -7,6 +7,7 @@
   function render(root) {
     BT.ui.clear(root);
     const bet = C.betControl(10);
+    let stake = 0;
     const seed = C.seedBox();
     const banner = C.resultBanner();
     const coinFaceH = el("div", { class: "coin-face heads" }, "H");
@@ -67,7 +68,8 @@
       if (busy) return; busy = true; startBtn.disabled = true;
       overlay.hide(); banner.hide(); seed.reset(); BT.ui.clear(track); streak = 0;
       flipCoinTo("heads", false);
-      const resp = await BT.api.gameBet("flip", { bet: bet.getBet(), params: {} });
+      stake = bet.getBet();
+      const resp = await BT.api.gameBet("flip", { bet: stake, params: {} });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id;
@@ -116,8 +118,7 @@
       roundId = null; BT.clearActiveGame(); setPlaying(false);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
-      const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");
-      if (payout > 0) { overlay.show("win", multText, "+" + BT.ui.fmt(payout) + " pts"); BT.ui.haptic("success"); }
+      if (payout > 0) { overlay.show("win", C.winMult(resp.multiplier, payout, stake), C.winLines(payout, stake)); BT.ui.haptic("success"); }
       else { overlay.show("lose", "0x", "Busted"); BT.ui.haptic("error"); }
     }
 

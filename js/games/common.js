@@ -180,16 +180,23 @@
     container.style.position = "relative";
     const multEl = el("div", { class: "mro-mult" }, "");
     const innerEl = el("div", { class: "mro-inner" }, [multEl]);
-    const labelEl = el("div", { class: "mro-label" }, "");
-    const cardEl = el("div", { class: "mro-card" }, [innerEl, labelEl]);
+    const linesEl = el("div", { class: "mro-lines" });
+    const cardEl = el("div", { class: "mro-card" }, [innerEl, linesEl]);
     const wrap = el("div", { class: "game-result-overlay hidden" }, [cardEl]);
     container.appendChild(wrap);
     wrap.addEventListener("click", () => wrap.classList.add("hidden"));
     return {
       node: wrap,
-      show(kind, multText, labelText) {
+      // `lines` is either a single string (e.g. a loss reason) or an array of
+      // strings stacked top-to-bottom. The first line renders as the muted
+      // label (Revenue), any following line as the emphasised Profit line.
+      show(kind, multText, lines) {
         multEl.textContent = multText;
-        labelEl.textContent = labelText;
+        BT.ui.clear(linesEl);
+        (Array.isArray(lines) ? lines : [lines]).forEach((ln, i) => {
+          if (ln === null || ln === undefined) return;
+          linesEl.appendChild(el("div", { class: i === 0 ? "mro-label" : "mro-profit" }, String(ln)));
+        });
         cardEl.className = "mro-card " + kind;
         wrap.classList.remove("hidden");
       },
@@ -206,6 +213,31 @@
     } else {
       BT.refreshMe && BT.refreshMe();
     }
+  }
+
+  // Win-overlay copy: the raw payout is REVENUE (the amount credited to the
+  // balance); REVENUE minus the stake is PROFIT (the net gain). New users read a
+  // bare "+X" as profit when it is actually gross revenue, so both are spelled
+  // out. Returns two lines for the overlay: ["Revenue: X pts", "Profit: +X pts"].
+  function winLines(payout, stake) {
+    const rev = Number(payout) || 0;
+    const profit = rev - (Number(stake) || 0);
+    const sign = profit < 0 ? "-" : "+";
+    return [
+      "Revenue: " + fmt(rev) + " pts",
+      "Profit: " + sign + fmt(Math.abs(profit)) + " pts",
+    ];
+  }
+
+  // Multiplier headline ("Nx") for a WIN overlay. Prefer the server-reported
+  // multiplier; if it is missing or non-positive, derive it from payout/stake so
+  // the headline is ALWAYS a multiplier, never a bare "Win!".
+  function winMult(mult, payout, stake) {
+    const s = Number(stake) || 0;
+    const m = typeof mult === "number" && mult > 0
+      ? mult
+      : (s > 0 ? (Number(payout) || 0) / s : 0);
+    return (Math.round(m * 100) / 100) + "x";
   }
 
   // Game panel header: icon + title on the left, ⓘ info button on the right.
@@ -279,6 +311,8 @@
     resultBanner,
     resultOverlay,
     syncBalance,
+    winLines,
+    winMult,
     errText,
     nowMs,
     frame,

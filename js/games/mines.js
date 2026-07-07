@@ -11,6 +11,7 @@
   function render(root) {
     BT.ui.clear(root);
     const bet = C.betControl(10);
+    let stake = 0;
     const seed = C.seedBox();
     const banner = C.resultBanner();
     let roundId = null, busy = false, ended = true, minesCount = 3, revealedCount = 0, lastBadge = null;
@@ -73,7 +74,8 @@
       if (busy) return; busy = true; startBtn.disabled = true;
       banner.hide(); overlay.hide(); seed.reset();
       resetCells();
-      const resp = await BT.api.gameBet("mines", { bet: bet.getBet(), params: { mines: minesCount } });
+      stake = bet.getBet();
+      const resp = await BT.api.gameBet("mines", { bet: stake, params: { mines: minesCount } });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id; ended = false; revealedCount = 0;
@@ -166,7 +168,7 @@
                  : (typeof resp.multiplier === "number" ? resp.multiplier
                  : (typeof o.multiplier === "number" ? o.multiplier : 0));
       if (payout > 0) {
-        overlay.show("win", (Math.round(mult * 100) / 100) + "x", "+" + BT.ui.fmt(payout) + " pts");
+        overlay.show("win", C.winMult(mult, payout, stake), C.winLines(payout, stake));
         BT.ui.haptic("success");
       } else {
         overlay.show("lose", (Math.round(mult * 100) / 100) + "x", "Hit a mine!");
