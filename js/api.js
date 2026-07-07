@@ -9,7 +9,10 @@
   }
 
   function hasRealBackend() {
-    return !!base();
+    // A backend is configured whenever BT_API_BASE is a string, INCLUDING the
+    // empty string (which means "same-origin proxy" — requests go to /bt/api/*
+    // on this origin). Only a missing BT_CONFIG counts as unconfigured/preview.
+    return !!(window.BT_CONFIG && typeof window.BT_CONFIG.BT_API_BASE === "string");
   }
 
   function initData() {
