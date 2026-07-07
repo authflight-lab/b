@@ -178,10 +178,13 @@
       C.gameHeader("mines", "Mines", "Reveal gems to grow your multiplier. Hit a mine and you lose. Cash out whenever."),
       bet.node,
       el("div", { class: "field" }, [el("label", null, "Number of Mines"), sliderRow]),
+      // Action buttons stay ABOVE the grid at all times: pre-bet it's the
+      // "Place bet" button; during a round it swaps to "Cash out" + "Pick
+      // Random" in the same spot, so nothing snaps below the grid mid-game.
       startBtn,
-      gridWrap,
       cashBtn,
       pickBtn,
+      gridWrap,
       banner.node,
       seed.node,
     ]));
