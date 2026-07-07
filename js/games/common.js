@@ -111,12 +111,15 @@
     }
     const curIcon = BT.ui.icon("token", 20);
     curIcon.classList.add("betbox-cur");
+    const halveBtn = actionBtn("1/2", () => setVal(Math.floor(cur() / 2)));
+    const doubleBtn = actionBtn("2x", () => setVal(cur() * 2));
+    const maxBtn = actionBtn("Max", () => setVal(maxBet((BT.state && BT.state.balance) || 0)));
     const box = el("div", { class: "betbox" }, [
       curIcon,
       input,
-      actionBtn("1/2", () => setVal(Math.floor(cur() / 2))),
-      actionBtn("2x", () => setVal(cur() * 2)),
-      actionBtn("Max", () => setVal(maxBet((BT.state && BT.state.balance) || 0))),
+      halveBtn,
+      doubleBtn,
+      maxBtn,
     ]);
 
     const node = el("div", { class: "field" }, [
@@ -127,7 +130,16 @@
       setVal(cur());
       return parseInt(input.value, 10);
     }
-    return { node, getBet, input };
+    // Block the whole bet UI (field + 1/2 / 2x / Max) while a round is open, so
+    // it can't be tapped mid-game. It never actually re-stakes an open round,
+    // but leaving it live made it look like it might. The .disabled class dims
+    // it and blocks pointer events; the attributes stop keyboard/tap input.
+    function setDisabled(on) {
+      input.disabled = !!on;
+      halveBtn.disabled = doubleBtn.disabled = maxBtn.disabled = !!on;
+      box.classList.toggle("disabled", !!on);
+    }
+    return { node, getBet, input, setDisabled };
   }
 
   // Provably-fair anchor. The seed pair (client_seed / nonce / server_hash, and

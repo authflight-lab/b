@@ -175,7 +175,7 @@
       renderHistory();
       setCard(rank, true);
       refreshOdds(true);
-      startBtn.style.display = "none"; cashBtn.style.display = "block"; bet.input.disabled = true;
+      startBtn.style.display = "none"; cashBtn.style.display = "block"; bet.setDisabled(true);
       skipBtn.style.display = "block";
       picks = 0; skips = 0;
       syncActions(true);
@@ -271,7 +271,7 @@
       ended = true; roundId = null; BT.clearActiveGame();
       startBtn.style.display = "block"; cashBtn.style.display = "none"; cashBtn.disabled = false;
       skipBtn.style.display = "none"; skipBtn.disabled = false;
-      bet.input.disabled = false;
+      bet.setDisabled(false);
       refreshOdds(false);
       C.syncBalance(resp);
       const payout = resp.payout || 0;

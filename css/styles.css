@@ -207,6 +207,7 @@ input[type="number"]:focus, input[type="text"]:focus, select:focus {
   border-radius: 14px; padding: 6px 6px 6px 14px; box-shadow: var(--glass-inset-hi);
   transition: border-color .15s ease, box-shadow .15s ease;
 }
+.betbox.disabled { opacity: 0.5; pointer-events: none; }
 .betbox:focus-within {
   border-color: var(--accent);
   box-shadow: var(--glass-inset-hi), 0 0 0 3px rgba(0, 124, 143, 0.28);

@@ -83,7 +83,7 @@
       startBtn.style.display = "none"; cashBtn.style.display = "block"; pickBtn.style.display = "block";
       // Must reveal at least one tile before cashing out.
       cashBtn.disabled = true;
-      bet.input.disabled = range.disabled = true;
+      bet.setDisabled(true); range.disabled = true;
       lockGrid(false);
     });
 
@@ -137,7 +137,7 @@
     function finish(resp) {
       ended = true; roundId = null; BT.clearActiveGame(); lockGrid(true);
       startBtn.style.display = "block"; cashBtn.style.display = "none"; pickBtn.style.display = "none";
-      bet.input.disabled = range.disabled = false;
+      bet.setDisabled(false); range.disabled = false;
       // Reveal the FULL board: the mine layout tells us every cell's truth —
       // any index not in `mines` is guaranteed safe, so we can show the whole
       // board (like Rainbet's post-round reveal), dimming cells the player

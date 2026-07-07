@@ -44,7 +44,7 @@
       startBtn.style.display = on ? "none" : "block";
       playRow.style.display = on ? "flex" : "none";
       cashBtn.style.display = on ? "block" : "none";
-      bet.input.disabled = on;
+      bet.setDisabled(on);
     }
     setPlaying(false);
 

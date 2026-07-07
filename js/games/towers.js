@@ -82,7 +82,7 @@
       startBtn.style.display = "none"; cashBtn.style.display = "block"; pickBtn.style.display = "block";
       // Must climb at least one floor before cashing out.
       cashBtn.disabled = true;
-      bet.input.disabled = diffSel.disabled = true;
+      bet.setDisabled(true); diffSel.disabled = true;
       enableFloor(0);
     });
 
@@ -192,7 +192,7 @@
     function finish(resp) {
       ended = true; roundId = null; BT.clearActiveGame(); enableFloor(-1);
       startBtn.style.display = "block"; cashBtn.style.display = "none"; pickBtn.style.display = "none";
-      bet.input.disabled = diffSel.disabled = false;
+      bet.setDisabled(false); diffSel.disabled = false;
       C.syncBalance(resp);
       const payout = resp.payout || 0;
       const multText = typeof resp.multiplier === "number" ? resp.multiplier.toFixed(2) + "x" : (payout > 0 ? "Win!" : "0x");
