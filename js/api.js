@@ -116,6 +116,11 @@
 
     gameBet: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body)),
     gameSettle: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/settle", body)),
+    // One-shot open+settle for single-settle games (dice, plinko): one round
+    // trip instead of gameBet + gameSettle. Returns the settle payload plus the
+    // bet-side server_hash/nonce. Callers should fall back to bet+settle if this
+    // 404s (app + API deploy independently, so /play may not be live yet).
+    gamePlay: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/play", body)),
     gameStep: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/step", body)),
     gameCashout: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/cashout", body)),
   };

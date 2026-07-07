@@ -99,49 +99,71 @@
     const betBtn = el("button", { class: "btn primary block" }, "Roll");
     let busy = false;
 
-    // Instant-game reveal floor: the roll spins for at least this long so it
-    // reads as snappy-but-satisfying even when the network beats it.
-    const REVEAL_MIN_MS = 480;
+    // The roll runs entirely on outcome-free "velocity" motion: the number
+    // churns fast then decelerates while the badge wobbles with a decaying
+    // amplitude — momentum with NOTHING predicted (the active server seed is
+    // secret, so the client can't know the roll), so there is nothing to undo
+    // when the real value lands. REVEAL_MIN_MS is the spin/coast floor before
+    // the true roll may land; SETTLE_MS is the final eased count onto it.
+    // Together they mask the network round trip behind a snappy ~600ms animation.
+    const REVEAL_MIN_MS = 340;
+    const SETTLE_MS = 260;
     let rollRaf = 0;
+    function cancelRaf() { if (rollRaf) { cancelAnimationFrame(rollRaf); rollRaf = 0; } }
 
-    // Start the roll the instant the user taps: the badge sweeps the track and
-    // its number spins — pure, outcome-free motion — while /bet + /settle fly
-    // behind it. Returns { t0, stop }.
+    // Start the instant the user taps: a fast, decelerating number flicker plus
+    // a decaying centre wobble. Returns { t0, stop }.
     function startRolling() {
-      if (rollRaf) cancelAnimationFrame(rollRaf);
+      cancelRaf();
       badge.textContent = "";
-      // `rolling` drops the CSS `left` transition so the rAF sweep stays crisp.
+      // `rolling` drops the CSS `left` transition so the rAF wobble stays crisp.
       badge.className = "dice-badge show rolling";
       const t0 = C.nowMs();
+      let nextFlip = 0;
       function tick() {
         const t = C.nowMs() - t0;
-        badge.textContent = (2 + Math.random() * 96).toFixed(2);
-        const pos = 50 + Math.sin(t / 55) * 36;
+        if (t >= nextFlip) {
+          badge.textContent = (2 + Math.random() * 96).toFixed(2);
+          // cadence widens (~28ms -> ~120ms) so the churn visibly decelerates
+          nextFlip = t + 28 + Math.min(92, t * 0.35);
+        }
+        const wob = 34 * Math.exp(-t / 220);
+        const pos = 50 + Math.sin(t / 42) * wob;
         badge.style.left = Math.max(2, Math.min(98, pos)) + "%";
         rollRaf = requestAnimationFrame(tick);
       }
       rollRaf = requestAnimationFrame(tick);
-      return {
-        t0,
-        stop() { if (rollRaf) { cancelAnimationFrame(rollRaf); rollRaf = 0; } },
-      };
+      return { t0, stop: cancelRaf };
     }
 
     function stopRolling(anim) {
-      if (anim) anim.stop(); else if (rollRaf) { cancelAnimationFrame(rollRaf); rollRaf = 0; }
+      if (anim) anim.stop(); else cancelRaf();
       badge.classList.remove("show", "rolling");
     }
 
-    // Reveal the true roll with an ease-out: hold out the rest of the motion
-    // window, then hand the badge to the CSS `left` transition to settle home.
-    async function revealRoll(anim, roll, win) {
+    // Land it: hold out the rest of the spin window, then ease-count the number
+    // from wherever the flicker left it onto the true roll while the CSS `left`
+    // transition slides the badge home — the velocity "settle" that reads as a
+    // real roll decelerating onto its value. Reuses rollRaf so the finally-guard
+    // can still cancel it if something goes wrong mid-settle.
+    function revealRoll(anim, roll, win) {
       anim.stop();
-      await C.hold(anim.t0, REVEAL_MIN_MS);
-      const pos = Math.max(0, Math.min(100, roll));
-      badge.textContent = roll.toFixed(2);
-      badge.className = "dice-badge show " + (win ? "win" : "lose");
-      void badge.offsetWidth; // re-enable the transition before moving to `pos`
-      badge.style.left = pos + "%";
+      return C.hold(anim.t0, REVEAL_MIN_MS).then(() => new Promise((resolve) => {
+        const from = parseFloat(badge.textContent);
+        const start = isNaN(from) ? roll : from;
+        const pos = Math.max(0, Math.min(100, roll));
+        badge.className = "dice-badge show " + (win ? "win" : "lose");
+        void badge.offsetWidth; // re-enable the CSS left transition before moving
+        badge.style.left = pos + "%";
+        const t0 = C.nowMs();
+        const ease = (k) => 1 - Math.pow(1 - k, 3); // cubic ease-out
+        (function step() {
+          const k = Math.min(1, (C.nowMs() - t0) / SETTLE_MS);
+          badge.textContent = (start + (roll - start) * ease(k)).toFixed(2);
+          if (k < 1) { rollRaf = requestAnimationFrame(step); }
+          else { badge.textContent = roll.toFixed(2); rollRaf = 0; resolve(); }
+        })();
+      }));
     }
 
     betBtn.addEventListener("click", async () => {
@@ -152,27 +174,37 @@
       banner.hide();
       seed.reset();
       const t = target;
+      const stake = bet.getBet();
 
       const anim = startRolling();
       try {
-        const betResp = await BT.api.gameBet("dice", {
-          bet: bet.getBet(),
-          params: { target: t },
-        });
-        if (!betResp || betResp.ok === false) {
-          BT.ui.toast(C.errText(betResp), "error");
-          return;
+        // One-shot open+settle: a single round trip instead of /bet then
+        // /settle. If the API hasn't shipped the /play route yet (app + API
+        // deploy independently, so it can 404), fall back to the two-call flow.
+        let s = await BT.api.gamePlay("dice", { bet: stake, params: { target: t } });
+        if (s && s._status === 404) {
+          const betResp = await BT.api.gameBet("dice", { bet: stake, params: { target: t } });
+          if (!betResp || betResp.ok === false) {
+            BT.ui.toast(C.errText(betResp), "error");
+            return;
+          }
+          seed.setHash(betResp.server_hash);
+          seed.setNonce(betResp.nonce);
+          BT.fair.noteBet(betResp);
+          if (typeof betResp.balance === "number") BT.setBalance(betResp.balance);
+          s = await BT.api.gameSettle("dice", { round_id: betResp.round_id, target: t });
         }
-        seed.setHash(betResp.server_hash);
-        seed.setNonce(betResp.nonce);
-        BT.fair.noteBet(betResp);
-        if (typeof betResp.balance === "number") BT.setBalance(betResp.balance);
-
-        const s = await BT.api.gameSettle("dice", { round_id: betResp.round_id, target: t });
         if (!s || s.ok === false) {
           BT.ui.toast(C.errText(s), "error");
           return;
         }
+
+        // /play returns the hash + nonce alongside the settle; note them for the
+        // Provably Fair panel. (In the fallback path these were already set from
+        // the bet response and the settle carries no nonce, so the guard skips.)
+        if (s.server_hash) seed.setHash(s.server_hash);
+        if (s.nonce !== undefined && s.nonce !== null) { seed.setNonce(s.nonce); BT.fair.noteBet(s); }
+
         const o = s.outcome || {};
         const roll = o.roll !== undefined ? o.roll : o.result;
         const win = o.win !== undefined ? o.win : (s.payout || 0) > 0;
