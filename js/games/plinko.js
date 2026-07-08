@@ -46,10 +46,11 @@
   // Tap-to-drop: every tap fires a real bet, spam-tapping is fine. Because
   // spawn is throttled, spawn rate == bet rate — this is the only rate
   // control on the client; the server rate limiter remains the backstop.
-  const SPAWN_MS = 100;      // min ms between two ball spawns (min tap gap)
+  const SPAWN_MS = 200;      // min ms between two ball spawns (min tap gap)
   const MAX_INFLIGHT = 12;   // max bets placed-but-not-yet-settled at once
 
   // ---- Physics constants ----
+  const BALL_TIME_SCALE = 0.7; // ball motion runs at 70% speed (30% slower)
   const GRAVITY = 1900;      // px/s^2
   const BALL_R = 6.5;
   const PEG_R = 3;
@@ -237,10 +238,14 @@
       updateDropLabel();
     }
 
+    // Only counted here — when the ball actually reaches its bucket — so the
+    // top-left stats panel never gives away the outcome before it lands.
     function finalizeBall(ball, n) {
       if (ball.done) return;
       ball.done = true;
       removeBall(ball);
+      stats.made += ball.payout;
+      updateStats();
       const slot = ball.target;
       if (slot !== null && slot !== undefined && bucketEls[slot]) {
         flashBucket(bucketEls[slot], ball.payout > 0);
@@ -318,8 +323,6 @@
       ball.multiplier = o.multiplier;
       ball.payout = s.payout || 0;
       ball.resolved = true;
-      stats.made += ball.payout;
-      updateStats();
       C.syncBalance(s);
       // If the ball already reached the bottom before the server answered,
       // it was parked in `waiting` — release it into its bucket right now.
@@ -374,19 +377,23 @@
     }
 
     function step(dt) {
+      // Ball motion runs in its own slowed-down time (30% slower than real
+      // time) so drops feel more deliberate; spawn throttling above still
+      // uses real time.
+      const bdt = dt * BALL_TIME_SCALE;
       const n = rows.get();
       for (const ball of balls) {
         if (ball.done) continue;
         if (!ball.waiting) {
-          ball.vy += GRAVITY * dt;
-          ball.x += ball.vx * dt;
-          ball.y += ball.vy * dt;
+          ball.vy += GRAVITY * bdt;
+          ball.x += ball.vx * bdt;
+          ball.y += ball.vy * bdt;
 
           if (ball.target !== null && ball.target !== undefined) {
             const targetX = bucketX(ball.target, n);
             const proximity = Math.min(1, Math.max(0, ball.y / landingY));
             const gain = 3 + proximity * 9;
-            ball.vx += (targetX - ball.x) * gain * dt;
+            ball.vx += (targetX - ball.x) * gain * bdt;
           }
           ball.vx = Math.max(-MAX_VX, Math.min(MAX_VX, ball.vx));
 
@@ -410,7 +417,7 @@
             finalizeBall(ball, n);
           } else {
             ball.vx *= 0.9;
-            ball.x += ball.vx * dt;
+            ball.x += ball.vx * bdt;
             ball.x = Math.max(ball.r, Math.min(W - ball.r, ball.x));
           }
         }
@@ -422,7 +429,7 @@
         if (balls[i].done) continue;
         for (let j = i + 1; j < balls.length; j++) {
           if (balls[j].done) continue;
-          resolveBallRepulsion(balls[i], balls[j], dt);
+          resolveBallRepulsion(balls[i], balls[j], bdt);
         }
       }
     }
