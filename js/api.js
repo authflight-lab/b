@@ -108,6 +108,7 @@
     redeem: (reward_id) => afterMutation(post("/bt/api/redeem", { reward_id })),
     leaderboard: (tab, period) => get("/bt/api/leaderboard?tab=" + encodeURIComponent(tab || "rich") + "&period=" + encodeURIComponent(period || "weekly")),
     history: () => get("/bt/api/history"),
+    bets: () => get("/bt/api/bets"),
 
     getSeedState: () => get("/bt/api/game/seeds"),
     rotateSeed: (body) => post("/bt/api/game/seeds/rotate", body || {}),

@@ -158,6 +158,11 @@
     document.querySelectorAll(".pillnav-link").forEach((btn) => {
       btn.addEventListener("click", () => showScreen(btn.dataset.screen));
     });
+    const betsBtn = document.getElementById("bets-btn");
+    if (betsBtn) {
+      betsBtn.appendChild(BT.ui.icon("paper", 20));
+      betsBtn.addEventListener("click", () => { if (BT.bets) BT.bets.open(); });
+    }
     window.addEventListener("resize", moveIndicator);
   }
 

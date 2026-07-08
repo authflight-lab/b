@@ -74,10 +74,12 @@ body {
 .pillnav {
   position: fixed; left: 50%; bottom: calc(18px + var(--safe-bottom)); z-index: 30;
   transform: translateX(-50%);
-  width: min(86vw, 360px);
+  width: min(92vw, 424px);
+  display: flex; align-items: center; gap: 8px;
 }
 .pillnav-inner {
   position: relative;
+  flex: 1 1 auto; min-width: 0;
   display: flex; align-items: stretch;
   height: 56px;
   padding: 6px;
@@ -129,6 +131,63 @@ body {
 .pillnav-link.active { color: var(--accent); }
 .pillnav-label { font-size: 13px; font-weight: 600; letter-spacing: 0.2px; }
 .pillnav-link.active .pillnav-label { font-weight: 700; }
+
+/* Round side pill — recent bets (paper) button, a separate capsule */
+.pillnav-round {
+  flex: 0 0 auto;
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  background: rgba(18, 22, 30, 0.55);
+  border: 1px solid var(--glass-border);
+  color: var(--text-dim); cursor: pointer;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.30);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+.pillnav-round:active { color: var(--accent); }
+
+/* Recent-bets panel */
+.bets-card { max-width: 480px; padding: 16px 14px; }
+.bets-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.bets-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--accent); }
+.bets-close {
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border); color: var(--text-dim);
+  width: 30px; height: 30px; border-radius: 999px; cursor: pointer;
+  font-size: 17px; line-height: 1; display: flex; align-items: center; justify-content: center;
+}
+.bets-table { display: flex; flex-direction: column; }
+.bets-row {
+  display: grid;
+  grid-template-columns: minmax(72px, 1.1fr) 1.2fr 0.65fr 0.6fr 0.8fr;
+  gap: 6px; align-items: center;
+  padding: 10px 8px; border-radius: 8px;
+  font-size: 12px;
+}
+.bets-row:nth-child(even) {
+  background: var(--glass-bg-2);
+  box-shadow: var(--glass-inset-hi);
+}
+.bets-header {
+  background: none !important; box-shadow: none !important;
+  color: var(--text-dim); font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  padding-top: 4px; padding-bottom: 6px;
+}
+.bets-row .num { text-align: right; }
+.bets-game { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--accent); }
+.bets-game-name { color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bets-date { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bets-bet { font-weight: 700; }
+.bets-mult { color: var(--text-dim); }
+.bets-payout { color: var(--text-dim); font-weight: 700; }
+.bets-payout.win { color: var(--good); }
+.bets-pager { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 10px; }
+.bets-pg-btn { padding: 8px 18px; font-size: 13px; }
+.bets-pg-label { color: var(--text-dim); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 
 /* Cards & sections */
 .card {
