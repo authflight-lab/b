@@ -1632,13 +1632,16 @@ input[type="number"].betbox-input:focus {
   display: flex; align-items: center; justify-content: center;
 }
 .sess-reset:active { background: rgba(255,255,255,0.12); }
-.sess-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;
+.sess-body { display: flex; align-items: stretch; gap: 8px; }
+.sess-stack {
+  display: flex; flex-direction: column; gap: 8px;
+  flex: 0 0 40%; max-width: 40%;
 }
 .sess-cell {
   padding: 8px 10px; border-radius: 12px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
 }
 .sess-label {
   font-size: 10.5px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase;
@@ -1648,7 +1651,7 @@ input[type="number"].betbox-input:focus {
 .sess-val.pos { color: #54de91; }
 .sess-val.neg { color: #f4364c; }
 .sess-chart {
-  position: relative; height: 84px; border-radius: 12px; overflow: hidden;
+  position: relative; flex: 1; min-height: 84px; border-radius: 12px; overflow: hidden;
   background: linear-gradient(180deg, #10141e 0%, #0b0e16 100%);
   border: 1px solid rgba(255,255,255,0.07);
 }

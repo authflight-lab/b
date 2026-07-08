@@ -392,7 +392,7 @@
     }
     const cProfit = cell("Profit", "");
     const cWagered = cell("Wagered", "");
-    const grid = el("div", { class: "sess-grid" }, [cProfit.node, cWagered.node]);
+    const stack = el("div", { class: "sess-stack" }, [cProfit.node, cWagered.node]);
 
     // Chart: fixed viewBox stretched to the box; non-scaling strokes keep the
     // line crisp. The green/red split is two copies of the same line + area,
@@ -465,13 +465,13 @@
       "aria-label": "Reset session stats",
       onclick: () => BT.session.reset(),
     }, "↺");
+    const body = el("div", { class: "sess-body" }, [stack, chartWrap]);
     const node = el("div", { class: "card sess-card" }, [
       el("div", { class: "sess-head" }, [
         el("div", { class: "sess-title" }, "Session stats"),
         resetBtn,
       ]),
-      grid,
-      chartWrap,
+      body,
     ]);
 
     // Deterministic teardown: a new panel replaces the old one wholesale, so
