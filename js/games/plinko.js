@@ -113,27 +113,8 @@
     const buckets = el("div", { class: "pk-buckets" });
     let bucketEls = [];
 
-    // ---- Session stats (this render session only; resets on reload) ----
-    const stats = { bet: 0, made: 0 };
-    const statBetEl = el("div", { class: "pk-stat-val" }, "0");
-    const statMadeEl = el("div", { class: "pk-stat-val" }, "0");
-    const statNetEl = el("div", { class: "pk-stat-val" }, "+0");
-    const statsBox = el("div", { class: "pk-stats" }, [
-      el("div", { class: "pk-stat-row" }, [el("span", null, "Total bet"), statBetEl]),
-      el("div", { class: "pk-stat-row" }, [el("span", null, "Total made"), statMadeEl]),
-      el("div", { class: "pk-stat-row pk-stat-net" }, [el("span", null, "Overall"), statNetEl]),
-    ]);
-    board.appendChild(statsBox);
-
-    function updateStats() {
-      const net = stats.made - stats.bet;
-      statBetEl.textContent = BT.ui.fmt(stats.bet);
-      statMadeEl.textContent = BT.ui.fmt(stats.made);
-      statNetEl.textContent = (net >= 0 ? "+" : "-") + BT.ui.fmt(Math.abs(net));
-      statNetEl.classList.toggle("pos", net > 0);
-      statNetEl.classList.toggle("neg", net < 0);
-    }
-    updateStats();
+    // (The old on-board session stats box lived here; it was replaced by the
+    // shared session P&L tracker rendered under every game — see play.js.)
 
     // ---- Sim state ----
     let W = 0, H = 0, DPR = 1;
@@ -238,14 +219,12 @@
       updateDropLabel();
     }
 
-    // Only counted here — when the ball actually reaches its bucket — so the
-    // top-left stats panel never gives away the outcome before it lands.
+    // Bucket flash + haptic fire only here — when the ball actually reaches
+    // its bucket — so nothing gives away the outcome before it lands.
     function finalizeBall(ball, n) {
       if (ball.done) return;
       ball.done = true;
       removeBall(ball);
-      stats.made += ball.payout;
-      updateStats();
       const slot = ball.target;
       if (slot !== null && slot !== undefined && bucketEls[slot]) {
         flashBucket(bucketEls[slot], ball.payout > 0);
@@ -300,8 +279,6 @@
       seed.setHash(betResp.server_hash);
       seed.setNonce(betResp.nonce);
       BT.fair.noteBet(betResp);
-      stats.bet += betAmt;
-      updateStats();
 
       let s;
       try {

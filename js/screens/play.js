@@ -180,6 +180,11 @@
       catch (e) { panel.appendChild(BT.ui.notice("Couldn't load that game.")); }
     }
 
+    // Session P&L tracker — one shared card under every game (fed centrally
+    // via api.js/BT.session, so it carries across game switches and updates
+    // live as rounds settle).
+    root.appendChild(BT.games.common.sessionPanel());
+
     // VERBATIM legal footer (spec §9). Do not paraphrase.
     root.appendChild(el("div", { class: "legal-footer" }, BT.LEGAL_POINTS));
   }

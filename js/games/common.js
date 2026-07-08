@@ -291,6 +291,211 @@
     return map[code] || ("Error: " + code);
   }
 
+  // --- Session P&L tracker ------------------------------------------------
+  // Client-side, session-only record of every settled wager (all games
+  // combined). Fed centrally by the api client (see api.js noteOpen /
+  // noteSettle) — it observes bet + settle responses, so no game controller
+  // reports anything itself. Resets on reload; nothing is persisted or sent
+  // anywhere. `curve` is the cumulative net profit after each settled bet —
+  // the stepped up/down line the panel charts.
+  BT.session = (function () {
+    const open = {};   // round_id -> stake, remembered between /bet and its settle
+    const S = { wagered: 0, returned: 0, wins: 0, losses: 0 };
+    let curve = [0];
+    const subs = [];
+
+    function emit() {
+      subs.slice().forEach((fn) => { try { fn(); } catch (e) {} });
+    }
+    return {
+      // Remember an opened round's stake until its settle arrives.
+      open(roundId, stake) {
+        if (roundId !== undefined && roundId !== null) open[roundId] = Number(stake) || 0;
+      },
+      // Pop the stake for a settling round. Returns undefined if unknown
+      // (e.g. a round opened before a reload) — that settle is simply not
+      // tracked rather than guessed at. Popping also makes settlement
+      // observation idempotent: a crash bust seen via /cashout can't be
+      // counted again by the /check poll.
+      take(roundId) {
+        if (roundId !== undefined && roundId !== null && Object.prototype.hasOwnProperty.call(open, roundId)) {
+          const v = open[roundId];
+          delete open[roundId];
+          return v;
+        }
+        return undefined;
+      },
+      settle(stake, payout) {
+        const st = Number(stake) || 0;
+        const po = Number(payout) || 0;
+        S.wagered += st;
+        S.returned += po;
+        // Wins vs losses per net result: a payout at or below the stake is a
+        // loss (payout > stake is the win test, so a 1.0x push counts as a
+        // loss of nothing but not a win).
+        if (po > st) S.wins += 1; else S.losses += 1;
+        curve.push(S.returned - S.wagered);
+        // Cap the curve; decimate every other point (keeping first and last)
+        // so a long session keeps its overall shape with a bounded array.
+        if (curve.length > 240) {
+          curve = curve.filter((_, i, a) => i % 2 === 0 || i === a.length - 1);
+        }
+        emit();
+      },
+      reset() {
+        S.wagered = 0; S.returned = 0; S.wins = 0; S.losses = 0;
+        curve = [0];
+        Object.keys(open).forEach((k) => delete open[k]);
+        emit();
+      },
+      stats: () => ({
+        profit: S.returned - S.wagered,
+        wagered: S.wagered,
+        wins: S.wins,
+        losses: S.losses,
+        bets: S.wins + S.losses,
+      }),
+      curve: () => curve.slice(),
+      subscribe(fn) {
+        subs.push(fn);
+        return () => {
+          const i = subs.indexOf(fn);
+          if (i >= 0) subs.splice(i, 1);
+        };
+      },
+    };
+  })();
+
+  // Session stats panel — the shared card shown under every game: a 2×2 stat
+  // grid (Profit / Wins / Wagered / Losses) plus a cumulative net-profit
+  // curve, green above zero and red below. Purely a view over BT.session.
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  let sessPanelSeq = 0;
+  // The single most recent panel instance. Only one session panel exists at a
+  // time (renderGames replaces it wholesale), so each new panel deterministically
+  // tears down its detached predecessor's subscription instead of relying on a
+  // future emit to notice the node is gone.
+  let sessPanelLive = null;
+  function svgNode(tag, attrs) {
+    const n = document.createElementNS(SVG_NS, tag);
+    if (attrs) for (const k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+
+  function sessionPanel() {
+    const uid = "sess" + (++sessPanelSeq);
+    const signed = (v) => (v < 0 ? "-" : "+") + fmt(Math.abs(v));
+
+    function cell(label, cls) {
+      const val = el("div", { class: "sess-val " + (cls || "") }, "0");
+      return { node: el("div", { class: "sess-cell" }, [el("div", { class: "sess-label" }, label), val]), val };
+    }
+    const cProfit = cell("Profit", "");
+    const cWins = cell("Wins", "pos");
+    const cWagered = cell("Wagered", "");
+    const cLosses = cell("Losses", "neg");
+    const grid = el("div", { class: "sess-grid" }, [cProfit.node, cWins.node, cWagered.node, cLosses.node]);
+
+    // Chart: fixed viewBox stretched to the box; non-scaling strokes keep the
+    // line crisp. The green/red split is two copies of the same line + area,
+    // clipped above and below the zero baseline.
+    const CW = 100, CH = 34, PAD = 2;
+    const svg = svgNode("svg", {
+      class: "sess-svg",
+      viewBox: "0 0 " + CW + " " + CH,
+      preserveAspectRatio: "none",
+      "aria-hidden": "true",
+    });
+    const chartWrap = el("div", { class: "sess-chart" });
+    chartWrap.appendChild(svg);
+    const emptyMsg = el("div", { class: "sess-empty" }, "Profit over time charts here once you bet.");
+    chartWrap.appendChild(emptyMsg);
+
+    function drawCurve(curve) {
+      BT.ui.clear(svg);
+      let lo = Math.min(0, Math.min.apply(null, curve));
+      let hi = Math.max(0, Math.max.apply(null, curve));
+      // A flat curve (every settle was a push, so net profit never left 0)
+      // would collapse the range; pad it symmetrically so the zero baseline
+      // sits centred rather than pinned to an edge.
+      if (hi === lo) { hi += 1; lo -= 1; }
+      const span = hi - lo;
+      const y = (v) => PAD + ((hi - v) / span) * (CH - PAD * 2);
+      const x = (i) => (curve.length > 1 ? (i / (curve.length - 1)) * CW : 0);
+      const zeroY = y(0);
+
+      const defs = svgNode("defs");
+      const mkClip = (id, yTop, h) => {
+        const cp = svgNode("clipPath", { id });
+        cp.appendChild(svgNode("rect", { x: -1, y: yTop, width: CW + 2, height: Math.max(0, h) }));
+        defs.appendChild(cp);
+      };
+      mkClip(uid + "-up", -1, zeroY + 1);
+      mkClip(uid + "-dn", zeroY, CH - zeroY + 1);
+      svg.appendChild(defs);
+
+      // Zero baseline.
+      svg.appendChild(svgNode("line", {
+        x1: 0, y1: zeroY, x2: CW, y2: zeroY, class: "sess-zero",
+      }));
+
+      const linePts = curve.map((v, i) => x(i) + "," + y(v)).join(" ");
+      const areaD = "M0," + zeroY + " L" + curve.map((v, i) => x(i) + "," + y(v)).join(" L") + " L" + CW + "," + zeroY + " Z";
+      [["up", "sess-up"], ["dn", "sess-dn"]].forEach(([side, cls]) => {
+        const g = svgNode("g", { "clip-path": "url(#" + uid + "-" + side + ")" });
+        g.appendChild(svgNode("path", { d: areaD, class: "sess-area " + cls }));
+        g.appendChild(svgNode("polyline", { points: linePts, class: "sess-line " + cls }));
+        svg.appendChild(g);
+      });
+    }
+
+    function update() {
+      const s = BT.session.stats();
+      cProfit.val.textContent = signed(s.profit);
+      cProfit.val.className = "sess-val " + (s.profit > 0 ? "pos" : s.profit < 0 ? "neg" : "");
+      cWins.val.textContent = String(s.wins);
+      cWagered.val.textContent = fmt(s.wagered);
+      cLosses.val.textContent = String(s.losses);
+      const curve = BT.session.curve();
+      const hasData = s.bets > 0;
+      emptyMsg.classList.toggle("hidden", hasData);
+      svg.classList.toggle("hidden", !hasData);
+      if (hasData) drawCurve(curve);
+    }
+
+    const resetBtn = el("button", {
+      class: "sess-reset",
+      type: "button",
+      "aria-label": "Reset session stats",
+      onclick: () => BT.session.reset(),
+    }, "↺");
+    const node = el("div", { class: "card sess-card" }, [
+      el("div", { class: "sess-head" }, [
+        el("div", { class: "sess-title" }, "Session stats"),
+        el("div", { class: "sess-note" }, "this session only"),
+        resetBtn,
+      ]),
+      grid,
+      chartWrap,
+    ]);
+
+    // Deterministic teardown: a new panel replaces the old one wholesale, so
+    // creating this one unsubscribes any detached predecessor immediately.
+    // The isConnected check on emit remains as a belt-and-braces fallback for
+    // a panel that is removed without a successor ever being created.
+    if (sessPanelLive && !sessPanelLive.node.isConnected) {
+      sessPanelLive.unsub();
+      sessPanelLive = null;
+    }
+    const unsub = BT.session.subscribe(() => {
+      if (!node.isConnected) { unsub(); return; }
+      update();
+    });
+    sessPanelLive = { node, unsub };
+    update();
+    return node;
+  }
+
   // --- Snappy-reveal motion helpers --------------------------------------
   // Games start outcome-free motion the instant the user taps and fire the
   // network request behind it. We NEVER know the result ahead of the server
@@ -312,6 +517,7 @@
     seedBox,
     resultBanner,
     resultOverlay,
+    sessionPanel,
     syncBalance,
     winLines,
     winMult,

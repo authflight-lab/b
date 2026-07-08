@@ -103,6 +103,38 @@
     catch (e) { invalidateMe(); return p; }
   };
 
+  // ---- Session P&L observation -------------------------------------------
+  // Every game call funnels through here, so the per-session profit tracker
+  // (BT.session, defined in games/common.js) is fed centrally instead of
+  // touching all nine game controllers. A SETTLE is recognised by a numeric
+  // `payout` on a successful response — only settled/cashed-out rounds carry
+  // one (mid-round steps don't). Stakes are remembered per round_id at bet
+  // time; the one-shot /play knows its stake straight from the request body.
+  // Purely observational: never alters the response, never throws.
+  function noteOpen(body, p) {
+    return p.then((resp) => {
+      try {
+        if (resp && resp.ok !== false && !resp.error && resp.round_id !== undefined && BT.session) {
+          BT.session.open(resp.round_id, Number(body && body.bet) || 0);
+        }
+      } catch (e) {}
+      return resp;
+    });
+  }
+  function noteSettle(getStake, p) {
+    return p.then((resp) => {
+      try {
+        if (resp && resp.ok !== false && !resp.error && typeof resp.payout === "number" && BT.session) {
+          const stake = getStake(resp);
+          if (typeof stake === "number") BT.session.settle(stake, resp.payout);
+        }
+      } catch (e) {}
+      return resp;
+    });
+  }
+  const stakeFromBody = (body) => () => Number(body && body.bet) || 0;
+  const stakeFromRound = (body) => () => (BT.session ? BT.session.take(body && body.round_id) : undefined);
+
   // Endpoint helpers — all paths under /bt/api/... per contract §4.
   const api = {
     isConfigured: hasRealBackend,
@@ -127,18 +159,21 @@
 
     backlogClaim: () => afterMutation(post("/bt/api/backlog/claim")),
 
-    gameBet: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body)),
-    gameSettle: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/settle", body)),
+    gameBet: (name, body) => noteOpen(body, afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body))),
+    gameSettle: (name, body) => noteSettle(stakeFromRound(body), afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/settle", body))),
     // One-shot open+settle for single-settle games (dice, plinko): one round
     // trip instead of gameBet + gameSettle. Returns the settle payload plus the
     // bet-side server_hash/nonce. Callers should fall back to bet+settle if this
     // 404s (app + API deploy independently, so /play may not be live yet).
-    gamePlay: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/play", body)),
-    gameStep: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/step", body)),
-    gameCashout: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/cashout", body)),
+    gamePlay: (name, body) => noteSettle(stakeFromBody(body), afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/play", body))),
+    // A step can settle too (a bust, or a terminal auto-cash) — those responses
+    // carry `payout`; mid-round steps don't, so noteSettle ignores them.
+    gameStep: (name, body) => noteSettle(stakeFromRound(body), afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/step", body))),
+    gameCashout: (name, body) => noteSettle(stakeFromRound(body), afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/cashout", body))),
     // Crash liveness poll (~1/s while the curve rises). Plain post — a bust
-    // pays 0 so the /me memo need not be dropped on every poll tick.
-    crashCheck: (body) => post("/bt/api/game/crash/check", body),
+    // pays 0 so the /me memo need not be dropped on every poll tick. A poll
+    // that discovers the crash settles the round (payout 0), so it's observed.
+    crashCheck: (body) => noteSettle(stakeFromRound(body), post("/bt/api/game/crash/check", body)),
   };
 
   BT.api = api;
