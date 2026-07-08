@@ -1,5 +1,8 @@
-// Plinko — single settle. Drop a ball; server returns the full path & slot.
-// Redesigned board: peg pyramid + colored multiplier buckets + bouncing ball.
+// Plinko — unlimited concurrent balls in one shared physics sim. Every ball
+// is a real, independently-throttled bet (bet -> settle); the sim only
+// renders motion and steers each ball toward the bucket the server already
+// decided. No odds/payout math happens here — outcome.slot/multiplier and
+// payout come straight from the settle response.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -39,21 +42,28 @@
     return d < 0.5 ? lerp(YELLOW, ORANGE, d * 2) : lerp(ORANGE, RED, (d - 0.5) * 2);
   }
 
+  // ---- Spawn throttle (tunable) ----
+  // Tap-to-drop: every tap fires a real bet, spam-tapping is fine. Because
+  // spawn is throttled, spawn rate == bet rate — this is the only rate
+  // control on the client; the server rate limiter remains the backstop.
+  const SPAWN_MS = 100;      // min ms between two ball spawns (min tap gap)
+  const MAX_INFLIGHT = 12;   // max bets placed-but-not-yet-settled at once
+
+  // ---- Physics constants ----
+  const GRAVITY = 1900;      // px/s^2
+  const BALL_R = 6.5;
+  const PEG_R = 3;
+  const REST = 0.42;         // peg-bounce restitution
+  const WALL_REST = 0.5;
+  const MAX_VX = 260;
+  const BALL_REPEL = 900;    // ball-vs-ball soft push strength
+
   function render(root) {
     BT.ui.clear(root);
     const bet = C.betControl(10);
     const seed = C.seedBox();
     const banner = C.resultBanner();
-    let busy = false;
-
-    // Extra clicks are queued and fired one at a time. DROP_DELAY_MS is the
-    // enforced wait between consecutive drops; 0 disables it entirely so drops
-    // fire back-to-back (only the ball animation itself paces them).
-    const DROP_DELAY_MS = 0;      // no enforced wait between consecutive drops
-    const QUEUE_MAX = 15;         // sanity cap on how many drops can be queued
-    let queue = [];
-    let processing = false;
-    let lastDropEndAt = 0;
+    let busy = false; // true while any ball is in flight or animating — locks rows/risk
 
     // ---- Segmented chip controls (rows + risk) ----
     function chipGroup(opts, initial, onChange) {
@@ -94,37 +104,92 @@
 
     // ---- Board ----
     const board = el("div", { class: "pk-board" });
-    const pegs = el("div", { class: "pk-pegs" });
-    const ball = el("div", { class: "pk-ball hidden" });
-    pegs.appendChild(ball);
-    board.appendChild(pegs);
+    const pegsWrap = el("div", { class: "pk-pegs" });
+    const canvas = el("canvas", { class: "pk-canvas" });
+    const ctx = canvas.getContext("2d");
+    pegsWrap.appendChild(canvas);
+    board.appendChild(pegsWrap);
     const buckets = el("div", { class: "pk-buckets" });
     let bucketEls = [];
+
+    // ---- Session stats (this render session only; resets on reload) ----
+    const stats = { bet: 0, made: 0 };
+    const statBetEl = el("div", { class: "pk-stat-val" }, "0");
+    const statMadeEl = el("div", { class: "pk-stat-val" }, "0");
+    const statNetEl = el("div", { class: "pk-stat-val" }, "+0");
+    const statsBox = el("div", { class: "pk-stats" }, [
+      el("div", { class: "pk-stat-row" }, [el("span", null, "Total bet"), statBetEl]),
+      el("div", { class: "pk-stat-row" }, [el("span", null, "Total made"), statMadeEl]),
+      el("div", { class: "pk-stat-row pk-stat-net" }, [el("span", null, "Overall"), statNetEl]),
+    ]);
+    board.appendChild(statsBox);
+
+    function updateStats() {
+      const net = stats.made - stats.bet;
+      statBetEl.textContent = BT.ui.fmt(stats.bet);
+      statMadeEl.textContent = BT.ui.fmt(stats.made);
+      statNetEl.textContent = (net >= 0 ? "+" : "-") + BT.ui.fmt(Math.abs(net));
+      statNetEl.classList.toggle("pos", net > 0);
+      statNetEl.classList.toggle("neg", net < 0);
+    }
+    updateStats();
+
+    // ---- Sim state ----
+    let W = 0, H = 0, DPR = 1;
+    let pegs = [];
+    let balls = [];
+    let ballIdSeq = 0;
+    let lastSpawnAt = 0;
+    let inFlightCount = 0;
+    let pendingStake = 0; // bet amounts fired but whose /bet response hasn't landed yet
+    let rafId = null;
+    let lastT = null;
+    let landingY = 0;
+
+    function sizeCanvas() {
+      DPR = window.devicePixelRatio || 1;
+      const rect = pegsWrap.getBoundingClientRect();
+      W = Math.max(1, Math.round(rect.width));
+      H = Math.max(1, Math.round(rect.height));
+      canvas.width = Math.round(W * DPR);
+      canvas.height = Math.round(H * DPR);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      landingY = H - BALL_R - 1;
+    }
+
+    function computePegs() {
+      const n = rows.get();
+      const u = 1 / (n + 1);
+      const list = [];
+      for (let r = 0; r < n; r++) {
+        const count = r + 3;
+        const yfrac = (r + 1) / (n + 1);
+        const leftInset = (n - 1 - r) / 2;
+        const y = (yfrac * 0.9 + 0.04) * H;
+        for (let m = 0; m < count; m++) {
+          const xfrac = (leftInset + m) * u;
+          list.push({ x: xfrac * W, y });
+        }
+      }
+      pegs = list;
+    }
+
+    function bucketX(j, n) {
+      return ((j + 0.5) / (n + 1)) * W;
+    }
+
+    function rebuildGeometry() {
+      sizeCanvas();
+      computePegs();
+    }
+    window.addEventListener("resize", rebuildGeometry);
 
     function rebuild() {
       const n = rows.get();
       const rk = risk.get();
       board.style.height = n * 22 + 46 + "px";
-
-      // Pegs: n rows, row r (0-based) has r+3 pegs → bottom row has n+2 pegs
-      // → n+1 gaps → n+1 buckets. u = one bucket width as a fraction.
-      const u = 1 / (n + 1);
-      const frag = document.createDocumentFragment();
-      for (let r = 0; r < n; r++) {
-        const count = r + 3;
-        const yfrac = (r + 1) / (n + 1);
-        const leftInset = (n - 1 - r) / 2;
-        for (let m = 0; m < count; m++) {
-          const xfrac = (leftInset + m) * u;
-          const dot = el("div", { class: "pk-peg" });
-          dot.style.left = xfrac * 100 + "%";
-          dot.style.top = yfrac * 90 + 4 + "%";
-          frag.appendChild(dot);
-        }
-      }
-      BT.ui.clear(pegs);
-      pegs.appendChild(ball);
-      pegs.appendChild(frag);
 
       // Buckets
       BT.ui.clear(buckets);
@@ -137,144 +202,279 @@
         buckets.appendChild(b);
         bucketEls.push(b);
       }
+      rebuildGeometry();
     }
     rebuild();
-    const overlay = C.resultOverlay(board);
 
     const dropBtn = el("button", { class: "btn primary block" }, "Drop Ball");
 
-    function frame(ms) {
-      return new Promise((r) => setTimeout(r, ms));
-    }
-
-    async function animatePath(path, n) {
-      const steps = Array.isArray(path) ? path : [];
-      const total = steps.length || n;
-      const u = 1 / (n + 1);
-      let rights = 0;
-      ball.classList.remove("hidden");
-      ball.style.left = "50%";
-      ball.style.top = "0%";
-      await frame(30);
-      for (let i = 1; i <= total; i++) {
-        const s = steps[i - 1];
-        const goRight = s === 1 || s === "R" || s === "r" || s === true;
-        if (goRight) rights++;
-        const xfrac = 0.5 + (rights - i / 2) * u;
-        ball.style.left = xfrac * 100 + "%";
-        ball.style.top = (i / total) * 90 + 4 + "%";
-        await frame(92);
+    function updateBusyLock() {
+      const active = balls.length > 0 || inFlightCount > 0;
+      if (active !== busy) {
+        busy = active;
+        rows.node.classList.toggle("locked", busy);
+        risk.node.classList.toggle("locked", busy);
       }
-      return rights;
-    }
-
-    function setBusy(v) {
-      busy = v;
-      rows.node.classList.toggle("locked", v);
-      risk.node.classList.toggle("locked", v);
     }
 
     function updateDropLabel() {
-      dropBtn.textContent = queue.length > 0 ? "Drop Ball (" + queue.length + " queued)" : "Drop Ball";
+      dropBtn.textContent = inFlightCount > 0
+        ? "Drop Ball \u00b7 " + inFlightCount + " in flight"
+        : "Drop Ball";
     }
 
-    // Block until DROP_DELAY_MS has elapsed since the previous drop finished,
-    // showing a live countdown on the button. The first-ever drop waits 0ms.
-    async function waitBetweenDrops() {
-      const end = lastDropEndAt + DROP_DELAY_MS;
-      let remain = end - Date.now();
-      while (remain > 0) {
-        dropBtn.textContent =
-          "Next drop in " + Math.ceil(remain / 1000) + "s\u2026" +
-          (queue.length ? " (" + queue.length + " queued)" : "");
-        await frame(200);
-        remain = end - Date.now();
+    function flashBucket(elm, win) {
+      elm.classList.remove("flash-win", "flash-loss");
+      void elm.offsetWidth;
+      elm.classList.add(win ? "flash-win" : "flash-loss");
+      setTimeout(() => elm.classList.remove("flash-win", "flash-loss"), 520);
+    }
+
+    function removeBall(ball) {
+      const idx = balls.indexOf(ball);
+      if (idx >= 0) balls.splice(idx, 1);
+      updateBusyLock();
+      updateDropLabel();
+    }
+
+    function finalizeBall(ball, n) {
+      if (ball.done) return;
+      ball.done = true;
+      removeBall(ball);
+      const slot = ball.target;
+      if (slot !== null && slot !== undefined && bucketEls[slot]) {
+        flashBucket(bucketEls[slot], ball.payout > 0);
       }
+      BT.ui.haptic(ball.payout > 0 ? "success" : "error");
     }
 
-    async function doDrop(job) {
-      overlay.hide(); banner.hide();
-      seed.reset();
+    // Spawn one ball = one real bet. Fires gameBet then gameSettle; the ball
+    // falls immediately (optimistic) and is steered toward the server's
+    // bucket once the settle response names it. The ball never determines
+    // its own payout — only performs the server's already-decided answer.
+    async function spawnBall(betAmt) {
       const n = rows.get();
       const rk = risk.get();
-      bucketEls.forEach((b) => b.classList.remove("hit"));
+      pendingStake += betAmt;
+      inFlightCount++;
+      updateBusyLock();
+      updateDropLabel();
+
+      const ball = {
+        id: ++ballIdSeq,
+        x: W / 2 + (Math.random() - 0.5) * 6,
+        y: BALL_R + 2,
+        vx: (Math.random() - 0.5) * 40,
+        vy: 0,
+        r: BALL_R,
+        bet: betAmt,
+        target: null,
+        multiplier: null,
+        payout: null,
+        resolved: false,
+        waiting: false,
+        done: false,
+      };
+      balls.push(ball);
+
+      let betResp;
       try {
-        const betResp = await BT.api.gameBet("plinko", {
-          bet: job.bet,
-          params: { rows: n, risk: rk },
-        });
-        if (!betResp || betResp.ok === false) {
-          BT.ui.toast(C.errText(betResp), "error");
-          return;
-        }
-        seed.setHash(betResp.server_hash);
-        seed.setNonce(betResp.nonce);
-        BT.fair.noteBet(betResp);
-        if (typeof betResp.balance === "number") BT.setBalance(betResp.balance);
-
-        const s = await BT.api.gameSettle("plinko", { round_id: betResp.round_id });
-        if (!s || s.ok === false) {
-          BT.ui.toast(C.errText(s), "error");
-          return;
-        }
-        const o = s.outcome || {};
-        await animatePath(o.path, n);
-        const slot = o.slot !== undefined ? o.slot : o.bucket;
-        if (slot !== undefined && slot >= 0 && slot < bucketEls.length) {
-          ball.style.left = ((slot + 0.5) / (n + 1)) * 100 + "%";
-          ball.style.top = "98%";
-          const hit = bucketEls[slot];
-          // Show the exact multiplier the server actually paid for this bucket.
-          if (o.multiplier !== undefined) hit.textContent = fmtMult(o.multiplier);
-          hit.classList.add("hit");
-        }
-        C.syncBalance(s);
-        const payout = s.payout || 0;
-        if (payout > 0) {
-          overlay.show("win", C.winMult(o.multiplier, payout, job.bet), C.winLines(payout, job.bet));
-          BT.ui.haptic("success");
-        } else {
-          BT.ui.haptic("error");
-        }
-      } finally {
-        lastDropEndAt = Date.now();
+        betResp = await BT.api.gameBet("plinko", { bet: betAmt, params: { rows: n, risk: rk } });
+      } catch (e) {
+        betResp = null;
       }
-    }
+      pendingStake = Math.max(0, pendingStake - betAmt);
 
-    async function processQueue() {
-      if (processing) return;
-      processing = true;
-      setBusy(true);
-      try {
-        while (queue.length) {
-          dropBtn.disabled = false; // allow queueing more during the wait
-          await waitBetweenDrops();
-          const job = queue.shift();
-          updateDropLabel();
-          dropBtn.disabled = true;  // lock while the ball is dropping
-          await doDrop(job);
-        }
-      } finally {
-        processing = false;
-        setBusy(false);
-        dropBtn.disabled = false;
-        updateDropLabel();
-      }
-    }
-
-    dropBtn.addEventListener("click", () => {
-      if (queue.length >= QUEUE_MAX) {
-        BT.ui.toast("Queue full — wait for a few drops to finish.", "error");
+      if (!betResp || betResp.ok === false) {
+        BT.ui.toast(C.errText(betResp), "error");
+        inFlightCount = Math.max(0, inFlightCount - 1);
+        removeBall(ball);
         return;
       }
-      queue.push({ bet: bet.getBet() });
+      if (typeof betResp.balance === "number") BT.setBalance(betResp.balance);
+      seed.setHash(betResp.server_hash);
+      seed.setNonce(betResp.nonce);
+      BT.fair.noteBet(betResp);
+      stats.bet += betAmt;
+      updateStats();
+
+      let s;
+      try {
+        s = await BT.api.gameSettle("plinko", { round_id: betResp.round_id });
+      } catch (e) {
+        s = null;
+      }
+      inFlightCount = Math.max(0, inFlightCount - 1);
       updateDropLabel();
-      processQueue();
+
+      if (!s || s.ok === false) {
+        BT.ui.toast(C.errText(s), "error");
+        removeBall(ball);
+        return;
+      }
+      const o = s.outcome || {};
+      const slot = o.slot !== undefined ? o.slot : o.bucket;
+      ball.target = typeof slot === "number" ? slot : null;
+      ball.multiplier = o.multiplier;
+      ball.payout = s.payout || 0;
+      ball.resolved = true;
+      stats.made += ball.payout;
+      updateStats();
+      C.syncBalance(s);
+      // If the ball already reached the bottom before the server answered,
+      // it was parked in `waiting` — release it into its bucket right now.
+      if (ball.waiting && !ball.done) finalizeBall(ball, rows.get());
+      updateBusyLock();
+    }
+
+    function trySpawn() {
+      const now = C.nowMs();
+      if (now - lastSpawnAt < SPAWN_MS) return false;
+      if (inFlightCount >= MAX_INFLIGHT) return false;
+      const betAmt = bet.getBet();
+      const avail = ((BT.state && BT.state.balance) || 0) - pendingStake;
+      if (betAmt > avail) return false;
+      lastSpawnAt = now;
+      spawnBall(betAmt);
+      return true;
+    }
+
+    // ---- Physics step ----
+    function resolvePegCollision(ball, peg) {
+      const dx = ball.x - peg.x, dy = ball.y - peg.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const minDist = ball.r + PEG_R;
+      if (dist >= minDist || dist < 1e-4) return;
+      const nx = dx / dist, ny = dy / dist;
+      const overlap = minDist - dist;
+      ball.x += nx * overlap;
+      ball.y += ny * overlap;
+      const vn = ball.vx * nx + ball.vy * ny;
+      if (vn < 0) {
+        ball.vx -= (1 + REST) * vn * nx;
+        ball.vy -= (1 + REST) * vn * ny;
+      }
+      // Small random jitter so bounces off the same peg never look identical.
+      ball.vx += (Math.random() - 0.5) * 55;
+      if (ball.vy < 40) ball.vy = 40;
+    }
+
+    function resolveBallRepulsion(a, b, dt) {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const minDist = a.r + b.r;
+      if (dist >= minDist || dist < 1e-4) return;
+      const nx = dx / dist, ny = dy / dist;
+      const overlap = minDist - dist;
+      a.x -= nx * overlap * 0.5; a.y -= ny * overlap * 0.5;
+      b.x += nx * overlap * 0.5; b.y += ny * overlap * 0.5;
+      const push = BALL_REPEL * dt;
+      a.vx -= nx * push; a.vy -= ny * push * 0.3;
+      b.vx += nx * push; b.vy += ny * push * 0.3;
+    }
+
+    function step(dt) {
+      const n = rows.get();
+      for (const ball of balls) {
+        if (ball.done) continue;
+        if (!ball.waiting) {
+          ball.vy += GRAVITY * dt;
+          ball.x += ball.vx * dt;
+          ball.y += ball.vy * dt;
+
+          if (ball.target !== null && ball.target !== undefined) {
+            const targetX = bucketX(ball.target, n);
+            const proximity = Math.min(1, Math.max(0, ball.y / landingY));
+            const gain = 3 + proximity * 9;
+            ball.vx += (targetX - ball.x) * gain * dt;
+          }
+          ball.vx = Math.max(-MAX_VX, Math.min(MAX_VX, ball.vx));
+
+          if (ball.x < ball.r) { ball.x = ball.r; ball.vx = Math.abs(ball.vx) * WALL_REST; }
+          if (ball.x > W - ball.r) { ball.x = W - ball.r; ball.vx = -Math.abs(ball.vx) * WALL_REST; }
+
+          for (const peg of pegs) resolvePegCollision(ball, peg);
+
+          if (ball.y >= landingY) {
+            ball.y = landingY;
+            if (ball.resolved) {
+              finalizeBall(ball, n);
+            } else {
+              ball.waiting = true;
+              ball.vy = 0;
+              ball.vx *= 0.4;
+            }
+          }
+        } else {
+          if (ball.resolved) {
+            finalizeBall(ball, n);
+          } else {
+            ball.vx *= 0.9;
+            ball.x += ball.vx * dt;
+            ball.x = Math.max(ball.r, Math.min(W - ball.r, ball.x));
+          }
+        }
+      }
+
+      // Ball-vs-ball soft repulsion so concurrent balls jostle instead of
+      // stacking exactly on top of one another.
+      for (let i = 0; i < balls.length; i++) {
+        if (balls[i].done) continue;
+        for (let j = i + 1; j < balls.length; j++) {
+          if (balls[j].done) continue;
+          resolveBallRepulsion(balls[i], balls[j], dt);
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#b9c1cf";
+      for (const p of pegs) {
+        const g = ctx.createRadialGradient(p.x - 1, p.y - 1, 0.5, p.x, p.y, PEG_R);
+        g.addColorStop(0, "#ffffff");
+        g.addColorStop(1, "#b9c1cf");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, PEG_R, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      for (const ball of balls) {
+        if (ball.done) continue;
+        const g = ctx.createRadialGradient(
+          ball.x - ball.r * 0.3, ball.y - ball.r * 0.35, 0.5,
+          ball.x, ball.y, ball.r
+        );
+        g.addColorStop(0, "#fff3c4");
+        g.addColorStop(0.55, "#f7b733");
+        g.addColorStop(1, "#e8890c");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function loop(t) {
+      if (lastT === null) lastT = t;
+      let dt = (t - lastT) / 1000;
+      lastT = t;
+      dt = Math.min(dt, 0.032);
+      step(dt);
+      draw();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    // Tap-to-drop: spam-tap the button, every tap fires a real bet (still
+    // gated by SPAWN_MS + MAX_INFLIGHT + affordability inside trySpawn()).
+    dropBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      trySpawn();
     });
 
     root.appendChild(
       el("div", { class: "card" }, [
-        C.gameHeader("plinko", "Plinko", "Drop the ball through the pegs — where it lands sets your multiplier. Edges pay big but are rare; the center is safe. More rows and higher risk spread the payouts wider."),
+        C.gameHeader("plinko", "Plinko", "Drop the ball through the pegs — where it lands sets your multiplier. Tap the button to drop balls — spam it as fast as you like, each one is its own real bet. Edges pay big but are rare; the center is safe. More rows and higher risk spread the payouts wider."),
         board,
         buckets,
         el("div", { class: "row plinko-opts" }, [
@@ -287,6 +487,13 @@
         seed.node,
       ])
     );
+
+    // The board must be attached to the document before we can measure it —
+    // rebuild() above ran while `board` was still detached, so its canvas
+    // sizing/peg geometry was computed against a 0x0 rect. Re-measure now.
+    rebuildGeometry();
+
+    rafId = requestAnimationFrame(loop);
   }
 
   C.register({ key: "plinko", title: "Plinko", render });
