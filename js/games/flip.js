@@ -77,6 +77,8 @@
       seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       setPlaying(true);
+      // Must call at least one flip before cashing out (mirrors mines/towers).
+      cashBtn.disabled = true;
     });
 
     async function step(side) {
@@ -85,7 +87,9 @@
       // Start the flip on tap; the real face lands when /step returns.
       spinCoin();
       const resp = await BT.api.gameStep("flip", { round_id: roundId, move: side });
-      headsBtn.disabled = tailsBtn.disabled = cashBtn.disabled = false;
+      headsBtn.disabled = tailsBtn.disabled = false;
+      // Cash out unlocks only once a flip has resolved this round.
+      cashBtn.disabled = streak < 1;
       busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       const os = resp.outcome_step || {};
@@ -100,6 +104,7 @@
       if (busted || resp.done) {
         finish(resp);
       } else {
+        cashBtn.disabled = false;
         BT.ui.haptic("light");
       }
     }
@@ -109,7 +114,7 @@
     cashBtn.addEventListener("click", async () => {
       if (busy || !roundId) return; busy = true; cashBtn.disabled = true;
       const resp = await BT.api.gameCashout("flip", { round_id: roundId });
-      cashBtn.disabled = false; busy = false;
+      cashBtn.disabled = streak < 1; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       finish(resp);
     });
