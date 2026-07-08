@@ -1129,16 +1129,17 @@ input[type="number"].betbox-input:focus {
   border: 2px dashed var(--glass-border); background: var(--glass-bg-2);
   transition: border-color .15s ease, background .15s ease;
 }
-.rps-slot-face { font-size: 46px; line-height: 1; }
+.rps-slot-face { font-size: 46px; line-height: 1; color: var(--text); display: flex; align-items: center; justify-content: center; }
+.rps-slot-face svg { width: 46px; height: 46px; display: block; }
 .rps-slot.spin { border-style: solid; }
 .rps-slot.spin .rps-slot-face { animation: rpsShake .18s ease infinite; }
 @keyframes rpsShake { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-6px) rotate(-8deg); } }
 .rps-slot.win { border: 2px solid var(--good); background: rgba(52,199,89,0.08); }
-.rps-slot.win .rps-slot-face { animation: rpsFlip .45s ease; }
+.rps-slot.win .rps-slot-face { animation: rpsFlip .45s ease; color: var(--good); }
 .rps-slot.tie { border: 2px solid #33415c; background: rgba(51,65,92,0.25); }
 .rps-slot.tie .rps-slot-face { animation: rpsFlip .45s ease; }
 .rps-slot.bust { border: 2px solid var(--bad); background: rgba(255,69,58,0.08); animation: rpsBustPulse .5s ease; }
-.rps-slot.bust .rps-slot-face { animation: rpsFlip .45s ease; }
+.rps-slot.bust .rps-slot-face { animation: rpsFlip .45s ease; color: var(--bad); }
 @keyframes rpsBustPulse { 0% { box-shadow: 0 0 0 0 rgba(255,69,58,0.5); } 100% { box-shadow: 0 0 0 14px rgba(255,69,58,0); } }
 .rps-slot-badge {
   position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
@@ -1177,7 +1178,10 @@ input[type="number"].betbox-input:focus {
   box-shadow: 0 0 14px rgba(52,199,89,0.28), var(--glass-inset-hi);
 }
 .rps-hand.live:not(:disabled):active { transform: scale(0.96); }
-.rps-hand-emoji { font-size: 30px; line-height: 1; }
+.rps-hand-emoji { font-size: 30px; line-height: 1; color: var(--text-dim); display: flex; align-items: center; justify-content: center; }
+.rps-hand-emoji svg { width: 30px; height: 30px; display: block; }
+.rps-hand.live:not(:disabled) .rps-hand-emoji { color: #bfe8cb; }
+.rps-hand.picked .rps-hand-emoji { color: var(--text); }
 .rps-hand-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
 .rps-hand.live:not(:disabled) .rps-hand-label { color: #bfe8cb; }
 
