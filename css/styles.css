@@ -1678,12 +1678,13 @@ input[type="number"].betbox-input:focus {
 
 /* Blackjack — dealer row on top, player row on bottom. Cards mirror the
    HighLow card look (own bj-* classes so nothing here can regress HighLow). */
-.bj-table { display: flex; flex-direction: column; gap: 18px; padding: 10px 2px 6px; position: relative; }
-.bj-hand { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.bj-table { display: flex; flex-direction: row; gap: 10px; padding: 10px 2px 6px; position: relative; }
+.bj-hand { display: flex; flex-direction: column; gap: 8px; align-items: center; flex: 1; min-width: 0; }
 .bj-hand-head { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .bj-hand-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
+.bj-hand-label.you { color: var(--accent); text-shadow: 0 0 10px rgba(var(--accent-rgb, 78,205,255), 0.7); }
 .bj-total { padding: 2px 8px; border-radius: 999px; background: var(--bg-elev); border: 1px solid var(--glass-border); font-size: 12px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 20px; text-align: center; }
-.bj-cards { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 78px; }
+.bj-cards { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 78px; }
 .bj-card {
   width: 54px; height: 78px; border-radius: 9px; position: relative;
   background: linear-gradient(160deg, #ffffff, #e9edf5); box-shadow: 0 6px 14px rgba(0,0,0,0.4);

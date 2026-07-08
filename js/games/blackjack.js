@@ -56,7 +56,7 @@
     const playerTotal = el("span", { class: "bj-total" }, "");
     const wagerChip = el("span", { class: "bj-wager", style: "display:none" }, "");
     const playerRow = el("div", { class: "bj-hand" }, [
-      el("div", { class: "bj-hand-head" }, [el("span", { class: "bj-hand-label" }, "You"), playerTotal, wagerChip]),
+      el("div", { class: "bj-hand-head" }, [el("span", { class: "bj-hand-label you" }, "You"), playerTotal, wagerChip]),
       playerCards,
     ]);
     const table = el("div", { class: "bj-table" }, [dealerRow, playerRow]);
