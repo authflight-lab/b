@@ -1625,7 +1625,6 @@ input[type="number"].betbox-input:focus {
 .sess-card { margin-top: 12px; }
 .sess-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
 .sess-title { font-size: 14px; font-weight: 800; color: rgba(255,255,255,0.92); }
-.sess-note { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.38); }
 .sess-reset {
   margin-left: auto; width: 26px; height: 26px; border-radius: 8px;
   border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05);

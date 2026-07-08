@@ -391,10 +391,8 @@
       return { node: el("div", { class: "sess-cell" }, [el("div", { class: "sess-label" }, label), val]), val };
     }
     const cProfit = cell("Profit", "");
-    const cWins = cell("Wins", "pos");
     const cWagered = cell("Wagered", "");
-    const cLosses = cell("Losses", "neg");
-    const grid = el("div", { class: "sess-grid" }, [cProfit.node, cWins.node, cWagered.node, cLosses.node]);
+    const grid = el("div", { class: "sess-grid" }, [cProfit.node, cWagered.node]);
 
     // Chart: fixed viewBox stretched to the box; non-scaling strokes keep the
     // line crisp. The green/red split is two copies of the same line + area,
@@ -453,9 +451,7 @@
       const s = BT.session.stats();
       cProfit.val.textContent = signed(s.profit);
       cProfit.val.className = "sess-val " + (s.profit > 0 ? "pos" : s.profit < 0 ? "neg" : "");
-      cWins.val.textContent = String(s.wins);
       cWagered.val.textContent = fmt(s.wagered);
-      cLosses.val.textContent = String(s.losses);
       const curve = BT.session.curve();
       const hasData = s.bets > 0;
       emptyMsg.classList.toggle("hidden", hasData);
@@ -472,7 +468,6 @@
     const node = el("div", { class: "card sess-card" }, [
       el("div", { class: "sess-head" }, [
         el("div", { class: "sess-title" }, "Session stats"),
-        el("div", { class: "sess-note" }, "this session only"),
         resetBtn,
       ]),
       grid,
