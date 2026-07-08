@@ -1134,8 +1134,23 @@ input[type="number"].betbox-input:focus {
 .rps-slot.spin { border-style: solid; }
 .rps-slot.spin .rps-slot-face { animation: rpsShake .18s ease infinite; }
 @keyframes rpsShake { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-6px) rotate(-8deg); } }
-.rps-slot.win { border: 2px solid var(--good); background: rgba(52,199,89,0.08); }
-.rps-slot.win .rps-slot-face { animation: rpsFlip .45s ease; color: var(--good); }
+.rps-slot.win { border: 2px solid transparent; background: rgba(18,140,66,0.1); }
+.rps-slot.win .rps-slot-face { animation: rpsFlip .45s ease; color: #129c47; }
+.rps-slot.win::before {
+  content: ""; position: absolute; inset: -2px; border-radius: 16px; padding: 2px;
+  background:
+    linear-gradient(115deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0) 70%) 0 0 / 250% 100%,
+    #129c47;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rpsWinShimmer 2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes rpsWinShimmer {
+  0% { background-position: -60% 0, 0 0; }
+  100% { background-position: 160% 0, 0 0; }
+}
 .rps-slot.tie { border: 2px solid #33415c; background: rgba(51,65,92,0.25); }
 .rps-slot.tie .rps-slot-face { animation: rpsFlip .45s ease; }
 .rps-slot.bust { border: 2px solid var(--bad); background: rgba(255,69,58,0.08); animation: rpsBustPulse .5s ease; }
@@ -1147,7 +1162,6 @@ input[type="number"].betbox-input:focus {
   white-space: nowrap; background: var(--bg-elev-2); border: 1px solid var(--glass-border);
   color: var(--text-dim);
 }
-.rps-slot.win .rps-slot-badge { background: var(--good); border-color: transparent; color: #06240f; }
 .rps-slot.bust .rps-slot-badge { background: var(--bad); border-color: transparent; color: #2a0605; }
 .rps-slot-badge.pop { animation: rpsPop .25s ease; }
 @keyframes rpsPop { 0% { transform: translateX(-50%) scale(0.6); } 100% { transform: translateX(-50%) scale(1); } }

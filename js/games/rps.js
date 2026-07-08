@@ -177,7 +177,7 @@
       // Win — advance the ladder, flip the newly-won rung.
       wins = typeof os.wins === "number" ? os.wins : wins + 1;
       mult = typeof resp.multiplier === "number" ? resp.multiplier : mult;
-      setSlot("win", houseIcon, (HAND_LABEL[os.pick] || "") + " wins");
+      setSlot("win", houseIcon, null);
       renderLadder(wins);
       BT.ui.haptic("light");
       if (resp.done) { finish(resp, true); return; }
