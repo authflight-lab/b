@@ -81,7 +81,7 @@
       ]),
       el("div", { class: "spacer" }),
       el("div", { class: "row between" }, [
-        el("div", { class: "small muted" }, unlimited ? "Unlimited this month" : ("Left this month: " + (remaining === null || remaining === undefined ? "?" : fmt(remaining)))),
+        el("div", { class: "small muted" }, unlimited ? "Unlimited" : ("In stock: " + (remaining === null || remaining === undefined ? "?" : fmt(remaining)))),
         btn,
       ]),
     ]);
@@ -90,7 +90,7 @@
   function redeemErr(r) {
     const m = {
       insufficient_balance: "You don't have enough points.",
-      monthly_limit_reached: "This prize is out of stock this month.",
+      monthly_limit_reached: "This prize is out of stock.",
       daily_limit_reached: "You've already claimed a reward today. Come back tomorrow.",
       activity_floor_not_met: "Chat + claim today to unlock redeeming.",
       reward_inactive: "That prize is no longer available.",
