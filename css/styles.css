@@ -1245,6 +1245,10 @@ input[type="number"].betbox-input:focus {
 }
 .ck-lane:last-child { border-right: none; }
 .ck-lane.dim .ck-drain-cover { opacity: 0.55; }
+/* During a live round, drains ahead of the chicken are click-ahead targets:
+   tapping one queues sequential hops through every lane in between. */
+.ck-road.live .ck-lane.dim .ck-drain-cover { cursor: pointer; }
+.ck-road.live .ck-lane.dim .ck-drain-cover:hover { opacity: 0.85; }
 .ck-lane.active .ck-drain-cover {
   opacity: 1;
   cursor: pointer;

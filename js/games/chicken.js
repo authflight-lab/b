@@ -52,7 +52,8 @@
         const label = el("span", { class: "ck-drain-mult" }, laneMult(l + 1).toFixed(2) + "\u00d7");
         const cover = el("div", { class: "ck-drain-cover", dataset: { l: String(l) } }, label);
         cover.addEventListener("click", () => {
-          if (parseInt(cover.dataset.l, 10) === curLane) cross();
+          const t = parseInt(cover.dataset.l, 10);
+          if (t >= curLane) crossTo(t);
         });
         const drain = el("div", { class: "ck-drain" }, [
           el("div", { class: "ck-drain-hole" }),
@@ -129,12 +130,30 @@
       startBtn.style.display = "none";
       cashBtn.style.display = "block";
       bet.setDisabled(true);
+      road.classList.add("live");
       markLanes(0);
       syncButtons();
     });
 
-    async function cross() {
-      if (busy || ended || !roundId) return;
+    // Multi-hop: clicking a drain ahead of the chicken queues one server step
+    // per intermediate lane — "hop to 1.60x AND 1.71x" in a single tap. The
+    // chain stops immediately on a bust, an error, or round completion.
+    let chaining = false;
+    async function crossTo(target) {
+      if (chaining || busy || ended || !roundId) return;
+      chaining = true;
+      try {
+        while (!ended && roundId && curLane <= target) {
+          const ok = await crossOnce();
+          if (!ok) break;
+        }
+      } finally {
+        chaining = false;
+      }
+    }
+
+    async function crossOnce() {
+      if (busy || ended || !roundId) return false;
       busy = true; syncButtons();
       const l = curLane;
       const ln = laneEl(l);
@@ -152,7 +171,7 @@
         BT.ui.toast(C.errText(resp), "error");
         if (prevHome) placeChicken(prevHome);
         syncButtons();
-        return;
+        return false;
       }
       const os = resp.outcome_step || {};
       const safe = os.safe !== undefined ? os.safe : !resp.busted;
@@ -160,7 +179,7 @@
         ended = true; markLanes(-1);
         await bustAnim(l);
         finish(resp);
-        return;
+        return false;
       }
       // Safe cross — the drain under the chicken holds; the one behind pays out.
       crossed = l + 1;
@@ -169,10 +188,11 @@
       road.querySelectorAll(".ck-lane.cur").forEach((x) => x.classList.remove("cur"));
       if (ln) ln.classList.add("held", "cur");
       BT.ui.haptic("light");
-      if (resp.done) { coinify(l); finish(resp); return; }
+      if (resp.done) { coinify(l); finish(resp); return false; }
       curLane = l + 1;
       markLanes(curLane);
       syncButtons();
+      return true;
     }
 
     cashBtn.addEventListener("click", async () => {
@@ -185,6 +205,7 @@
 
     function finish(resp) {
       ended = true; roundId = null; BT.clearActiveGame(); markLanes(-1);
+      road.classList.remove("live");
       road.querySelectorAll(".ck-lane.cur").forEach((x) => x.classList.remove("cur"));
       startBtn.style.display = "block";
       cashBtn.style.display = "none";
