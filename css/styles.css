@@ -993,6 +993,9 @@ input[type="number"].betbox-input:focus {
 .mro-card.lose { border-color: #f0817a; box-shadow: 0 0 34px rgba(240,129,122,0.4), 0 10px 26px rgba(0,0,0,0.45); }
 .mro-card.lose .mro-inner { border-color: rgba(240,129,122,0.55); }
 .mro-card.lose .mro-mult, .mro-card.lose .mro-label, .mro-card.lose .mro-profit { color: #f0817a; }
+.mro-card.push { border-color: rgba(203,239,245,0.3); box-shadow: 0 0 18px rgba(203,239,245,0.12), 0 10px 26px rgba(0,0,0,0.45); }
+.mro-card.push .mro-inner { border-color: rgba(203,239,245,0.25); }
+.mro-card.push .mro-mult, .mro-card.push .mro-label, .mro-card.push .mro-profit { color: var(--text-dim); }
 @keyframes mroIn { from { transform: scale(0.82); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 /* Towers — vertical gem climb inside a dungeon shaft */
@@ -1730,10 +1733,19 @@ input[type="number"].betbox-input:focus {
 .bj-stamp.win, .bj-stamp.natural { border-color: rgba(84,222,145,0.35); }
 .bj-stamp.natural { border-color: rgba(245,196,81,0.45); }
 
-.bj-hand.bj-glow-win .bj-card { box-shadow: 0 0 0 1px rgba(84,222,145,0.55), 0 0 16px rgba(84,222,145,0.35), 0 6px 14px rgba(0,0,0,0.4); }
-.bj-hand.bj-glow-lose .bj-card { box-shadow: 0 0 0 1px rgba(244,54,76,0.55), 0 0 14px rgba(244,54,76,0.3), 0 6px 14px rgba(0,0,0,0.4); animation: bjLoseFlash 0.4s ease; }
-.bj-hand.bj-glow-push .bj-card { box-shadow: 0 0 0 1px rgba(203,239,245,0.35), 0 6px 14px rgba(0,0,0,0.4); }
-@keyframes bjLoseFlash { 0% { filter: brightness(1.6) saturate(1.4); } 100% { filter: none; } }
+/* Loss: cards flash red and fall off the bottom of the table. */
+.bj-cards.bj-losing .bj-card {
+  animation: bjCardFall 0.56s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.bj-cards.bj-losing .bj-card:nth-child(1) { animation-delay: 0s; }
+.bj-cards.bj-losing .bj-card:nth-child(2) { animation-delay: 0.06s; }
+.bj-cards.bj-losing .bj-card:nth-child(3) { animation-delay: 0.12s; }
+.bj-cards.bj-losing .bj-card:nth-child(4) { animation-delay: 0.18s; }
+@keyframes bjCardFall {
+  0%   { transform: none; box-shadow: 0 0 0 2px rgba(244,54,76,0.8), 0 0 18px rgba(244,54,76,0.55); opacity: 1; }
+  15%  { transform: translateY(-6px) rotate(-3deg); }
+  100% { transform: translateY(120px) rotate(8deg); opacity: 0; }
+}
 
 .bj-actions { display: flex; gap: 8px; margin: 8px 0 4px; }
 .bj-actions .btn { flex: 1; }

@@ -1,14 +1,6 @@
 // Blackjack — standard hit/stand/double, dealer stands on soft/hard 17 (S17).
-// Blackjack (natural 21 on the first two cards) pays 3:2 and settles instantly
-// at deal time; a push (equal totals) returns the stake (1.0x). No splitting or
-// side bets in v1. The dealer's hole card stays hidden until the hand ends.
-//
-// Presentation follows the house style (see game-optimistic-motion): the server
-// response is the only source of truth, but every card arrives PACED — the
-// initial deal staggers player/dealer/player/hole, a hit slides the new card
-// in, and at hand end the hole card FLIPS over before the dealer draws out one
-// card at a time. Outcomes land ON the table (stamp + hand glow), not in an
-// overlay: BUST (red), WIN (green), PUSH (neutral), BLACKJACK (celebratory).
+// Natural 21 on the first two cards pays 3:2 and settles at deal time.
+// Hitting to exactly 21 auto-settles at 2x. No splitting or side bets in v1.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -17,6 +9,7 @@
   const DEAL_MS = 160;   // stagger between initial-deal cards
   const DRAW_MS = 430;   // suspense pacing between dealer draws
   const FLIP_MS = 170;   // half of the hole-card rotateY flip
+  const FALL_MS = 560;   // loss card fall animation duration
 
   const RANKS = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
   const SUITS = [
@@ -26,16 +19,12 @@
     { g: "♣", red: false },
   ];
   const rankLabel = (r) => RANKS[r] || "?";
-  // Deterministic, cosmetic suit per card position — the backend only tracks
-  // ranks 1..13, so suits are purely a client-side visual (matches HighLow).
   const suitFor = (r, idx) => SUITS[(r * 3 + idx * 5 + 1) % 4];
 
   function cardValue(r) {
     if (r === 1) return 11;
     return r >= 10 ? 10 : r;
   }
-  // Returns { total, soft } — soft means an ace is still counted as 11, so the
-  // hand reads "7/17" style (the low total is always total - 10).
   function handTotal(cards) {
     let total = 0, aces = 0;
     cards.forEach((r) => { total += cardValue(r); if (r === 1) aces += 1; });
@@ -56,7 +45,7 @@
     let roundId = null, busy = false, ended = true;
     let player = [], dealer = [];
 
-    // --- Board: dealer row (top) + player row (bottom) ----------------------
+    // --- Board ---------------------------------------------------------------
     const dealerCards = el("div", { class: "bj-cards" });
     const dealerTotal = el("span", { class: "bj-total" }, "");
     const dealerRow = el("div", { class: "bj-hand" }, [
@@ -70,8 +59,10 @@
       el("div", { class: "bj-hand-head" }, [el("span", { class: "bj-hand-label" }, "You"), playerTotal, wagerChip]),
       playerCards,
     ]);
-    const stampEl = el("div", { class: "bj-stamp", style: "display:none" });
-    const table = el("div", { class: "bj-table" }, [dealerRow, playerRow, stampEl]);
+    const table = el("div", { class: "bj-table" }, [dealerRow, playerRow]);
+
+    // Standard win overlay — shared component used by every other game.
+    const overlay = C.resultOverlay(table);
 
     function setWager(amount, doubled) {
       wagerChip.style.display = amount > 0 ? "inline-flex" : "none";
@@ -88,13 +79,11 @@
       ]);
     }
 
-    // Append one card with the slide-in animation, then update the totals.
-    // `holeHidden` keeps the dealer total reading "N+?" while the hole is down.
     let holeHidden = true;
     function updateTotals() {
       playerTotal.textContent = player.length ? totalText(player) : "";
       dealerTotal.textContent = dealer.length
-        ? (holeHidden ? String(cardValue(dealer[0])) + "+?" : totalText(dealer))
+        ? (holeHidden ? String(cardValue(dealer[0])) : totalText(dealer))
         : "";
     }
     function addCard(handEl, hand, r, faceDown) {
@@ -107,14 +96,13 @@
     function clearTable() {
       BT.ui.clear(dealerCards); BT.ui.clear(playerCards);
       player = []; dealer = []; holeHidden = true;
-      dealerRow.classList.remove("bj-glow-win", "bj-glow-lose", "bj-glow-push");
-      playerRow.classList.remove("bj-glow-win", "bj-glow-lose", "bj-glow-push");
-      stampEl.style.display = "none";
+      playerCards.classList.remove("bj-losing");
+      overlay.hide();
       updateTotals();
     }
 
-    // The iconic beat: rotateY the hole card out, swap the face in, then (if
-    // the dealer drew) deal each extra card with suspense pacing.
+    // Rotates hole card out, swaps face in, then deals any extra dealer cards
+    // one at a time with suspense pacing.
     async function revealDealer(finalDealer) {
       if (!Array.isArray(finalDealer) || finalDealer.length < 2) return;
       const holeNode = dealerCards.children[1];
@@ -135,7 +123,7 @@
       }
     }
 
-    // --- Actions --------------------------------------------------------------
+    // --- Actions -------------------------------------------------------------
     const dealBtn = el("button", { class: "btn primary block" }, "Deal");
     const hitBtn = el("button", { class: "btn primary", style: "display:none" }, "Hit");
     const standBtn = el("button", { class: "btn", style: "display:none" }, "Stand");
@@ -146,7 +134,6 @@
       if (!active) { hitBtn.disabled = standBtn.disabled = doubleBtn.disabled = true; return; }
       hitBtn.disabled = false;
       standBtn.disabled = false;
-      // Double needs a second stake: gate on the 2-card hand AND affordability.
       const bal = (BT.state && BT.state.balance) || 0;
       doubleBtn.disabled = player.length !== 2 || bal < stake;
     }
@@ -156,16 +143,9 @@
       hitBtn.style.display = standBtn.style.display = doubleBtn.style.display = on ? "inline-block" : "none";
     }
 
-    // On-table outcome. Quiet for losses; celebratory for wins/naturals.
-    function stamp(kind, main, sub) {
-      stampEl.className = "bj-stamp " + kind;
-      BT.ui.clear(stampEl);
-      stampEl.appendChild(el("span", { class: "bj-stamp-main" }, main));
-      if (sub) stampEl.appendChild(el("span", { class: "bj-stamp-sub" }, sub));
-      stampEl.style.display = "flex";
-    }
-
-    function finish(resp, opts) {
+    // Losses: player cards glow red then fall — no overlay.
+    // Wins / push: standard win overlay.
+    async function finish(resp, opts) {
       ended = true; roundId = null;
       BT.clearActiveGame();
       busy = false;
@@ -174,33 +154,33 @@
       bet.setDisabled(false);
       syncActions(false);
       C.syncBalance(resp);
+
       const payout = resp.payout || 0;
       const mult = typeof resp.multiplier === "number" ? resp.multiplier : 0;
       const finalStake = typeof resp.bet === "number" ? resp.bet : stake;
-      const busted = !!(opts && opts.busted);
       const natural = !!(opts && opts.natural);
-      if (busted) {
-        playerRow.classList.add("bj-glow-lose");
-        stamp("lose", "BUST", "-" + BT.ui.fmt(finalStake) + " pts");
+
+      const isLoss = payout === 0 && mult === 0;  // bust or dealer wins
+      const isPush = mult === 1;
+
+      if (isLoss) {
+        // Red glow, then cards fall off the table — no overlay.
+        playerCards.classList.add("bj-losing");
         BT.ui.haptic("error");
+        await C.frame(FALL_MS);
       } else if (natural && mult > 1) {
-        playerRow.classList.add("bj-glow-win");
-        stamp("natural", "BLACKJACK!", C.winMult(mult, payout, finalStake) + " · +" + BT.ui.fmt(payout - finalStake) + " pts");
         BT.ui.haptic("success");
-      } else if (mult === 1) {
-        playerRow.classList.add("bj-glow-push");
-        dealerRow.classList.add("bj-glow-push");
-        stamp("push", "PUSH", "Stake returned");
+        overlay.show("win",
+          "BLACKJACK! " + C.winMult(mult, payout, finalStake),
+          C.winLines(payout, finalStake));
+      } else if (isPush) {
         BT.ui.haptic("light");
-      } else if (payout > 0) {
-        playerRow.classList.add("bj-glow-win");
-        stamp("win", "WIN " + C.winMult(mult, payout, finalStake), "+" + BT.ui.fmt(payout - finalStake) + " pts");
-        BT.ui.haptic("success");
+        overlay.show("push", "1×", "Stake returned");
       } else {
-        playerRow.classList.add("bj-glow-lose");
-        dealerRow.classList.add("bj-glow-win");
-        stamp("lose", "Dealer wins", "-" + BT.ui.fmt(finalStake) + " pts");
-        BT.ui.haptic("error");
+        BT.ui.haptic("success");
+        overlay.show("win",
+          C.winMult(mult, payout, finalStake),
+          C.winLines(payout, finalStake));
       }
     }
 
@@ -235,10 +215,9 @@
       await C.frame(DEAL_MS);
 
       if (resp.done) {
-        // Natural blackjack settled instantly at deal time — still give it
-        // the full reveal: flip the hole, then stamp the celebration/push.
+        // Natural blackjack settled at deal time — flip hole, show overlay.
         await revealDealer(resp.dealer || dealer);
-        finish(resp, { natural: true });
+        await finish(resp, { natural: true });
         return;
       }
 
@@ -262,7 +241,7 @@
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
       if (typeof resp.bet === "number" && resp.bet !== stake) setWager(resp.bet, true);
 
-      // Slide in any new player card(s) — one for hit/double.
+      // Slide in any new player cards.
       const newPlayer = os.player || player;
       for (let i = player.length; i < newPlayer.length; i++) {
         addCard(playerCards, player, newPlayer[i], false);
@@ -271,7 +250,7 @@
 
       if (resp.done) {
         if (os.dealer) await revealDealer(os.dealer);
-        finish(resp, { busted: !!resp.busted });
+        await finish(resp, {});
         return;
       }
       busy = false;
@@ -284,7 +263,7 @@
 
     updateTotals();
     root.appendChild(el("div", { class: "card" }, [
-      C.gameHeader("blackjack", "Blackjack", "Classic blackjack against the dealer. Hit, stand, or double down on your first two cards. The dealer stands on 17 or higher. A natural blackjack (21 on your first two cards) pays 3:2; a push returns your stake. No splitting or side bets."),
+      C.gameHeader("blackjack", "Blackjack", "Classic blackjack against the dealer. Hit, stand, or double down on your first two cards. The dealer stands on 17 or higher. A natural blackjack pays 3:2; hitting to 21 wins at 2x; a push returns your stake. No splitting or side bets."),
       table,
       actionsRow,
       bet.node,
