@@ -125,7 +125,12 @@
     return p.then((resp) => {
       try {
         if (resp && resp.ok !== false && !resp.error && typeof resp.payout === "number" && BT.session) {
-          const stake = getStake(resp);
+          let stake = getStake(resp);
+          // A settle that declares the round's FINAL stake (blackjack double:
+          // the wager doubled mid-round, so the stake remembered at bet time
+          // is stale) overrides it. Only applies to rounds we were already
+          // tracking — an unknown round (opened before a reload) stays untracked.
+          if (typeof stake === "number" && typeof resp.bet === "number") stake = resp.bet;
           if (typeof stake === "number") BT.session.settle(stake, resp.payout);
         }
       } catch (e) {}
@@ -134,6 +139,9 @@
   }
   const stakeFromBody = (body) => () => Number(body && body.bet) || 0;
   const stakeFromRound = (body) => () => (BT.session ? BT.session.take(body && body.round_id) : undefined);
+  // For settles observed on the /bet call itself (a blackjack natural pays out
+  // at deal time): the round_id lives on the RESPONSE, not the request body.
+  const stakeFromRespRound = (resp) => (BT.session ? BT.session.take(resp && resp.round_id) : undefined);
 
   // Endpoint helpers — all paths under /bt/api/... per contract §4.
   const api = {
@@ -159,7 +167,10 @@
 
     backlogClaim: () => afterMutation(post("/bt/api/backlog/claim")),
 
-    gameBet: (name, body) => noteOpen(body, afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body))),
+    // A /bet can settle immediately too (a blackjack natural) — such responses
+    // carry `payout`, so after noteOpen registers the stake, noteSettle records
+    // the settle. Ordinary bet responses carry no payout and are just opened.
+    gameBet: (name, body) => noteSettle(stakeFromRespRound, noteOpen(body, afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/bet", body)))),
     gameSettle: (name, body) => noteSettle(stakeFromRound(body), afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/settle", body))),
     // One-shot open+settle for single-settle games (dice, plinko): one round
     // trip instead of gameBet + gameSettle. Returns the settle payload plus the
