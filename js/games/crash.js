@@ -28,15 +28,39 @@
     let raf = 0, t0 = 0, points = [];
     let checking = false, lastCheckT = 0;
 
-    // --- Stage: curve + dominant counter ---------------------------------
+    // --- Stage: exponential curve + top-left counter ----------------------
+    // One SVG path (glowing stroke) + one fill path (gradient area) + one
+    // leading-tip dot, all redrawn per frame — single-path GPU-cheap drawing.
     const W = 320, H = 150;
-    const curve = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    curve.setAttribute("class", "crash-curve");
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
     svg.setAttribute("viewBox", "0 0 " + W + " " + H);
     svg.setAttribute("preserveAspectRatio", "none");
     svg.setAttribute("class", "crash-svg");
-    svg.appendChild(curve);
+    const defs = document.createElementNS(NS, "defs");
+    const grad = document.createElementNS(NS, "linearGradient");
+    // Unique per render: a stale duplicate of this screen in the DOM must
+    // never capture the gradient url() reference of the live one.
+    const gradId = "crash-fill-grad-" + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+    grad.setAttribute("id", gradId);
+    grad.setAttribute("x1", "0"); grad.setAttribute("y1", "0");
+    grad.setAttribute("x2", "0"); grad.setAttribute("y2", "1");
+    const stop1 = document.createElementNS(NS, "stop");
+    stop1.setAttribute("offset", "0"); stop1.setAttribute("class", "crash-fill-s1");
+    const stop2 = document.createElementNS(NS, "stop");
+    stop2.setAttribute("offset", "1"); stop2.setAttribute("class", "crash-fill-s2");
+    grad.appendChild(stop1); grad.appendChild(stop2);
+    defs.appendChild(grad);
+    const fillPath = document.createElementNS(NS, "path");
+    fillPath.setAttribute("class", "crash-fill");
+    fillPath.setAttribute("fill", "url(#" + gradId + ")");
+    const curve = document.createElementNS(NS, "path");
+    curve.setAttribute("class", "crash-curve");
+    const tip = document.createElementNS(NS, "circle");
+    tip.setAttribute("class", "crash-tip");
+    tip.setAttribute("r", "4");
+    tip.style.display = "none";
+    svg.appendChild(defs); svg.appendChild(fillPath); svg.appendChild(curve); svg.appendChild(tip);
     const counter = el("div", { class: "crash-counter" }, "1.00\u00d7");
     const status = el("div", { class: "crash-status" }, "Place a bet to launch.");
     const stage = el("div", { class: "crash-stage" }, [svg, counter, status]);
@@ -69,18 +93,36 @@
       return m < 2 ? "" : m < 5 ? " warm" : m < 10 ? " hot" : " red";
     }
 
+    // Plot the multiplier as a visibly exponential sweep: x is linear time,
+    // y bends the normalised multiplier with a power curve so the trace sits
+    // near-flat along the baseline and steepens toward the leading tip. The
+    // tip keeps a little headroom from the corner so the dot always rides
+    // inside the frame.
+    const CURVE_POW = 1.7;
+    function clearCurve() {
+      curve.setAttribute("d", "");
+      fillPath.setAttribute("d", "");
+      tip.style.display = "none";
+    }
     function drawCurve() {
-      if (points.length < 2) { curve.setAttribute("d", ""); return; }
+      if (points.length < 2) { clearCurve(); return; }
       const last = points[points.length - 1];
-      const tMax = Math.max(last[0], 1200);
+      const tMax = Math.max(last[0], 1200) * 1.06;
       const mMax = Math.max(last[1], 1.5);
-      let d = "";
+      const X0 = 6, XR = 12;            // left origin / right headroom
+      const Y0 = H - 8, YT = 18;        // baseline / top headroom
+      let d = "", x = X0, y = Y0;
       for (let i = 0; i < points.length; i++) {
-        const x = (points[i][0] / tMax) * W;
-        const y = H - 6 - ((points[i][1] - 1) / (mMax - 1)) * (H - 14);
+        x = X0 + (points[i][0] / tMax) * (W - X0 - XR);
+        const n = Math.max(0, (points[i][1] - 1) / (mMax - 1));
+        y = Y0 - Math.pow(n, CURVE_POW) * (Y0 - YT);
         d += (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
       }
       curve.setAttribute("d", d);
+      fillPath.setAttribute("d", d + "L" + x.toFixed(1) + " " + Y0 + "L" + X0 + " " + Y0 + "Z");
+      tip.setAttribute("cx", x.toFixed(1));
+      tip.setAttribute("cy", y.toFixed(1));
+      tip.style.display = "";
     }
 
     // The climb: the client CANNOT know the crash point (the active server
@@ -102,6 +144,7 @@
         const m = Math.min(Math.exp(GROWTH * t), CAP);
         counter.textContent = m.toFixed(2) + "\u00d7";
         counter.className = "crash-counter live" + counterTone(m);
+        svg.setAttribute("class", "crash-svg live" + counterTone(m));
         cashBtn.textContent = "Cash out \u00b7 " + Math.min(m, MAX_CLAIM).toFixed(2) + "\u00d7";
         if (t - lastPt >= 80) { points.push([t, m]); lastPt = t; drawCurve(); }
         if (t - lastCheckT >= CHECK_MS && !checking) { lastCheckT = t; pollCrash(); }
@@ -138,6 +181,7 @@
       stopLoop();
       counter.textContent = m.toFixed(2) + "\u00d7";
       counter.className = "crash-counter " + (crashed ? "crashed" : "cashed");
+      svg.setAttribute("class", "crash-svg " + (crashed ? "crashed" : "cashed"));
       if (crashed) {
         stage.classList.add("crash-flash");
         setTimeout(() => stage.classList.remove("crash-flash"), 650);
@@ -185,7 +229,6 @@
       } else {
         const cp = typeof o.crash_point === "number" ? o.crash_point : claimed;
         freezeAt(cp, true);
-        banner.show("lose", (loseMsg || "Crashed") + " \u00b7 " + cp.toFixed(2) + "\u00d7");
         BT.ui.haptic("error");
         rearmNow();
       }
@@ -228,7 +271,8 @@
       overlay.hide(); banner.hide(); seed.reset();
       counter.className = "crash-counter";
       counter.textContent = "1.00\u00d7";
-      curve.setAttribute("d", "");
+      svg.setAttribute("class", "crash-svg");
+      clearCurve();
       stake = bet.getBet();
       const resp = await BT.api.gameBet("crash", { bet: stake, params: {} });
       busy = false; betBtn.disabled = false;

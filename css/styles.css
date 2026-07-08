@@ -1439,25 +1439,60 @@ input[type="number"].betbox-input:focus {
   z-index: 1;
   pointer-events: none;
 }
+/* One glowing stroke — a single drop-shadow on a single path keeps the
+   per-frame redraw GPU-cheap (no stacked blurred layers). */
 .crash-curve {
   fill: none;
-  stroke: rgba(255,209,102,0.55);
-  stroke-width: 2.5;
+  stroke: #ffd166;
+  stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 6px rgba(255,209,102,0.25));
+  filter: drop-shadow(0 0 6px rgba(255,209,102,0.45));
 }
+/* Translucent gradient body under the curve, fading to the baseline. */
+.crash-fill { stroke: none; }
+.crash-fill-s1 { stop-color: rgba(255,209,102,0.28); }
+.crash-fill-s2 { stop-color: rgba(255,209,102,0); }
+/* Live point riding the head of the curve. */
+.crash-tip {
+  fill: #fff7e0;
+  filter: drop-shadow(0 0 5px rgba(255,209,102,0.9));
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: crash-tip-pulse 1s ease-in-out infinite;
+}
+@keyframes crash-tip-pulse {
+  50% { opacity: 0.55; transform: scale(1.4); }
+}
+/* Tension hue shift: calm gold → orange → red as the multiplier climbs. */
+.crash-svg.live.warm .crash-curve { stroke: #ffc14d; filter: drop-shadow(0 0 7px rgba(255,193,77,0.5)); }
+.crash-svg.live.warm .crash-fill-s1 { stop-color: rgba(255,193,77,0.30); }
+.crash-svg.live.hot .crash-curve { stroke: #ff9f43; filter: drop-shadow(0 0 8px rgba(255,159,67,0.55)); }
+.crash-svg.live.hot .crash-fill-s1 { stop-color: rgba(255,159,67,0.32); }
+.crash-svg.live.hot .crash-tip { fill: #ffe3c2; filter: drop-shadow(0 0 6px rgba(255,159,67,0.95)); }
+.crash-svg.live.red .crash-curve { stroke: #ff5a5a; filter: drop-shadow(0 0 9px rgba(255,90,90,0.6)); }
+.crash-svg.live.red .crash-fill-s1 { stop-color: rgba(255,90,90,0.32); }
+.crash-svg.live.red .crash-tip { fill: #ffd6d6; filter: drop-shadow(0 0 6px rgba(255,90,90,0.95)); animation-duration: 0.55s; }
+/* The crash frame: curve snaps red, the live tip is gone. */
+.crash-svg.crashed .crash-curve { stroke: #ff5a5a; filter: drop-shadow(0 0 8px rgba(255,90,90,0.6)); }
+.crash-svg.crashed .crash-fill-s1 { stop-color: rgba(255,90,90,0.26); }
+.crash-svg.crashed .crash-tip { display: none; }
+/* Cashed out: the frozen curve turns green — the win overlay carries the rest. */
+.crash-svg.cashed .crash-curve { stroke: #7ddc96; filter: drop-shadow(0 0 7px rgba(125,220,150,0.5)); }
+.crash-svg.cashed .crash-fill-s1 { stop-color: rgba(125,220,150,0.26); }
+.crash-svg.cashed .crash-tip { animation: none; fill: #d7f5e0; }
 .crash-counter {
-  position: relative;
+  position: absolute;
+  top: 10px; left: 14px;
   z-index: 2;
-  font-size: 52px;
+  font-size: 30px;
   font-weight: 800;
   letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
   color: #eef2f7;
   text-shadow: 0 2px 12px rgba(0,0,0,0.5);
   transition: color 0.3s ease;
-  font-variant-numeric: tabular-nums;
 }
 .crash-counter.live { color: #ffffff; }
 .crash-counter.live.warm { color: #ffd166; }
@@ -1476,10 +1511,18 @@ input[type="number"].betbox-input:focus {
   color: var(--text-dim, #9aa4b2);
   pointer-events: none;
 }
-.crash-stage.crash-flash { animation: crash-flash 0.6s ease 1; }
+.crash-stage.crash-flash { animation: crash-flash 0.6s ease 1, crash-shake 0.4s ease 1; }
 @keyframes crash-flash {
   0%   { background: rgba(255,80,80,0.35); }
   100% { background: #14181f; }
+}
+@keyframes crash-shake {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(-6px, 2px); }
+  40%  { transform: translate(5px, -2px); }
+  60%  { transform: translate(-3px, 1px); }
+  80%  { transform: translate(2px, 0); }
+  100% { transform: translate(0, 0); }
 }
 .crash-auto-input {
   width: 100%;

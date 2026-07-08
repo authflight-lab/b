@@ -234,7 +234,6 @@
           overlay.show("win", C.winMult(o.multiplier, payout, job.bet), C.winLines(payout, job.bet));
           BT.ui.haptic("success");
         } else {
-          banner.show("lose", "No win \u00b7 " + (o.multiplier !== undefined ? fmtMult(o.multiplier) : "0\u00d7"));
           BT.ui.haptic("error");
         }
       } finally {

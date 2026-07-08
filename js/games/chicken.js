@@ -213,7 +213,7 @@
       C.syncBalance(resp);
       const payout = resp.payout || 0;
       if (payout > 0) { overlay.show("win", C.winMult(resp.multiplier, payout, stake), C.winLines(payout, stake)); BT.ui.haptic("success"); }
-      else { banner.show("lose", "Run over! \u00b7 0\u00d7"); BT.ui.haptic("error"); }
+      else { BT.ui.haptic("error"); }
     }
 
     buildRoad();
