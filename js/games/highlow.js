@@ -115,6 +115,25 @@
       }
     }
 
+    // Board-level bust feedback: red flash on the board + shake on the card.
+    // Must fire independent of the win/loss overlay (which is skipped for
+    // losses across all games) — otherwise a bust is silent.
+    function bustFlash() {
+      board.classList.remove("hl-bust");
+      void board.offsetWidth;
+      board.classList.add("hl-bust");
+      setTimeout(() => board.classList.remove("hl-bust"), 950);
+    }
+
+    // Win feedback: a subtle green pulse mirroring the bust flash, so a win
+    // reads instantly without needing to read the multiplier text.
+    function winFlash() {
+      board.classList.remove("hl-win");
+      void board.offsetWidth;
+      board.classList.add("hl-win");
+      setTimeout(() => board.classList.remove("hl-win"), 950);
+    }
+
     // Refresh the side previews + probability bar for the current rank/mult.
     function refreshOdds(playable) {
       if (rank < 1) {
@@ -203,14 +222,19 @@
       const newStep = step + 1;
       if (drawn !== undefined) {
         step = newStep;
-        setCard(drawn, true);
+        // On a bust, don't flip the card at the same time as the red flash —
+        // it reads as a glitch. The card still updates to reveal the drawn
+        // value, it just doesn't rotate in.
+        setCard(drawn, won);
         if (won) {
           picks += 1; skips = 0; // a real pick resets the skip allowance
           mult = typeof resp.multiplier === "number" ? resp.multiplier : mult;
           history.push({ rank: drawn, step, badge: "win", label: mult.toFixed(2) + "×", dir });
           rank = current;
+          winFlash();
         } else {
           history.push({ rank: drawn, step, badge: "bust", label: "0.00×", dir });
+          bustFlash();
         }
         renderHistory();
       }

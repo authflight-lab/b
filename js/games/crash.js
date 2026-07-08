@@ -227,7 +227,11 @@
         BT.ui.haptic("success");
         resetCountdown();
       } else {
-        const cp = typeof o.crash_point === "number" ? o.crash_point : claimed;
+        // crash_point ships nested under `outcome` from /cashout but at the
+        // top level from /crash/check — accept either shape.
+        const cp = typeof o.crash_point === "number" ? o.crash_point
+                 : typeof resp.crash_point === "number" ? resp.crash_point
+                 : claimed;
         freezeAt(cp, true);
         BT.ui.haptic("error");
         rearmNow();

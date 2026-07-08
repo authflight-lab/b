@@ -98,20 +98,24 @@
       const safe = os.safe !== undefined ? os.safe : !resp.busted;
       const floorEl = tower.querySelector('.tower-floor[data-f="' + f + '"]');
       const chosen = floorEl && floorEl.querySelector('.cell[data-c="' + c + '"]');
-      // On a bust the real API discloses the floor's trap columns in the
-      // top-level `outcome.traps` (not `outcome_step`), so reveal all of them.
-      const traps = os.trap_positions || os.traps || outcome.traps || outcome.trap_positions
-        || (os.trap !== undefined ? [os.trap] : null);
-      if (floorEl && Array.isArray(traps)) {
-        traps.forEach((tc) => {
-          const tcell = floorEl.querySelector('.cell[data-c="' + tc + '"]');
-          if (tcell && tcell !== chosen) {
-            tcell.classList.remove("gem-hidden", "disabled");
-            tcell.classList.add("mine", "collapse");
-            tcell._icon.textContent = "";
-            shatterCell(tcell);
-          }
-        });
+      // Only disclose the floor's traps on a BUST. On a safe pick the other
+      // tiles stay hidden — the player never learns where the traps were.
+      // (The real API's `outcome.traps` is only meaningful once the run has
+      // ended; disclosing it on a safe pick would spoil the other tiles.)
+      if (resp.busted && floorEl) {
+        const traps = os.trap_positions || os.traps || outcome.traps || outcome.trap_positions
+          || (os.trap !== undefined ? [os.trap] : null);
+        if (Array.isArray(traps)) {
+          traps.forEach((tc) => {
+            const tcell = floorEl.querySelector('.cell[data-c="' + tc + '"]');
+            if (tcell && tcell !== chosen) {
+              tcell.classList.remove("gem-hidden", "disabled");
+              tcell.classList.add("mine", "collapse");
+              tcell._icon.textContent = "";
+              shatterCell(tcell);
+            }
+          });
+        }
       }
       if (chosen) {
         chosen.classList.remove("gem-hidden");
