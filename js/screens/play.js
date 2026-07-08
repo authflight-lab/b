@@ -139,12 +139,14 @@
       el("div", { class: "play-head-right" }, [balChip, fairBtn]),
     ]));
 
-    const grid = el("div", { class: "game-grid" });
+    // Compact horizontal selector strip (scrollable) so the game panel sits
+    // right below with minimal scrolling.
+    const strip = el("div", { class: "game-strip" });
     ORDER.forEach((key) => {
       const g = BT.games.registry[key];
       if (!g) return;
-      grid.appendChild(el("div", {
-        class: "game-tile" + (selected === key ? " active" : ""),
+      strip.appendChild(el("div", {
+        class: "game-chip" + (selected === key ? " active" : ""),
         onclick: () => {
           if (BT.activeGame && BT.activeGame.name !== key) {
             BT.ui.toast("Cash out your current game first.", "error");
@@ -154,12 +156,17 @@
           selected = key; renderGames(root);
         },
       }, [
-        el("div", { class: "g-ico" }, BT.ui.icon(key, 26)),
-        el("div", { class: "g-name" }, g.title),
+        el("span", { class: "g-ico" }, BT.ui.icon(key, 18)),
+        el("span", { class: "g-name" }, g.title),
         NEW_GAMES.includes(key) ? el("span", { class: "g-new" }, "NEW") : null,
       ]));
     });
-    root.appendChild(grid);
+    root.appendChild(strip);
+    // Keep the selected chip visible without the user hunting for it.
+    const act = strip.querySelector(".game-chip.active");
+    if (act) requestAnimationFrame(() => {
+      try { act.scrollIntoView({ block: "nearest", inline: "center" }); } catch (e) {}
+    });
 
     if (!BT.api.isConfigured()) {
       root.appendChild(BT.ui.notice("The game server isn't connected yet. You can browse the games, but betting is disabled until it's live."));
