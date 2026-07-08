@@ -748,13 +748,13 @@ input[type="number"].betbox-input:focus {
   100% { transform: translate(0, 0); }
 }
 
-/* Win: a subtle green pulse mirroring the bust flash — no shake, no card
-   flip riding on top of it, so the color alone reads the outcome instantly. */
-.hl-board.hl-win { animation: hlWinPulse 0.9s ease 1; }
-.hl-board.hl-win .hl-card { box-shadow: 0 0 0 3px rgba(84,222,145,0.5), 0 10px 24px rgba(0,0,0,0.45); }
+/* Win: a subtle green pulse on the CARD only (unlike bust, the board
+   background stays put) — no shake, no card flip riding on top of it, so
+   the color alone reads the outcome instantly. */
+.hl-board.hl-win .hl-card { animation: hlWinPulse 0.9s ease 1; }
 @keyframes hlWinPulse {
-  0%   { background: rgba(84,222,145,0.22); border-radius: 16px; }
-  100% { background: transparent; }
+  0%   { box-shadow: 0 0 0 3px rgba(84,222,145,0.5), 0 10px 24px rgba(0,0,0,0.45); }
+  100% { box-shadow: 0 0 0 0 rgba(84,222,145,0), 0 10px 24px rgba(0,0,0,0.45); }
 }
 
 .hl-prob { display: flex; gap: 8px; margin: 12px 0 4px; }
