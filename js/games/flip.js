@@ -64,9 +64,17 @@
       track.scrollLeft = track.scrollWidth;
     }
 
+    function bustFlash() {
+      coinWrap.classList.remove("coin-bust");
+      void coinWrap.offsetWidth;
+      coinWrap.classList.add("coin-bust");
+      setTimeout(() => coinWrap.classList.remove("coin-bust"), 950);
+    }
+
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       overlay.hide(); banner.hide(); seed.reset(); BT.ui.clear(track); streak = 0;
+      coinWrap.classList.remove("coin-bust");
       flipCoinTo("heads", false);
       stake = bet.getBet();
       const resp = await BT.api.gameBet("flip", { bet: stake, params: {} });
@@ -101,6 +109,7 @@
       const busted = !!resp.busted;
       streak += 1;
       pushMult(resp.multiplier, !busted);
+      if (busted) bustFlash();
       if (busted || resp.done) {
         finish(resp);
       } else {
