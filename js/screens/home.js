@@ -14,6 +14,7 @@
     { key: "rps",     label: "RPS",     isNew: true },
     { key: "chicken", label: "Chicken", isNew: true },
     { key: "crash",   label: "Crash",   isNew: true },
+    { key: "blackjack", label: "Blackjack", isNew: true },
   ];
 
   const QUESTS = [

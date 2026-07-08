@@ -4,8 +4,8 @@
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
 
-  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps", "chicken", "crash"];
-  const NEW_GAMES = ["rps", "chicken", "crash"];
+  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps", "chicken", "crash", "blackjack"];
+  const NEW_GAMES = ["rps", "chicken", "crash", "blackjack"];
   let selected = "dice";
 
   // ---- Provably Fair: verification code shown per game ----------------------
@@ -109,6 +109,17 @@
       "// You win your claimed multiplier iff it is BELOW crashPoint AND your\n" +
       "// cashout arrives before the curve reaches it (wins are clamped to the\n" +
       "// server clock); waiting past crashPoint loses the stake.\n",
+    blackjack:
+      FAIR_PREAMBLE +
+      "\n" +
+      "// Blackjack — ranks 1..13 (A..K), drawn in dealing order:\n" +
+      "// cursor 0=player c1, 1=dealer up, 2=player c2, 3=dealer hole,\n" +
+      "// then 4,5,6... for every hit/dealer draw.\n" +
+      "const rank = (u) => Math.floor(u * 13) + 1;\n" +
+      "const card = (cursor) => rank(rng(cursor));\n" +
+      "// Ace counts 11 (soft) unless it busts the hand, then 1. Dealer hits\n" +
+      "// while total < 17 (stands on soft/hard 17 — S17). Natural 21 on the\n" +
+      "// first two cards pays 3:2 immediately; a push (equal totals) is 1.0x.\n",
   };
 
   function render(root) {

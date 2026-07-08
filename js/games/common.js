@@ -280,6 +280,8 @@
       bad_init_data: "Open this from Telegram to play.",
       round_open: "You already have a round in progress.",
       no_open_round: "That round has ended.",
+      invalid_move: "That move isn't available right now.",
+      round_not_open: "That round has ended.",
       must_reveal_first: "Reveal at least one tile before cashing out.",
       must_climb_first: "Climb at least one floor before cashing out.",
       must_pick_first: "Pick at least one card before cashing out.",

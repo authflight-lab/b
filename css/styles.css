@@ -1672,3 +1672,29 @@ input[type="number"].betbox-input:focus {
 .sess-line.sess-dn { stroke: #f4364c; filter: drop-shadow(0 0 4px rgba(244,54,76,0.75)); }
 .sess-area.sess-up { fill: rgba(84,222,145,0.16); stroke: none; }
 .sess-area.sess-dn { fill: rgba(244,54,76,0.16); stroke: none; }
+
+/* Blackjack — dealer row on top, player row on bottom. Cards mirror the
+   HighLow card look (own bj-* classes so nothing here can regress HighLow). */
+.bj-table { display: flex; flex-direction: column; gap: 18px; padding: 10px 2px 6px; position: relative; }
+.bj-hand { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.bj-hand-head { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.bj-hand-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
+.bj-total { padding: 2px 8px; border-radius: 999px; background: var(--bg-elev); border: 1px solid var(--glass-border); font-size: 12px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 20px; text-align: center; }
+.bj-cards { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 78px; }
+.bj-card {
+  width: 54px; height: 78px; border-radius: 9px; position: relative;
+  background: linear-gradient(160deg, #ffffff, #e9edf5); box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 17px; gap: 2px; animation: bjDeal .25s ease;
+}
+.bj-card.red { color: #d13b3b; }
+.bj-card.black { color: #1a2230; }
+.bj-suit { font-size: 14px; }
+.bj-card.back {
+  background: repeating-linear-gradient(135deg, #2c3550, #2c3550 6px, #232a3f 6px, #232a3f 12px);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+@keyframes bjDeal { 0% { transform: translateY(-10px) scale(0.9); opacity: 0.2; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+
+.bj-actions { display: flex; gap: 8px; margin: 8px 0 4px; }
+.bj-actions .btn { flex: 1; }

@@ -135,6 +135,10 @@
     crash:
       '<path d="M3 19.5L9.5 12l4 3.5L21 6.5"/>' +
       '<path d="M15.5 6.5H21V12"/>',
+    blackjack:
+      '<rect x="3" y="4" width="10" height="15" rx="2" transform="rotate(-8 8 11.5)"/>' +
+      '<rect x="11" y="5" width="10" height="15" rx="2"/>' +
+      '<circle cx="16" cy="9.5" r="1.2" fill="currentColor" stroke="none"/>',
     rich:
       '<path d="M12 2v20"/>' +
       '<path d="M17 6c0-2.2-2.24-3.5-5-3.5S7 3.8 7 6s2.24 3.5 5 3.5 5 1.3 5 3.5-2.24 3.5-5 3.5-5-1.3-5-3.5"/>',
