@@ -201,7 +201,7 @@
       C.syncBalance(resp);
       const payout = resp.payout || 0;
       if (payout > 0) { overlay.show("win", C.winMult(resp.multiplier, payout, stake), C.winLines(payout, stake)); BT.ui.haptic("success"); }
-      else { overlay.show("lose", "0x", "House wins"); BT.ui.haptic("error"); }
+      else { banner.show("lose", "House wins \u00b7 0\u00d7"); BT.ui.haptic("error"); }
       renderLadder();
     }
 

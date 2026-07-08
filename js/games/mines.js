@@ -171,7 +171,7 @@
         overlay.show("win", C.winMult(mult, payout, stake), C.winLines(payout, stake));
         BT.ui.haptic("success");
       } else {
-        overlay.show("lose", (Math.round(mult * 100) / 100) + "x", "Hit a mine!");
+        banner.show("lose", "Hit a mine! \u00b7 " + (Math.round(mult * 100) / 100) + "\u00d7");
         BT.ui.haptic("error");
       }
     }

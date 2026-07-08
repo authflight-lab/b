@@ -119,7 +119,7 @@
       C.syncBalance(resp);
       const payout = resp.payout || 0;
       if (payout > 0) { overlay.show("win", C.winMult(resp.multiplier, payout, stake), C.winLines(payout, stake)); BT.ui.haptic("success"); }
-      else { overlay.show("lose", "0x", "Busted"); BT.ui.haptic("error"); }
+      else { banner.show("lose", "Busted \u00b7 0\u00d7"); BT.ui.haptic("error"); }
     }
 
     root.appendChild(el("div", { class: "card" }, [

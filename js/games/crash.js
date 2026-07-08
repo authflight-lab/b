@@ -127,7 +127,7 @@
           roundId = null; BT.clearActiveGame();
           bet.setDisabled(false); autoInput.disabled = false;
           freezeAt(parseFloat(counter.textContent) || 1.0, true);
-          resetCountdown();
+          rearmNow();
         }
         // Any other error (network blip, rate limit): ignore — next poll retries.
       }).catch(() => { checking = false; });
@@ -142,6 +142,14 @@
         stage.classList.add("crash-flash");
         setTimeout(() => stage.classList.remove("crash-flash"), 650);
       }
+    }
+
+    // After a LOSS the bet form re-arms instantly — no countdown, so the next
+    // round is a single tap away. Wins keep the cosmetic countdown below.
+    function rearmNow() {
+      betBtn.style.display = "block"; cashBtn.style.display = "none";
+      betBtn.disabled = false;
+      status.textContent = "Place a bet to launch.";
     }
 
     // Between rounds: cosmetic countdown before the bet form re-enables.
@@ -173,13 +181,14 @@
         freezeAt(typeof resp.multiplier === "number" ? resp.multiplier : claimed, false);
         overlay.show("win", C.winMult(resp.multiplier, payout, stake), C.winLines(payout, stake));
         BT.ui.haptic("success");
+        resetCountdown();
       } else {
         const cp = typeof o.crash_point === "number" ? o.crash_point : claimed;
         freezeAt(cp, true);
-        overlay.show("lose", cp.toFixed(2) + "\u00d7", loseMsg || "Crashed before your cashout");
+        banner.show("lose", (loseMsg || "Crashed") + " \u00b7 " + cp.toFixed(2) + "\u00d7");
         BT.ui.haptic("error");
+        rearmNow();
       }
-      resetCountdown();
     }
 
     async function cashout(m, auto) {
