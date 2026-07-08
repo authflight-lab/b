@@ -191,9 +191,11 @@
       catch (e) { panel.appendChild(BT.ui.notice("Couldn't load that game.")); }
     }
 
-    // Session P&L tracker — one shared card under every game (fed centrally
-    // via api.js/BT.session, so it carries across game switches and updates
-    // live as rounds settle).
+    // Session stats — scoped to THIS game panel only: every render of the
+    // play screen (opening the page, switching games) starts a fresh tally,
+    // so the card never carries totals across games or navigations. It is
+    // still fed centrally (api.js/BT.session) while the panel is mounted.
+    BT.session.reset();
     root.appendChild(BT.games.common.sessionPanel());
 
     // VERBATIM legal footer (spec §9). Do not paraphrase.

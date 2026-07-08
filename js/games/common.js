@@ -294,12 +294,14 @@
   }
 
   // --- Session P&L tracker ------------------------------------------------
-  // Client-side, session-only record of every settled wager (all games
-  // combined). Fed centrally by the api client (see api.js noteOpen /
-  // noteSettle) — it observes bet + settle responses, so no game controller
-  // reports anything itself. Resets on reload; nothing is persisted or sent
-  // anywhere. `curve` is the cumulative net profit after each settled bet —
-  // the stepped up/down line the panel charts.
+  // Client-side record of settled wagers, scoped to a single game panel: the
+  // play screen calls reset() on every render (opening the page, switching
+  // games), so the tally covers only the current game since it was opened —
+  // never an all-session or cross-game total. Fed centrally by the api client
+  // (see api.js noteOpen / noteSettle) — it observes bet + settle responses,
+  // so no game controller reports anything itself. Nothing is persisted or
+  // sent anywhere. `curve` is the cumulative net profit after each settled
+  // bet — the stepped up/down line the panel charts.
   BT.session = (function () {
     const open = {};   // round_id -> stake, remembered between /bet and its settle
     const S = { wagered: 0, returned: 0, wins: 0, losses: 0 };
