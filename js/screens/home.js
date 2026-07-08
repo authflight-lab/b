@@ -13,6 +13,7 @@
     { key: "flip",    label: "Flip"    },
     { key: "rps",     label: "RPS"     },
     { key: "chicken", label: "Chicken" },
+    { key: "crash",   label: "Crash"   },
   ];
 
   const QUESTS = [

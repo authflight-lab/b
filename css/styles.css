@@ -1234,3 +1234,78 @@ input[type="number"].betbox-input:focus {
   padding-bottom: 14px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.35);
 }
+
+/* ---- Crash (scoped .crash-*) ---------------------------------------------- */
+.crash-stage {
+  position: relative;
+  border-radius: 14px;
+  background: #14181f;
+  border: 1px solid rgba(255,255,255,0.06);
+  min-height: 190px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.crash-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.crash-curve {
+  fill: none;
+  stroke: rgba(255,209,102,0.55);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 6px rgba(255,209,102,0.25));
+}
+.crash-counter {
+  position: relative;
+  z-index: 2;
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #eef2f7;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  transition: color 0.3s ease;
+  font-variant-numeric: tabular-nums;
+}
+.crash-counter.live { color: #ffffff; }
+.crash-counter.live.warm { color: #ffd166; }
+.crash-counter.live.hot { color: #ff9f43; }
+.crash-counter.live.red { color: #ff5a5a; }
+.crash-counter.cashed { color: #7ddc96; }
+.crash-counter.crashed { color: #ff5a5a; }
+.crash-status {
+  position: absolute;
+  left: 0; right: 0; bottom: 10px;
+  z-index: 2;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-dim, #9aa4b2);
+  pointer-events: none;
+}
+.crash-stage.crash-flash { animation: crash-flash 0.6s ease 1; }
+@keyframes crash-flash {
+  0%   { background: rgba(255,80,80,0.35); }
+  100% { background: #14181f; }
+}
+.crash-auto-input {
+  width: 100%;
+}
+.crash-cash {
+  position: sticky;
+  bottom: 8px;
+  z-index: 5;
+  font-size: 17px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}

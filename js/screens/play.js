@@ -4,7 +4,7 @@
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
 
-  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps", "chicken"];
+  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps", "chicken", "crash"];
   let selected = "dice";
 
   // ---- Provably Fair: verification code shown per game ----------------------
@@ -102,6 +102,14 @@
       "cars.sort((a, b) => a - b);   // server discloses them sorted\n" +
       "// safe if your zone is not in `cars`\n" +
       "const multiplier = Math.min(0.98 * (C / (C - T)) ** lanes, 20);\n",
+    crash:
+      FAIR_PREAMBLE +
+      "\n" +
+      "// Crash — ONE draw fixes the round's crash point before you bet.\n" +
+      "const u = rng(0);\n" +
+      "const crashPoint = Math.min(Math.max(1.0, 0.98 / u), 25);   // 2% edge, 25x cap\n" +
+      "// You win your claimed cashout multiplier iff it is BELOW crashPoint;\n" +
+      "// cashing at or above it (or never cashing out) loses the stake.\n",
   };
 
   function render(root) {
