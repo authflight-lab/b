@@ -1684,6 +1684,7 @@ input[type="number"].betbox-input:focus {
 .bj-hand-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
 .bj-hand-label.you { color: var(--accent); text-shadow: 0 0 10px rgba(var(--accent-rgb, 78,205,255), 0.7); }
 .bj-total { padding: 2px 8px; border-radius: 999px; background: var(--bg-elev); border: 1px solid var(--glass-border); font-size: 12px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 20px; text-align: center; }
+.bj-total.bust { background: rgba(244,54,76,0.15); border-color: rgba(244,54,76,0.5); color: #f4364c; }
 .bj-cards { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 102px; }
 .bj-card {
   width: 70px; height: 101px; border-radius: 11px; position: relative;

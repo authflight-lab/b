@@ -97,6 +97,7 @@
       BT.ui.clear(dealerCards); BT.ui.clear(playerCards);
       player = []; dealer = []; holeHidden = true;
       playerCards.classList.remove("bj-losing");
+      playerTotal.classList.remove("bust");
       overlay.hide();
       updateTotals();
     }
@@ -160,11 +161,20 @@
       const finalStake = typeof resp.bet === "number" ? resp.bet : stake;
       const natural = !!(opts && opts.natural);
 
-      const isLoss = payout === 0 && mult === 0;  // bust or dealer wins
+      const busted = !!(opts && opts.busted);
+      const isLoss = payout === 0 && mult === 0;
       const isPush = mult === 1;
 
-      if (isLoss) {
-        // Red glow, then cards fall off the table — no overlay.
+      if (busted) {
+        // Player went over 21 — show BUST on the total, then cards fall.
+        // Dealer doesn't draw on a bust so no reveal happens here.
+        playerTotal.classList.add("bust");
+        playerTotal.textContent = "BUST";
+        playerCards.classList.add("bj-losing");
+        BT.ui.haptic("error");
+        await C.frame(FALL_MS);
+      } else if (isLoss) {
+        // Dealer beat the player — cards fall, no extra label.
         playerCards.classList.add("bj-losing");
         BT.ui.haptic("error");
         await C.frame(FALL_MS);
@@ -249,8 +259,10 @@
       }
 
       if (resp.done) {
-        if (os.dealer) await revealDealer(os.dealer);
-        await finish(resp, {});
+        // On a bust the dealer doesn't need to play — skip the reveal entirely.
+        // On stand/double/21, keep full suspense pacing for the dealer draw.
+        if (os.dealer && !resp.busted) await revealDealer(os.dealer);
+        await finish(resp, { busted: !!resp.busted });
         return;
       }
       busy = false;
