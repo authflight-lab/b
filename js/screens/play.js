@@ -108,8 +108,10 @@
       "// Crash — ONE draw fixes the round's crash point before you bet.\n" +
       "const u = rng(0);\n" +
       "const crashPoint = Math.min(Math.max(1.0, 0.98 / u), 25);   // 2% edge, 25x cap\n" +
-      "// You win your claimed cashout multiplier iff it is BELOW crashPoint;\n" +
-      "// cashing at or above it (or never cashing out) loses the stake.\n",
+      "// The curve is server-clocked from the bet: mult = e^(0.00006 * ms).\n" +
+      "// You win your claimed multiplier iff it is BELOW crashPoint AND your\n" +
+      "// cashout arrives before the curve reaches it (wins are clamped to the\n" +
+      "// server clock); waiting past crashPoint loses the stake.\n",
   };
 
   function render(root) {

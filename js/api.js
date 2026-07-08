@@ -123,6 +123,9 @@
     gamePlay: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/play", body)),
     gameStep: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/step", body)),
     gameCashout: (name, body) => afterMutation(post("/bt/api/game/" + encodeURIComponent(name) + "/cashout", body)),
+    // Crash liveness poll (~1/s while the curve rises). Plain post — a bust
+    // pays 0 so the /me memo need not be dropped on every poll tick.
+    crashCheck: (body) => post("/bt/api/game/crash/check", body),
   };
 
   BT.api = api;

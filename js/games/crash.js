@@ -1,10 +1,12 @@
 // Crash — solo curve. A multiplier climbs from 1.00x; cash out before the
-// server's predetermined crash point to win. The rising curve/counter here is
-// COSMETIC (mult(t) = e^(0.00006t)); the server never tracks time — it only
-// compares the multiplier you claim at cashout against the seeded crash point,
-// so the EV is identical (98%) at every cashout target. The crash point is
-// committed via the server hash before the bet and revealed only on bust
-// (or verifiable after seed rotation).
+// server's predetermined crash point to win. The round is SERVER-clocked:
+// the bet anchors a server t0 and the round autonomously crashes the moment
+// e^(GROWTH * elapsed) reaches the seeded crash point. This client animates
+// the same formula and polls /crash/check (~1/s) to learn of the crash the
+// moment it happens — it can never predict it (the crash point stays secret
+// until settle; committed via the server hash before the bet, verifiable
+// after seed rotation). Wins are clamped server-side to the server clock, so
+// the animation can safely lag a little; claims can never run ahead.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -12,8 +14,9 @@
 
   const CAP = 25;              // CRASH_CAP (== global MULT_CAP)
   const MAX_CLAIM = 24.99;     // claiming >= CAP always busts, so stop just under
-  const GROWTH = 0.00006;      // mult(t) = e^(GROWTH * t_ms) — cosmetic curve speed
+  const GROWTH = 0.00006;      // mult(t) = e^(GROWTH * t_ms) — MUST match api/game/crash.py
   const RESET_S = 3;           // cosmetic between-round countdown
+  const CHECK_MS = 1000;       // /crash/check poll interval while the curve rises
 
   function render(root) {
     BT.ui.clear(root);
@@ -23,6 +26,7 @@
     const banner = C.resultBanner();
     let roundId = null, busy = false, running = false;
     let raf = 0, t0 = 0, points = [];
+    let checking = false, lastCheckT = 0;
 
     // --- Stage: curve + dominant counter ---------------------------------
     const W = 320, H = 150;
@@ -79,14 +83,16 @@
       curve.setAttribute("d", d);
     }
 
-    // The climb: pure cosmetic motion — the client CANNOT know the crash point
-    // (the active server seed is secret), so the curve just rises until the
-    // player cashes out (or the cap auto-fires). Nothing is predicted.
+    // The climb: the client CANNOT know the crash point (the active server
+    // seed is secret), so the curve rises on the shared formula while a ~1/s
+    // poll of /crash/check asks the server-clocked truth "has it crashed?".
+    // The moment it has, the server settles the round (payout 0, crash point
+    // revealed) and the curve drops right here — no cashout needed.
     // `reset` starts a fresh round clock; omit it to RESUME after a transient
     // cashout failure without rewinding t0/points.
     function startLoop(reset) {
       stopLoop();
-      if (reset) { t0 = C.nowMs(); points = [[0, 1]]; }
+      if (reset) { t0 = C.nowMs(); points = [[0, 1]]; lastCheckT = 0; }
       let lastPt = points.length ? points[points.length - 1][0] : 0;
       running = true;
       (function tick() {
@@ -98,11 +104,33 @@
         counter.className = "crash-counter live" + counterTone(m);
         cashBtn.textContent = "Cash out \u00b7 " + Math.min(m, MAX_CLAIM).toFixed(2) + "\u00d7";
         if (t - lastPt >= 80) { points.push([t, m]); lastPt = t; drawCurve(); }
+        if (t - lastCheckT >= CHECK_MS && !checking) { lastCheckT = t; pollCrash(); }
         const at = autoTarget();
         if (at !== null && m >= at) { cashout(at, true); return; }
         if (m >= CAP) { cashout(MAX_CLAIM, true); return; } // cap: forced claim just under
         raf = requestAnimationFrame(tick);
       })();
+    }
+
+    // Ask the server whether the round has crashed. Fire-and-forget from the
+    // rAF loop; results arriving after a cashout started (busy) or after the
+    // round ended are ignored — the cashout response is then the authority.
+    function pollCrash() {
+      const rid = roundId;
+      checking = true;
+      BT.api.crashCheck({ round_id: rid }).then((r) => {
+        checking = false;
+        if (!running || busy || !roundId || roundId !== rid || !stage.isConnected) return;
+        if (r && r.crashed) { finish(r, 1.0, "Crashed"); return; }
+        if (r && (r.error === "no_open_round" || r.error === "round_not_open" || r.error === "round_not_found")) {
+          // Round closed elsewhere (e.g. swept while backgrounded) — end it.
+          roundId = null; BT.clearActiveGame();
+          bet.setDisabled(false); autoInput.disabled = false;
+          freezeAt(parseFloat(counter.textContent) || 1.0, true);
+          resetCountdown();
+        }
+        // Any other error (network blip, rate limit): ignore — next poll retries.
+      }).catch(() => { checking = false; });
     }
 
     function freezeAt(m, crashed) {
@@ -134,7 +162,7 @@
       }, 1000);
     }
 
-    function finish(resp, claimed) {
+    function finish(resp, claimed, loseMsg) {
       roundId = null;
       BT.clearActiveGame();
       bet.setDisabled(false); autoInput.disabled = false;
@@ -148,7 +176,7 @@
       } else {
         const cp = typeof o.crash_point === "number" ? o.crash_point : claimed;
         freezeAt(cp, true);
-        overlay.show("lose", cp.toFixed(2) + "\u00d7", "Crashed before your cashout");
+        overlay.show("lose", cp.toFixed(2) + "\u00d7", loseMsg || "Crashed before your cashout");
         BT.ui.haptic("error");
       }
       resetCountdown();
