@@ -46,10 +46,34 @@
       class: "race-seg" + (currentPeriod === key ? " active" : ""),
       onclick: () => { if (currentPeriod !== key) { currentPeriod = key; render(root); } },
     }, label);
-    return el("div", { class: "race-segtoggle" }, [
-      mk("weekly", "Weekly"),
-      mk("alltime", "All-Time"),
+    return el("div", { class: "race-periodrow" }, [
+      el("div", { class: "race-segtoggle" }, [
+        mk("weekly", "Weekly"),
+        mk("alltime", "All-Time"),
+      ]),
+      el("span", { id: "lb-resets", class: "race-resets" }),
     ]);
+  }
+
+  // Renders a static "Resets in Xd Xh Xm" from a server-provided timestamp.
+  // Computed once (on load / tab switch), never polled or re-rendered on a
+  // timer — the countdown is only as fresh as the last time the screen was
+  // shown, by design.
+  function renderResets(resetsAt) {
+    const label = document.getElementById("lb-resets");
+    if (!label) return;
+    if (!resetsAt) { label.textContent = ""; return; }
+    const ms = new Date(resetsAt).getTime() - Date.now();
+    if (!isFinite(ms) || ms <= 0) { label.textContent = ""; return; }
+    const totalMin = Math.floor(ms / 60000);
+    const d = Math.floor(totalMin / 1440);
+    const h = Math.floor((totalMin % 1440) / 60);
+    const m = totalMin % 60;
+    const parts = [];
+    if (d > 0) parts.push(d + "d");
+    if (d > 0 || h > 0) parts.push(h + "h");
+    parts.push(m + "min");
+    label.textContent = "Resets in " + parts.join(" ");
   }
 
   // ---- Rows -----------------------------------------------------------------
@@ -69,6 +93,8 @@
       box.appendChild(el("button", { class: "btn block", onclick: () => render(root) }, "Retry"));
       return;
     }
+
+    renderResets(data.resets_at);
 
     // Reward column only appears on the Weekly board (all-time pays nothing).
     const showReward = currentPeriod === "weekly";

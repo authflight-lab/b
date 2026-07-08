@@ -348,10 +348,18 @@ input[type="number"].betbox-input:focus {
 }
 
 /* Weekly / all-time segmented switch. */
+.race-periodrow {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin: 0 0 14px;
+}
 .race-segtoggle {
-  display: inline-flex; gap: 2px; margin: 0 0 14px; padding: 3px;
+  display: inline-flex; gap: 2px; padding: 3px;
   border-radius: 999px; background: var(--glass-bg-2);
   border: 1px solid var(--glass-border); box-shadow: var(--glass-inset-hi);
+}
+.race-resets {
+  font-size: 12px; font-weight: 600; color: var(--text-dim);
+  white-space: nowrap;
 }
 .race-seg {
   padding: 6px 16px; border-radius: 999px; border: none; background: transparent;
