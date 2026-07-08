@@ -1084,147 +1084,204 @@ input[type="number"].betbox-input:focus {
 /* ---- Chicken Cross (scoped .ck-*) ---------------------------------------- */
 .ck-road-wrap {
   border-radius: 14px;
-  background: #14181f;
+  background: #141828;
   border: 1px solid rgba(255,255,255,0.06);
   overflow: hidden;
   margin-bottom: 12px;
 }
 .ck-road {
   display: flex;
-  gap: 6px;
-  padding: 10px;
+  padding: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  min-height: 240px;
+  min-height: 250px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.12)),
+    #171b2e;
 }
 .ck-road::-webkit-scrollbar { display: none; }
-.ck-pad, .ck-lane {
-  display: flex;
-  flex-direction: column;
-  flex: 1 0 64px;
+
+/* Start kerb: the sidewalk strip the chicken waits on. */
+.ck-kerb {
+  flex: 0 0 64px;
   min-width: 64px;
-  border-radius: 10px;
-}
-.ck-pad {
-  background: linear-gradient(180deg, rgba(84,110,68,0.35), rgba(84,110,68,0.2));
-  border: 1px solid rgba(140,180,110,0.25);
-}
-.ck-pad-cell {
-  flex: 1;
   display: grid;
   place-items: center;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 26px, rgba(255,255,255,0.02) 26px 52px),
+    #1d2238;
+  border-right: 3px solid rgba(255,255,255,0.1);
+  position: relative;
+  z-index: 3;
 }
+
 .ck-lane {
-  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.07);
+  flex: 1 0 88px;
+  min-width: 88px;
   position: relative;
-  transition: opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.ck-lane.dim { opacity: 0.45; }
-.ck-lane.active {
-  border-color: rgba(255,209,102,0.55);
-  box-shadow: 0 0 0 1px rgba(255,209,102,0.25), 0 0 14px rgba(255,209,102,0.12);
-}
-.ck-lane.crossed { border-color: rgba(120,220,150,0.35); }
-.ck-lane.bust {
-  border-color: rgba(255,90,90,0.6);
-  animation: ck-lane-flash 0.5s ease 2;
-}
-@keyframes ck-lane-flash {
-  50% { background: rgba(255,80,80,0.18); }
-}
-.ck-lane-mult {
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted, #9aa4b2);
-  padding: 5px 2px 3px;
-  letter-spacing: 0.02em;
-}
-.ck-lane-mult.hit { color: #7ddc96; }
-.ck-lane-mult.pad { color: rgba(160,200,130,0.9); }
-.ck-strip {
-  position: relative;
-  flex: 1;
-  display: flex;
-  padding: 4px;
-}
-.ck-cells {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-}
-.ck-cell {
-  flex: 1;
-  min-height: 42px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.06);
-  border: 1px dashed rgba(255,255,255,0.14);
   display: grid;
   place-items: center;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  border-right: 2px dashed rgba(255,255,255,0.1);
+  transition: opacity 0.2s ease, background 0.2s ease;
+  overflow: hidden;
 }
-.ck-lane.active .ck-cell:not(.disabled):hover,
-.ck-lane.active .ck-cell:not(.disabled):active { background: rgba(255,209,102,0.14); border-color: rgba(255,209,102,0.5); }
-.ck-cell.disabled { cursor: default; pointer-events: none; }
-.ck-traffic {
+.ck-lane:last-child { border-right: none; }
+.ck-lane.dim .ck-drain-cover { opacity: 0.55; }
+.ck-lane.active .ck-drain-cover {
+  opacity: 1;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(255,209,102,0.35), 0 0 18px rgba(255,209,102,0.18);
+}
+.ck-lane.active .ck-drain-cover:hover,
+.ck-lane.active .ck-drain-cover:active {
+  box-shadow: 0 0 0 2px rgba(255,209,102,0.6), 0 0 24px rgba(255,209,102,0.3);
+}
+
+/* Shimmer ring around the drain the chicken is standing on: a rotating
+   conic highlight masked down to the cover's rim. */
+.ck-lane.cur .ck-drain-cover::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: conic-gradient(
+    rgba(125,220,150,0) 0deg,
+    rgba(125,220,150,0.75) 70deg,
+    rgba(255,255,255,0.95) 100deg,
+    rgba(125,220,150,0.75) 130deg,
+    rgba(125,220,150,0) 200deg,
+    rgba(125,220,150,0) 360deg
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  animation: ck-shimmer 1.8s linear infinite;
+  pointer-events: none;
+}
+@keyframes ck-shimmer {
+  to { transform: rotate(360deg); }
+}
+.ck-lane.bust { animation: ck-lane-flash 0.5s ease 2; }
+@keyframes ck-lane-flash {
+  50% { background: rgba(255,80,80,0.14); }
+}
+
+/* Drain (manhole): a void underneath, the cover on top, and a spot the
+   chicken stands on. The cover falls away on a bust to reveal the hole. */
+.ck-drain {
+  position: relative;
+  width: 66px;
+  height: 66px;
+}
+.ck-drain-hole {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, #05060d 58%, #10131f 100%);
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.9);
+}
+.ck-drain-cover {
   position: absolute;
   inset: 0;
-  z-index: 1;
-  overflow: hidden;
-  pointer-events: none;
-  border-radius: 8px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255,255,255,0.09), rgba(255,255,255,0) 62%),
+    radial-gradient(circle at 50% 50%, #262c45 0 58%, #1c2138 60% 100%);
+  border: 2px solid rgba(255,255,255,0.14);
+  box-shadow:
+    inset 0 0 0 5px rgba(255,255,255,0.05),
+    inset 0 0 0 6px rgba(0,0,0,0.3),
+    0 3px 8px rgba(0,0,0,0.45);
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
 }
-.ck-vehicle {
+/* Rivet dots around the rim, like a real drain cover. */
+.ck-drain-cover::before {
+  content: "";
   position: absolute;
-  top: -18%;
+  inset: 7px;
+  border-radius: 50%;
+  border: 2px dotted rgba(255,255,255,0.14);
+  pointer-events: none;
+}
+.ck-drain-cover.fall {
+  animation: ck-cover-fall 0.55s ease-in forwards;
+}
+@keyframes ck-cover-fall {
+  0%   { transform: none; opacity: 1; }
+  30%  { transform: translateY(4px) rotate(6deg) scale(0.98); }
+  100% { transform: translateY(46px) rotate(24deg) scale(0.42); opacity: 0; }
+}
+.ck-lane.held .ck-drain-mult { visibility: hidden; }
+.ck-drain-mult {
   font-size: 13px;
-  opacity: 0.4;
-  transform: rotate(90deg);
-  animation: ck-drive linear infinite;
-  will-change: top;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #cdd5e4;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
 }
-@keyframes ck-drive {
-  from { top: -18%; }
-  to   { top: 108%; }
-}
-.ck-vehicle.zoom {
-  font-size: 18px;
-  opacity: 0.95;
-  animation: ck-zoom 0.6s linear forwards;
-  filter: drop-shadow(0 0 6px rgba(255,255,255,0.25));
-}
-@keyframes ck-zoom {
-  from { top: -22%; }
-  to   { top: 112%; }
-}
-.ck-chicken {
-  font-size: 26px;
-  line-height: 1;
+.ck-coin {
+  width: 44px;
+  height: 44px;
   display: block;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+  animation: ck-coin-pop 0.35s ease-out;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+}
+@keyframes ck-coin-pop {
+  0%   { transform: scale(0.3); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* The spot the chicken occupies — sits over the drain, centered. */
+.ck-spot {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 4;
+}
+.ck-kerb .ck-spot { position: static; }
+.ck-chicken {
+  width: 46px;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5));
+  position: relative;
+  z-index: 5;
 }
 .ck-chicken.hop { animation: ck-hop 0.32s ease-out; }
 @keyframes ck-hop {
   0%   { transform: translateY(4px) scale(0.9); }
-  45%  { transform: translateY(-9px) scale(1.12); }
+  45%  { transform: translateY(-10px) scale(1.1); }
   100% { transform: translateY(0) scale(1); }
 }
-.ck-splat {
-  font-size: 26px;
-  line-height: 1;
-  animation: ck-splat-pop 0.4s ease-out;
+.ck-chicken.drop { animation: ck-chicken-drop 0.7s ease-in forwards; }
+@keyframes ck-chicken-drop {
+  0%   { transform: none; opacity: 1; }
+  25%  { transform: translateY(2px) rotate(-8deg) scale(0.96); }
+  100% { transform: translateY(52px) rotate(14deg) scale(0.3); opacity: 0; }
 }
-@keyframes ck-splat-pop {
-  0%   { transform: scale(0.4); opacity: 0.4; }
-  60%  { transform: scale(1.35); opacity: 1; }
-  100% { transform: scale(1); }
+
+/* Bust car: drops from the top of the lane and brakes just above the drain. */
+.ck-car {
+  position: absolute;
+  top: -60%;
+  left: 50%;
+  width: 44px;
+  height: auto;
+  z-index: 6;
+  transform: translateX(-50%);
+  animation: ck-car-brake 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+  pointer-events: none;
 }
-.ck-carspot { font-size: 20px; line-height: 1; }
+@keyframes ck-car-brake {
+  from { top: -60%; }
+  to   { top: 4%; }
+}
+
 .ck-cash {
   position: sticky;
   bottom: 8px;

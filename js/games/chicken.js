@@ -1,39 +1,23 @@
-// Chicken Cross — hop across road lanes, avoid the car zones. /step + /cashout.
-// The chicken starts on the left kerb; each lane is a vertical strip of C
-// crossing zones, T of which hide a car (server-determined). Tap a zone in the
-// next lane to hop there. All vehicle animation here is COSMETIC — outcomes
-// come only from the server response (the active server seed is secret, so
-// nothing is ever predicted client-side). Ladder values are a PREVIEW from the
-// published formula (0.98 * (C/(C-T))^L, capped 20x); the real payout is
-// always the server's multiplier.
+// Chicken Cross — hop across road lanes by tapping the next drain cover.
+// Rainbet-style presentation: a dark top-down road, dashed lane dividers, one
+// drain cover (manhole) per lane showing its multiplier. Tapping the next
+// drain hops the chicken onto it; the SERVER decides safe/bust (the zone sent
+// is a random pick — every zone has identical odds, the seeded car draw is
+// what settles the outcome). All motion here is COSMETIC: on a bust a car
+// zooms down the lane, the drain cover under the chicken drops away into a
+// void and the chicken falls through. Ladder values are a PREVIEW from the
+// published formula (0.96 * 25/(25-L), Rainbet-style easy ladder); the real
+// payout is always the server's multiplier.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
   const C = BT.games.common;
 
-  const EPS = 0.02;      // matches api/game/chicken.py
-  const CAP = 20;        // CHICKEN_MAX_MULT
-  const MAX_LANES = 8;   // LANES
-  const DIFF = {
-    easy:      { C: 3, growth: 3 / 2, label: "Easy (3 zones, 1 car)" },
-    medium:    { C: 2, growth: 2 / 1, label: "Medium (2 zones, 1 car)" },
-    hard:      { C: 3, growth: 3 / 1, label: "Hard (3 zones, 2 cars)" },
-    daredevil: { C: 4, growth: 4 / 1, label: "Daredevil (4 zones, 3 cars)" },
-  };
-  const CHICK = "\uD83D\uDC14";  // 🐔
-  const CAR = "\uD83D\uDE97";    // 🚗
-  const SPLAT = "\uD83D\uDCA5";  // 💥
-  const TRAFFIC = ["\uD83D\uDE97", "\uD83D\uDE95", "\uD83D\uDE99", "\uD83D\uDE9B"]; // 🚗🚕🚙🚛
+  const EDGE = 0.04;     // CHICKEN_EDGE in api/game/chicken.py
+  const TOTAL = 25;      // zone deck (one car, no replacement)
+  const LANES = 24;      // road depth; final lane pays exactly 24.00x
 
-  const laneMult = (L, g) => Math.min((1 - EPS) * Math.pow(g, L), CAP);
-  // Road depth per difficulty: the run auto-cashes once the raw multiplier
-  // reaches the cap, so only render the reachable lanes.
-  function lanesFor(g) {
-    for (let L = 1; L <= MAX_LANES; L++) {
-      if ((1 - EPS) * Math.pow(g, L) >= CAP) return L;
-    }
-    return MAX_LANES;
-  }
+  const laneMult = (L) => (1 - EDGE) * TOTAL / (TOTAL - Math.min(L, LANES));
 
   function render(root) {
     BT.ui.clear(root);
@@ -42,208 +26,178 @@
     const seed = C.seedBox();
     const banner = C.resultBanner();
     let roundId = null, busy = false, ended = true;
-    let curLane = 0, cols = 2, laneCount = 5, mult = 1.0, crossed = 0;
-
-    const diffSel = el("select", null, Object.keys(DIFF).map((k) =>
-      el("option", { value: k }, DIFF[k].label)));
-    diffSel.value = "medium";
+    let curLane = 0, mult = 1.0, crossed = 0;
 
     const road = el("div", { class: "ck-road" });
     const roadWrap = el("div", { class: "ck-road-wrap" }, road);
     const overlay = C.resultOverlay(roadWrap);
 
-    const chickenEl = el("span", { class: "ck-chicken" }, CHICK);
-    let startPadCell = null;
-    let chickenHome = null; // cell the chicken currently rests in
+    const chickenEl = el("img", { class: "ck-chicken", src: "img/ck-chicken.png", alt: "" });
+    let kerbSpot = null;
+    let chickenHome = null; // .ck-spot the chicken currently rests on
 
     const startBtn = el("button", { class: "btn primary block" }, "Place bet");
     const cashBtn = el("button", { class: "btn primary block ck-cash", style: "display:none" }, "Cash out");
 
-    function syncCashout() {
-      cashBtn.disabled = crossed < 1 || busy;
+    function syncButtons() {
+      cashBtn.disabled = crossed < 1 || busy || ended;
       cashBtn.textContent = crossed >= 1 ? "Cash out \u00b7 " + mult.toFixed(2) + "\u00d7" : "Cash out";
-    }
-
-    // Cosmetic traffic: a couple of vehicles per lane drifting down the strip
-    // at randomized speeds/offsets, running continuously via CSS keyframes.
-    function seedTraffic(trafficEl) {
-      for (let i = 0; i < 2; i++) {
-        const v = el("span", { class: "ck-vehicle" },
-          TRAFFIC[Math.floor(Math.random() * TRAFFIC.length)]);
-        v.style.left = (12 + Math.random() * 56) + "%";
-        v.style.animationDuration = (2.4 + Math.random() * 2.6).toFixed(2) + "s";
-        v.style.animationDelay = (-Math.random() * 4).toFixed(2) + "s";
-        trafficEl.appendChild(v);
-      }
-    }
-
-    // Near-miss beat: a fast truck zips through the lane just crossed.
-    function nearMiss(laneEl) {
-      const t = laneEl && laneEl.querySelector(".ck-traffic");
-      if (!t) return;
-      const v = el("span", { class: "ck-vehicle zoom" }, "\uD83D\uDE9B");
-      v.style.left = (20 + Math.random() * 40) + "%";
-      t.appendChild(v);
-      setTimeout(() => v.remove(), 700);
     }
 
     function buildRoad() {
       BT.ui.clear(road);
-      startPadCell = el("div", { class: "ck-pad-cell" });
-      road.appendChild(el("div", { class: "ck-pad" }, [
-        el("div", { class: "ck-lane-mult pad" }, "Start"),
-        startPadCell,
-      ]));
-      const d = DIFF[diffSel.value];
-      for (let l = 0; l < laneCount; l++) {
-        const cells = el("div", { class: "ck-cells" });
-        for (let z = 0; z < cols; z++) {
-          const cell = el("div", { class: "ck-cell disabled", dataset: { l: String(l), z: String(z) } });
-          cell.addEventListener("click", () => pick(l, z));
-          cells.appendChild(cell);
-        }
-        const traffic = el("div", { class: "ck-traffic" });
-        seedTraffic(traffic);
-        const laneEl = el("div", { class: "ck-lane dim", dataset: { l: String(l) } }, [
-          el("div", { class: "ck-lane-mult" }, laneMult(l + 1, d.growth).toFixed(2) + "\u00d7"),
-          el("div", { class: "ck-strip" }, [traffic, cells]),
-        ]);
-        road.appendChild(laneEl);
-      }
-      placeChicken(startPadCell);
-    }
-
-    function placeChicken(cell) {
-      chickenHome = cell;
-      chickenEl.classList.remove("hop"); void chickenEl.offsetWidth;
-      cell.appendChild(chickenEl);
-      chickenEl.classList.add("hop");
-      if (cell.scrollIntoView) cell.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-    }
-
-    // Light the active lane, keep crossed lanes lit, dim lanes ahead, and only
-    // allow taps on the active lane's zones.
-    function enableLane(l) {
-      road.querySelectorAll(".ck-lane").forEach((laneEl) => {
-        const cl = parseInt(laneEl.dataset.l, 10);
-        const isActive = cl === l;
-        laneEl.classList.toggle("active", isActive);
-        laneEl.classList.toggle("dim", !isActive && cl > (l < 0 ? laneCount : l));
-        laneEl.querySelectorAll(".ck-cell").forEach((cell) => {
-          cell.classList.toggle("disabled", !isActive);
+      kerbSpot = el("div", { class: "ck-spot" });
+      road.appendChild(el("div", { class: "ck-kerb" }, kerbSpot));
+      for (let l = 0; l < LANES; l++) {
+        const label = el("span", { class: "ck-drain-mult" }, laneMult(l + 1).toFixed(2) + "\u00d7");
+        const cover = el("div", { class: "ck-drain-cover", dataset: { l: String(l) } }, label);
+        cover.addEventListener("click", () => {
+          if (parseInt(cover.dataset.l, 10) === curLane) cross();
         });
+        const drain = el("div", { class: "ck-drain" }, [
+          el("div", { class: "ck-drain-hole" }),
+          cover,
+          el("div", { class: "ck-spot" }),
+        ]);
+        road.appendChild(el("div", { class: "ck-lane dim", dataset: { l: String(l) } }, drain));
+      }
+      placeChicken(kerbSpot);
+    }
+
+    const laneEl = (l) => road.querySelector('.ck-lane[data-l="' + l + '"]');
+    const spotOf = (lane) => lane && lane.querySelector(".ck-spot");
+
+    function placeChicken(spot) {
+      chickenHome = spot;
+      chickenEl.classList.remove("hop", "drop"); void chickenEl.offsetWidth;
+      spot.appendChild(chickenEl);
+      chickenEl.classList.add("hop");
+      const lane = spot.closest(".ck-lane, .ck-kerb");
+      if (lane && lane.scrollIntoView) lane.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+
+    // Highlight the next lane to cross, keep crossed lanes lit, dim the rest.
+    function markLanes(next) {
+      road.querySelectorAll(".ck-lane").forEach((ln) => {
+        const cl = parseInt(ln.dataset.l, 10);
+        ln.classList.toggle("active", cl === next);
+        ln.classList.toggle("dim", next >= 0 ? cl > next : cl >= crossed);
       });
+    }
+
+    // A lane the chicken has left behind: swap the drain cover's label for a coin.
+    function coinify(l) {
+      const ln = laneEl(l);
+      const cover = ln && ln.querySelector(".ck-drain-cover");
+      if (!cover) return;
+      BT.ui.clear(cover);
+      cover.appendChild(el("img", { class: "ck-coin", src: "img/ck-coin.png", alt: "" }));
+      ln.classList.add("crossed");
+    }
+
+    // Cosmetic bust beat: a car drops down the lane and brakes just above the
+    // drain, then the cover falls into the void and the chicken drops through.
+    async function bustAnim(l) {
+      const ln = laneEl(l);
+      if (!ln) return;
+      ln.classList.add("bust");
+      const car = el("img", { class: "ck-car", src: "img/ck-car.png", alt: "" });
+      ln.appendChild(car);
+      await C.frame(420);                       // car slides in
+      const cover = ln.querySelector(".ck-drain-cover");
+      if (cover) cover.classList.add("fall");   // drain cover drops away
+      await C.frame(260);
+      chickenEl.classList.remove("hop");
+      chickenEl.classList.add("drop");          // chicken falls into the void
+      BT.ui.haptic("error");
+      await C.frame(700);
     }
 
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       overlay.hide(); banner.hide(); seed.reset();
-      const d = DIFF[diffSel.value];
-      cols = d.C; laneCount = lanesFor(d.growth);
       curLane = 0; crossed = 0; mult = 1.0;
       buildRoad();
       stake = bet.getBet();
-      const resp = await BT.api.gameBet("chicken", { bet: stake, params: { difficulty: diffSel.value } });
+      const resp = await BT.api.gameBet("chicken", { bet: stake, params: { difficulty: "easy" } });
       startBtn.disabled = false; busy = false;
       if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); return; }
       roundId = resp.round_id; ended = false;
       BT.setActiveGame("chicken", roundId);
       seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
-      startBtn.style.display = "none"; cashBtn.style.display = "block";
-      bet.setDisabled(true); diffSel.disabled = true;
-      syncCashout();
-      enableLane(0);
+      startBtn.style.display = "none";
+      cashBtn.style.display = "block";
+      bet.setDisabled(true);
+      markLanes(0);
+      syncButtons();
     });
 
-    async function pick(l, z) {
-      if (busy || ended || !roundId || l !== curLane) return;
-      busy = true; enableLane(-1); cashBtn.disabled = true;
-      // Outcome-free motion: hop into the chosen zone the instant of the tap
-      // and hold a minimum motion window; the server response then decides
-      // whether the chicken lands (safe) or gets splatted (bust).
-      const laneEl = road.querySelector('.ck-lane[data-l="' + l + '"]');
-      const cell = laneEl && laneEl.querySelector('.ck-cell[data-z="' + z + '"]');
+    async function cross() {
+      if (busy || ended || !roundId) return;
+      busy = true; syncButtons();
+      const l = curLane;
+      const ln = laneEl(l);
       const prevHome = chickenHome;
-      if (cell) placeChicken(cell);
+      // Outcome-free motion: hop onto the next drain the instant of the tap and
+      // hold a minimum motion window; the server response then decides whether
+      // the chicken keeps standing (safe) or the cover gives way (bust).
+      if (ln) placeChicken(spotOf(ln));
       const t0 = C.nowMs();
-      const resp = await BT.api.gameStep("chicken", { round_id: roundId, move: { zone: z } });
+      const zone = Math.floor(Math.random() * (TOTAL - l)); // cosmetic — all zones equal odds
+      const resp = await BT.api.gameStep("chicken", { round_id: roundId, move: { zone } });
       await C.hold(t0, 480);
       busy = false;
       if (!resp || resp.ok === false) {
         BT.ui.toast(C.errText(resp), "error");
         if (prevHome) placeChicken(prevHome);
-        enableLane(curLane); syncCashout();
+        syncButtons();
         return;
       }
       const os = resp.outcome_step || {};
-      const outcome = resp.outcome || {};
       const safe = os.safe !== undefined ? os.safe : !resp.busted;
       if (!safe) {
-        // Bust — splat on the chosen zone and disclose the lane's car zones
-        // (the API reveals them in the settle outcome).
-        const cars = outcome.cars || os.cars || [];
-        if (laneEl) {
-          laneEl.classList.add("bust");
-          cars.forEach((cz) => {
-            const ccell = laneEl.querySelector('.ck-cell[data-z="' + cz + '"]');
-            if (ccell && ccell !== cell) ccell.appendChild(el("span", { class: "ck-carspot" }, CAR));
-          });
-        }
-        chickenEl.remove();
-        if (cell) cell.appendChild(el("span", { class: "ck-splat" }, SPLAT));
-        ended = true; enableLane(-1);
-        BT.ui.haptic("error");
-        await C.frame(820);
+        ended = true; markLanes(-1);
+        await bustAnim(l);
         finish(resp);
         return;
       }
-      // Safe cross — land, tick the multiplier, maybe a cosmetic near-miss.
+      // Safe cross — the drain under the chicken holds; the one behind pays out.
       crossed = l + 1;
       mult = typeof resp.multiplier === "number" ? resp.multiplier : mult;
-      if (laneEl) {
-        laneEl.classList.add("crossed");
-        const badge = laneEl.querySelector(".ck-lane-mult");
-        if (badge) { badge.textContent = mult.toFixed(2) + "\u00d7"; badge.classList.add("hit"); }
-        if (Math.random() < 0.4) nearMiss(laneEl);
-      }
+      if (l > 0) coinify(l - 1);
+      road.querySelectorAll(".ck-lane.cur").forEach((x) => x.classList.remove("cur"));
+      if (ln) ln.classList.add("held", "cur");
       BT.ui.haptic("light");
-      if (resp.done) { finish(resp); return; }
+      if (resp.done) { coinify(l); finish(resp); return; }
       curLane = l + 1;
-      enableLane(curLane);
-      syncCashout();
+      markLanes(curLane);
+      syncButtons();
     }
 
     cashBtn.addEventListener("click", async () => {
-      if (busy || ended || !roundId) return; busy = true; cashBtn.disabled = true;
+      if (busy || ended || !roundId) return; busy = true; syncButtons();
       const resp = await BT.api.gameCashout("chicken", { round_id: roundId });
       busy = false;
-      if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); syncCashout(); return; }
+      if (!resp || resp.ok === false) { BT.ui.toast(C.errText(resp), "error"); syncButtons(); return; }
       finish(resp);
     });
 
     function finish(resp) {
-      ended = true; roundId = null; BT.clearActiveGame(); enableLane(-1);
-      startBtn.style.display = "block"; cashBtn.style.display = "none"; cashBtn.disabled = false;
-      bet.setDisabled(false); diffSel.disabled = false;
+      ended = true; roundId = null; BT.clearActiveGame(); markLanes(-1);
+      road.querySelectorAll(".ck-lane.cur").forEach((x) => x.classList.remove("cur"));
+      startBtn.style.display = "block";
+      cashBtn.style.display = "none";
+      bet.setDisabled(false);
       C.syncBalance(resp);
       const payout = resp.payout || 0;
       if (payout > 0) { overlay.show("win", C.winMult(resp.multiplier, payout, stake), C.winLines(payout, stake)); BT.ui.haptic("success"); }
-      else { overlay.show("lose", "0x", "Splat!"); BT.ui.haptic("error"); }
+      else { overlay.show("lose", "0x", "Run over!"); BT.ui.haptic("error"); }
     }
 
-    cols = DIFF[diffSel.value].C;
-    laneCount = lanesFor(DIFF[diffSel.value].growth);
-    diffSel.addEventListener("change", () => {
-      if (!ended) return;
-      cols = DIFF[diffSel.value].C;
-      laneCount = lanesFor(DIFF[diffSel.value].growth);
-      buildRoad();
-    });
     buildRoad();
     root.appendChild(el("div", { class: "card" }, [
-      C.gameHeader("chicken", "Chicken Cross", "Hop across the road lane by lane. Each lane hides cars in some zones — pick a safe zone to cross and grow your multiplier; hit a car and the run ends. Cash out any time after your first cross; the run auto-cashes at 20\u00d7."),
-      el("div", { class: "field" }, [el("label", null, "Difficulty"), diffSel]),
+      C.gameHeader("chicken", "Chicken Cross", "Tap the next drain cover to send the chicken across the road one lane at a time. Every safe lane grows your multiplier — but each crossing risks a car. Get hit and the drain cover gives way. Cash out any time after your first cross; reach the far side for the full 24\u00d7."),
       roadWrap,
       bet.node,
       startBtn,
