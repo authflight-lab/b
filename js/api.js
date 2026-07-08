@@ -28,7 +28,7 @@
   // an awaiting caller's busy-flag/disabled-button stuck indefinitely (e.g.
   // the crash cash-out button "freezing"). After this many ms we abort and
   // resolve with network_error instead, same as any other network failure.
-  const REQUEST_TIMEOUT_MS = 10000;
+  const REQUEST_TIMEOUT_MS = 4000;
 
   // Core request. Always resolves (never throws) with an object.
   // On handled failures returns { ok:false, error:"<code>", ... }.
