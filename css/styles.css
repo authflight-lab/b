@@ -1684,16 +1684,16 @@ input[type="number"].betbox-input:focus {
 .bj-hand-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
 .bj-hand-label.you { color: var(--accent); text-shadow: 0 0 10px rgba(var(--accent-rgb, 78,205,255), 0.7); }
 .bj-total { padding: 2px 8px; border-radius: 999px; background: var(--bg-elev); border: 1px solid var(--glass-border); font-size: 12px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 20px; text-align: center; }
-.bj-cards { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 78px; }
+.bj-cards { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 102px; }
 .bj-card {
-  width: 54px; height: 78px; border-radius: 9px; position: relative;
+  width: 70px; height: 101px; border-radius: 11px; position: relative;
   background: linear-gradient(160deg, #ffffff, #e9edf5); box-shadow: 0 6px 14px rgba(0,0,0,0.4);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 17px; gap: 2px; animation: bjDeal .25s ease;
+  font-weight: 800; font-size: 22px; gap: 2px; animation: bjDeal .25s ease;
 }
 .bj-card.red { color: #d13b3b; }
 .bj-card.black { color: #1a2230; }
-.bj-suit { font-size: 14px; }
+.bj-suit { font-size: 18px; }
 .bj-card.back {
   background: repeating-linear-gradient(135deg, #2c3550, #2c3550 6px, #232a3f 6px, #232a3f 12px);
   border: 1px solid rgba(255,255,255,0.12);
