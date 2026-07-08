@@ -1248,14 +1248,15 @@ input[type="number"].betbox-input:focus {
 /* During a live round, drains ahead of the chicken are click-ahead targets:
    tapping one queues sequential hops through every lane in between. */
 .ck-road.live .ck-lane.dim .ck-drain-cover { cursor: pointer; }
-.ck-road.live .ck-lane.dim .ck-drain-cover:hover { opacity: 0.85; }
-.ck-lane.active .ck-drain-cover {
-  opacity: 1;
-  cursor: pointer;
-  box-shadow: 0 0 0 2px rgba(255,209,102,0.35), 0 0 18px rgba(255,209,102,0.18);
-}
+.ck-lane.active .ck-drain-cover { opacity: 1; cursor: pointer; }
+/* The yellow glow follows the mouse: any clickable drain (the next lane or a
+   click-ahead lane) lights up on hover/press instead of the next lane
+   glowing permanently. */
 .ck-lane.active .ck-drain-cover:hover,
-.ck-lane.active .ck-drain-cover:active {
+.ck-lane.active .ck-drain-cover:active,
+.ck-road.live .ck-lane.dim .ck-drain-cover:hover,
+.ck-road.live .ck-lane.dim .ck-drain-cover:active {
+  opacity: 1;
   box-shadow: 0 0 0 2px rgba(255,209,102,0.6), 0 0 24px rgba(255,209,102,0.3);
 }
 
@@ -1341,8 +1342,12 @@ input[type="number"].betbox-input:focus {
   letter-spacing: 0.02em;
   color: #cdd5e4;
   text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  /* Let hover/click pass through to the cover so the pointer cursor and
+     hover glow work over the label text too. */
+  pointer-events: none;
 }
 .ck-coin {
+  pointer-events: none;
   width: 44px;
   height: 44px;
   display: block;
