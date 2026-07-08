@@ -5,6 +5,7 @@
   const el = BT.ui.el;
 
   const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps", "chicken", "crash"];
+  const NEW_GAMES = ["rps", "chicken", "crash"];
   let selected = "dice";
 
   // ---- Provably Fair: verification code shown per game ----------------------
@@ -152,7 +153,11 @@
           }
           selected = key; renderGames(root);
         },
-      }, [el("div", { class: "g-ico" }, BT.ui.icon(key, 26)), el("div", { class: "g-name" }, g.title)]));
+      }, [
+        el("div", { class: "g-ico" }, BT.ui.icon(key, 26)),
+        el("div", { class: "g-name" }, g.title),
+        NEW_GAMES.includes(key) ? el("span", { class: "g-new" }, "NEW") : null,
+      ]));
     });
     root.appendChild(grid);
 

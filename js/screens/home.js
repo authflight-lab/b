@@ -11,9 +11,9 @@
     { key: "towers",  label: "Towers"  },
     { key: "highlow", label: "HighLow" },
     { key: "flip",    label: "Flip"    },
-    { key: "rps",     label: "RPS"     },
-    { key: "chicken", label: "Chicken" },
-    { key: "crash",   label: "Crash"   },
+    { key: "rps",     label: "RPS",     isNew: true },
+    { key: "chicken", label: "Chicken", isNew: true },
+    { key: "crash",   label: "Crash",   isNew: true },
   ];
 
   const QUESTS = [
@@ -201,6 +201,7 @@
       const tile = el("div", { class: "game-tile", style: "cursor:pointer" }, [
         el("div", { class: "g-ico" }, BT.ui.icon(g.key, 26)),
         el("div", { class: "g-name" }, g.label),
+        g.isNew ? el("span", { class: "g-new" }, "NEW") : null,
       ]);
       tile.addEventListener("click", () => BT.openGame(g.key));
       grid.appendChild(tile);
