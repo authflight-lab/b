@@ -30,13 +30,13 @@
       "// Dice — one draw. Win if roll > target (target in 2..98).\n" +
       "const roll = rng(0) * 100;\n" +
       "const win = roll > target;\n" +
-      "const multiplier = win ? (0.99 * 100 / (100 - target)) : 0;   // 1% edge\n",
+      "const multiplier = win ? (0.98 * 100 / (100 - target)) : 0;   // 2% edge\n",
     flip:
       FAIR_PREAMBLE +
       "\n" +
       "// Flip — one draw per flip; win if u < 0.5. cursor = flip index (0-based).\n" +
       "const win = rng(cursor) < 0.5;\n" +
-      "const multiplier = 1.98 ** streak;   // after `streak` straight wins\n",
+      "const multiplier = 1.96 ** streak;   // after `streak` straight wins\n",
     mines:
       FAIR_PREAMBLE +
       "\n" +

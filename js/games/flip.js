@@ -1,4 +1,4 @@
-// Flip — chainable coin flip. /step per flip, /cashout to lock. 1.98^k.
+// Flip — chainable coin flip. /step per flip, /cashout to lock. 1.96^k.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -123,7 +123,7 @@
     }
 
     root.appendChild(el("div", { class: "card" }, [
-      C.gameHeader("flip", "Flip", "Pick a side each round. Every correct flip multiplies your bet by 1.98×. Cash out any time before you miss."),
+      C.gameHeader("flip", "Flip", "Pick a side each round. Every correct flip multiplies your bet by 1.96×. Cash out any time before you miss."),
       coinWrap,
       track,
       bet.node,

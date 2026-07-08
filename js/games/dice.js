@@ -1,6 +1,6 @@
 // Dice — single settle. Client sends a target [2,98]; server rolls & pays.
 // Win if roll > target. The Multiplier / Win Chance shown are a PREVIEW using
-// the game's published formula (M = 99/(100-target), P(win) = (100-target)%); the
+// the game's published formula (M = 98/(100-target), P(win) = (100-target)%); the
 // actual payout is always computed server-side and rendered from the settle response.
 (function () {
   const BT = (window.BT = window.BT || {});
@@ -62,7 +62,7 @@
     ]);
 
     // Stat fields.
-    const multOut = el("div", { class: "val" }, "1.9800");
+    const multOut = el("div", { class: "val" }, "1.9600");
     const rollInput = el("input", { type: "number", min: String(T_MIN), max: String(T_MAX), step: "1", value: "50" });
     const chanceOut = el("div", { class: "val" }, "50.00");
     const stats = el("div", { class: "dice-stats" }, [
@@ -87,7 +87,7 @@
       if (!fromInput) rollInput.value = String(target);
       valueOut.textContent = target.toFixed(2);
       valueOut.style.left = target + "%";
-      multOut.textContent = (99 / (100 - target)).toFixed(4);
+      multOut.textContent = (98 / (100 - target)).toFixed(4);
       chanceOut.textContent = (100 - target).toFixed(2);
     }
 
