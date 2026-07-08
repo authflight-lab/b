@@ -1,10 +1,10 @@
-// Play — game selector for all 6 games. Age gate + disclaimers render first.
+// Play — game selector for all games. Age gate + disclaimers render first.
 // The client renders server outcomes only; no odds/RNG/payout math here.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
 
-  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps"];
+  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps", "chicken"];
   let selected = "dice";
 
   // ---- Provably Fair: verification code shown per game ----------------------
@@ -88,6 +88,20 @@
       "const house = HANDS[Math.min(2, Math.floor(rng(cursor) * 3))];\n" +
       "// win: (playerIdx - houseIdx + 3) % 3 === 1 ; a tie replays, no change\n" +
       "const multiplier = Math.min(1.96 ** wins, 20);   // 2% edge, capped 20x\n",
+    chicken:
+      FAIR_PREAMBLE +
+      "\n" +
+      "// Chicken — T car zones per lane, drawn without replacement from the\n" +
+      "// C zones. Draw i on a lane uses cursor = lane + i*1000 (0-based lane).\n" +
+      "const rngInt = (cursor, n) => Math.floor(rng(cursor) * n);\n" +
+      "const { C, T } = { easy: { C: 3, T: 1 }, medium: { C: 2, T: 1 },\n" +
+      "                   hard: { C: 3, T: 2 }, daredevil: { C: 4, T: 3 } }[difficulty];\n" +
+      "const free = [...Array(C).keys()], cars = [];\n" +
+      "for (let i = 0; i < T; i++)\n" +
+      "  cars.push(free.splice(rngInt(lane + i * 1000, free.length), 1)[0]);\n" +
+      "cars.sort((a, b) => a - b);   // server discloses them sorted\n" +
+      "// safe if your zone is not in `cars`\n" +
+      "const multiplier = Math.min(0.98 * (C / (C - T)) ** lanes, 20);\n",
   };
 
   function render(root) {

@@ -1080,3 +1080,157 @@ input[type="number"].betbox-input:focus {
 .rps-hand-emoji { font-size: 30px; line-height: 1; }
 .rps-hand-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
 .rps-hand.live:not(:disabled) .rps-hand-label { color: #bfe8cb; }
+
+/* ---- Chicken Cross (scoped .ck-*) ---------------------------------------- */
+.ck-road-wrap {
+  border-radius: 14px;
+  background: #14181f;
+  border: 1px solid rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.ck-road {
+  display: flex;
+  gap: 6px;
+  padding: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-height: 240px;
+}
+.ck-road::-webkit-scrollbar { display: none; }
+.ck-pad, .ck-lane {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 64px;
+  min-width: 64px;
+  border-radius: 10px;
+}
+.ck-pad {
+  background: linear-gradient(180deg, rgba(84,110,68,0.35), rgba(84,110,68,0.2));
+  border: 1px solid rgba(140,180,110,0.25);
+}
+.ck-pad-cell {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+.ck-lane {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.07);
+  position: relative;
+  transition: opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ck-lane.dim { opacity: 0.45; }
+.ck-lane.active {
+  border-color: rgba(255,209,102,0.55);
+  box-shadow: 0 0 0 1px rgba(255,209,102,0.25), 0 0 14px rgba(255,209,102,0.12);
+}
+.ck-lane.crossed { border-color: rgba(120,220,150,0.35); }
+.ck-lane.bust {
+  border-color: rgba(255,90,90,0.6);
+  animation: ck-lane-flash 0.5s ease 2;
+}
+@keyframes ck-lane-flash {
+  50% { background: rgba(255,80,80,0.18); }
+}
+.ck-lane-mult {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted, #9aa4b2);
+  padding: 5px 2px 3px;
+  letter-spacing: 0.02em;
+}
+.ck-lane-mult.hit { color: #7ddc96; }
+.ck-lane-mult.pad { color: rgba(160,200,130,0.9); }
+.ck-strip {
+  position: relative;
+  flex: 1;
+  display: flex;
+  padding: 4px;
+}
+.ck-cells {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.ck-cell {
+  flex: 1;
+  min-height: 42px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px dashed rgba(255,255,255,0.14);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ck-lane.active .ck-cell:not(.disabled):hover,
+.ck-lane.active .ck-cell:not(.disabled):active { background: rgba(255,209,102,0.14); border-color: rgba(255,209,102,0.5); }
+.ck-cell.disabled { cursor: default; pointer-events: none; }
+.ck-traffic {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: 8px;
+}
+.ck-vehicle {
+  position: absolute;
+  top: -18%;
+  font-size: 13px;
+  opacity: 0.4;
+  transform: rotate(90deg);
+  animation: ck-drive linear infinite;
+  will-change: top;
+}
+@keyframes ck-drive {
+  from { top: -18%; }
+  to   { top: 108%; }
+}
+.ck-vehicle.zoom {
+  font-size: 18px;
+  opacity: 0.95;
+  animation: ck-zoom 0.6s linear forwards;
+  filter: drop-shadow(0 0 6px rgba(255,255,255,0.25));
+}
+@keyframes ck-zoom {
+  from { top: -22%; }
+  to   { top: 112%; }
+}
+.ck-chicken {
+  font-size: 26px;
+  line-height: 1;
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+}
+.ck-chicken.hop { animation: ck-hop 0.32s ease-out; }
+@keyframes ck-hop {
+  0%   { transform: translateY(4px) scale(0.9); }
+  45%  { transform: translateY(-9px) scale(1.12); }
+  100% { transform: translateY(0) scale(1); }
+}
+.ck-splat {
+  font-size: 26px;
+  line-height: 1;
+  animation: ck-splat-pop 0.4s ease-out;
+}
+@keyframes ck-splat-pop {
+  0%   { transform: scale(0.4); opacity: 0.4; }
+  60%  { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.ck-carspot { font-size: 20px; line-height: 1; }
+.ck-cash {
+  position: sticky;
+  bottom: 8px;
+  z-index: 5;
+  font-size: 17px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}

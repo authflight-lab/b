@@ -12,6 +12,7 @@
     { key: "highlow", label: "HighLow" },
     { key: "flip",    label: "Flip"    },
     { key: "rps",     label: "RPS"     },
+    { key: "chicken", label: "Chicken" },
   ];
 
   const QUESTS = [
