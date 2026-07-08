@@ -93,6 +93,7 @@
       monthly_limit_reached: "This prize is out of stock.",
       daily_limit_reached: "You've already claimed a reward today. Come back tomorrow.",
       activity_floor_not_met: "Chat + claim today to unlock redeeming.",
+      dev_account: "Dev accounts can't redeem shop rewards.",
       reward_inactive: "That prize is no longer available.",
       network_error: "Network error — try again.",
       api_not_configured: "The shop isn't connected yet.",
