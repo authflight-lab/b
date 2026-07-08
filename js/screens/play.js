@@ -4,7 +4,7 @@
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
 
-  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko"];
+  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps"];
   let selected = "dice";
 
   // ---- Provably Fair: verification code shown per game ----------------------
@@ -80,6 +80,14 @@
       "  if (rng(cursor) < 0.5) bucket++;\n" +
       "}\n" +
       "// bucket in [0, rows] -> multiplier from the payout table\n",
+    rps:
+      FAIR_PREAMBLE +
+      "\n" +
+      "// RPS — one draw per round. cursor = round index (ties consume one too).\n" +
+      "const HANDS = ['rock', 'paper', 'scissors'];\n" +
+      "const house = HANDS[Math.min(2, Math.floor(rng(cursor) * 3))];\n" +
+      "// win: (playerIdx - houseIdx + 3) % 3 === 1 ; a tie replays, no change\n" +
+      "const multiplier = Math.min(1.96 ** wins, 20);   // 2% edge, capped 20x\n",
   };
 
   function render(root) {

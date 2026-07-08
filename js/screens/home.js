@@ -11,11 +11,12 @@
     { key: "towers",  label: "Towers"  },
     { key: "highlow", label: "HighLow" },
     { key: "flip",    label: "Flip"    },
+    { key: "rps",     label: "RPS"     },
   ];
 
   const QUESTS = [
     { n: "01", label: "Chat",   desc: "Earn points for every message in the group.", screen: null },
-    { n: "02", label: "Play",   desc: "Six games live, instant payouts.",            screen: "play" },
+    { n: "02", label: "Play",   desc: "Provably fair games, instant payouts.",       screen: "play" },
     { n: "03", label: "Redeem", desc: "Telegram Stars, Premium, or crypto.", screen: "shop" },
   ];
 

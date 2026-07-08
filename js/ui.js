@@ -120,6 +120,11 @@
       '<circle cx="4" cy="17.5" r="1.5" fill="currentColor" stroke="none"/>' +
       '<circle cx="12" cy="17.5" r="1.5" fill="currentColor" stroke="none"/>' +
       '<circle cx="20" cy="17.5" r="1.5" fill="currentColor" stroke="none"/>',
+    rps:
+      '<circle cx="6.5" cy="6.5" r="2.8"/>' +
+      '<circle cx="6.5" cy="17.5" r="2.8"/>' +
+      '<path d="M8.9 8.2 20 19"/>' +
+      '<path d="M8.9 15.8 20 5"/>',
     rich:
       '<path d="M12 2v20"/>' +
       '<path d="M17 6c0-2.2-2.24-3.5-5-3.5S7 3.8 7 6s2.24 3.5 5 3.5 5 1.3 5 3.5-2.24 3.5-5 3.5-5-1.3-5-3.5"/>',
