@@ -59,22 +59,24 @@
     setPlaying(false);
 
     function pushMult(m, on) {
-      const s = el("div", { class: "mult-step" + (on ? " on" : "") }, (m ? (Math.round(m * 100) / 100) + "×" : "?"));
+      const s = el("div", { class: "mult-step" + (on ? " on" : " off") }, (m ? (Math.round(m * 100) / 100) + "×" : "?"));
       track.appendChild(s);
       track.scrollLeft = track.scrollWidth;
     }
 
-    function bustFlash() {
-      coinWrap.classList.remove("coin-bust");
-      void coinWrap.offsetWidth;
-      coinWrap.classList.add("coin-bust");
-      setTimeout(() => coinWrap.classList.remove("coin-bust"), 950);
+    // Glitch-warp lives on coinBob (the idle-bob wrapper), never on coin3d,
+    // so it never fights the inline rotateY() that lands the coin's face.
+    function bustCoin() {
+      coinBob.classList.remove("coin-warp");
+      void coinBob.offsetWidth;
+      coinBob.classList.add("coin-warp");
+      setTimeout(() => coinBob.classList.remove("coin-warp"), 720);
     }
 
     startBtn.addEventListener("click", async () => {
       if (busy) return; busy = true; startBtn.disabled = true;
       overlay.hide(); banner.hide(); seed.reset(); BT.ui.clear(track); streak = 0;
-      coinWrap.classList.remove("coin-bust");
+      coinBob.classList.remove("coin-warp");
       flipCoinTo("heads", false);
       stake = bet.getBet();
       const resp = await BT.api.gameBet("flip", { bet: stake, params: {} });
@@ -109,7 +111,8 @@
       const busted = !!resp.busted;
       streak += 1;
       pushMult(resp.multiplier, !busted);
-      if (busted) bustFlash();
+      // Let the coin land on the losing face first, then warp.
+      if (busted) setTimeout(bustCoin, 260);
       if (busted || resp.done) {
         finish(resp);
       } else {
