@@ -23,6 +23,13 @@
     }
   }
 
+  // Requests never hang forever: a stalled connection (spotty mobile network,
+  // app backgrounded mid-request, unresponsive server) would otherwise leave
+  // an awaiting caller's busy-flag/disabled-button stuck indefinitely (e.g.
+  // the crash cash-out button "freezing"). After this many ms we abort and
+  // resolve with network_error instead, same as any other network failure.
+  const REQUEST_TIMEOUT_MS = 10000;
+
   // Core request. Always resolves (never throws) with an object.
   // On handled failures returns { ok:false, error:"<code>", ... }.
   async function request(method, path, body) {
@@ -30,6 +37,8 @@
       return { ok: false, error: "api_not_configured", _unconfigured: true };
     }
     let res;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
       res = await fetch(base() + path, {
         method: method,
@@ -38,9 +47,12 @@
           "X-Telegram-Init-Data": initData(),
         },
         body: body !== undefined && body !== null ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
       });
     } catch (e) {
       return { ok: false, error: "network_error", _network: true };
+    } finally {
+      clearTimeout(timer);
     }
 
     let data = null;
