@@ -10,7 +10,7 @@
   const GAME_NAMES = {
     dice: "Dice", flip: "Flip", mines: "Mines", towers: "Towers",
     highlow: "HighLow", plinko: "Plinko", rps: "RPS",
-    chicken: "Chicken", crash: "Crash",
+    chicken: "Chicken", crash: "Crash", blackjack: "Blackjack",
   };
 
   // "Jul 7, 12:15 AM" — compact, matches the reference layout.
