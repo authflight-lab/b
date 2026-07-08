@@ -7,7 +7,6 @@
   const DIFF = { easy: 4, medium: 3, hard: 2 };
   const FLOORS = 8;
   const GEM = "\uD83D\uDC8E";   // 💎 safe gem
-  const TRAP = "\uD83D\uDCA5";  // 💥 shattered trap
 
   function render(root) {
     BT.ui.clear(root);
@@ -108,8 +107,9 @@
           const tcell = floorEl.querySelector('.cell[data-c="' + tc + '"]');
           if (tcell && tcell !== chosen) {
             tcell.classList.remove("gem-hidden", "disabled");
-            tcell.classList.add("mine");
-            tcell._icon.textContent = TRAP;
+            tcell.classList.add("mine", "collapse");
+            tcell._icon.textContent = "";
+            shatterCell(tcell);
           }
         });
       }
