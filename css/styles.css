@@ -17,19 +17,34 @@
   --bad:           #ef2b2b;
   --radius:        14px;
 
-  /* Liquid-glass surface tokens (aligned with the pill nav) */
-  --glass-bg:      rgba(20, 26, 36, 0.62);
-  --glass-bg-2:    rgba(28, 35, 49, 0.50);
+  /* Liquid-glass surface tokens (aligned with the pill nav).
+     PERF: --glass-blur is reserved for FIXED/floating chrome (pill nav, round
+     pill, overlays, toasts) where content genuinely moves behind the glass.
+     Surfaces that scroll WITH the page (.card, .notice, .result.neutral) use
+     "faked" glass — the same tint/inset-highlight language with NO
+     backdrop-filter — because a live per-frame blur there is wasted GPU work
+     in the Telegram webview. Blur radii are kept <= 20px: cost scales ~with
+     radius², and past ~15px extra blur is invisible on a phone. */
+  /* Glass tint carries a whisper of the teal accent so the palette feels
+     designed rather than default-dark. Top light-lines are 0.5px-spread
+     hairlines — a crisp catch of light on the rim, not a glow. */
+  --glass-bg:      rgba(18, 28, 36, 0.72);
+  --glass-bg-2:    rgba(24, 37, 48, 0.56);
   --glass-border:  rgba(255, 255, 255, 0.10);
-  --glass-blur:    blur(18px) saturate(160%);
+  --glass-blur:    blur(12px) saturate(140%);
   --glass-shadow:
     0 10px 30px rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.16),
     inset 0 -1px 0 rgba(0, 0, 0, 0.28);
   --glass-shadow-sm:
     0 4px 14px rgba(0, 0, 0, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.09);
-  --glass-inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.12);
+  --glass-inset-hi: inset 0 1px 0.5px rgba(255, 255, 255, 0.18);
+  /* Directional lit edge for cards: light catches top-left, falls off. */
+  --glass-edge: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.10));
 
   --cell-emoji:    clamp(26px, 12vw, 50px);
   --safe-top:      env(safe-area-inset-top, 0px);
@@ -92,8 +107,8 @@ body {
     0 2px 8px rgba(0, 0, 0, 0.30),
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     inset 0 -1px 0 rgba(0, 0, 0, 0.30);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
 .pillnav-links {
@@ -111,7 +126,8 @@ body {
   box-shadow:
     0 4px 14px rgba(0, 124, 143, 0.30),
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -3px 8px rgba(0, 0, 0, 0.12);
+    inset 0 -3px 8px rgba(0, 0, 0, 0.12),
+    0 0 20px -4px rgba(0, 180, 200, 0.35); /* accent bloom — lit from within */
   transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
               width 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform, width;
@@ -189,14 +205,17 @@ body {
 .bets-pg-btn { padding: 8px 18px; font-size: 13px; }
 .bets-pg-label { color: var(--text-dim); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 
-/* Cards & sections */
+/* Cards & sections — faked glass (no live blur: they scroll with the page,
+   see the token block note). Tint + inset light-lines carry the look.
+   The border is a 135° gradient (padding-box/border-box trick): a lit
+   top-left edge fading dark — glass with a caught edge, not a flat frame. */
 .card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(180deg, rgba(24, 35, 46, 0.78), var(--glass-bg)) padding-box,
+    var(--glass-edge) border-box;
+  border: 1px solid transparent;
   border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
   box-shadow: var(--glass-shadow);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
 }
 .card h2, .card h3 { margin: 0 0 10px; }
 .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); margin: 4px 2px 10px; }
@@ -222,8 +241,22 @@ body {
   padding: 11px 14px; border-radius: 12px; cursor: pointer;
   box-shadow: var(--glass-shadow-sm);
   transition: transform .05s ease, opacity .15s ease, filter .15s ease;
+  position: relative; overflow: hidden;
 }
 .btn:active { transform: scale(0.98); }
+/* Specular sweep on press — a quick diagonal light band crossing the pane. */
+.btn::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: translateX(-160%) skewX(-20deg);
+  pointer-events: none;
+}
+.btn:active:not(:disabled)::after { animation: btn-sweep 0.28s ease-out; }
+@keyframes btn-sweep {
+  from { transform: translateX(-160%) skewX(-20deg); }
+  to   { transform: translateX(340%) skewX(-20deg); }
+}
+@media (prefers-reduced-motion: reduce) { .btn::after { display: none; } }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 /* Filled CTAs — glossy but not glass, with a top light-line to match. */
 .btn.primary, .btn.accent2, .btn.good, .btn.danger {
@@ -570,7 +603,6 @@ input[type="number"].betbox-input:focus {
 .result.neutral {
   background: var(--glass-bg-2); border: 1px solid var(--glass-border); color: var(--text);
   box-shadow: var(--glass-inset-hi);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
 }
 
 /* Game visuals */
@@ -1023,10 +1055,11 @@ input[type="number"].betbox-input:focus {
   -webkit-backdrop-filter: blur(10px) saturate(140%);
 }
 .overlay.hidden { display: none; }
+/* No own blur: the parent .overlay already frosts the backdrop — a second
+   backdrop-filter here would blur an already-blurred surface (double pass). */
 .overlay-card {
   background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--radius);
   padding: 20px; max-width: 460px; width: 100%; box-shadow: var(--glass-shadow);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
 }
 .overlay-card h2 { margin-top: 0; }
 .legal { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
@@ -1055,7 +1088,6 @@ input[type="number"].betbox-input:focus {
 .notice {
   background: var(--glass-bg-2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px;
   color: var(--text-dim); font-size: 13px; box-shadow: var(--glass-inset-hi);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
 }
 .loading { color: var(--text-dim); text-align: center; padding: 24px; }
 
