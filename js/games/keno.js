@@ -12,7 +12,7 @@
   const GRID = 40;
   const COLS = 8;
   const MAX_PICKS = 10;
-  const EPS = 0.02; // MUST match api/game/__init__.py global EPS.
+  const EPS = 0.01; // Keno-specific edge — MUST match KENO_EPS in api/game/keno.py.
   const REVEAL_STAGGER_MS = 150;
 
   // Relative payout weights per (picks, hits) — an EXACT port of SHAPE in
