@@ -15,6 +15,7 @@
     { key: "chicken", label: "Chicken", isNew: true },
     { key: "crash",   label: "Crash",   isNew: true },
     { key: "blackjack", label: "Blackjack", isNew: true },
+    { key: "keno",    label: "Keno",    isNew: true },
   ];
 
   const QUESTS = [

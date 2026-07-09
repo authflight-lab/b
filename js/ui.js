@@ -168,6 +168,13 @@
       '<path d="M12 3.4 22 20.2H2L12 3.4Z"/>' +
       '<path d="M12 9.5v4.6"/>' +
       '<circle cx="12" cy="17.2" r="0.7" fill="currentColor" stroke="none"/>',
+    keno:
+      '<rect x="3" y="3" width="18" height="18" rx="4.5"/>' +
+      '<circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/>' +
+      '<circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/>' +
+      '<circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/>' +
+      '<circle cx="15.5" cy="15.5" r="1.4"/>' +
+      '<circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
   };
 
   function icon(name, size) {

@@ -1867,3 +1867,98 @@ input[type="number"].betbox-input:focus {
 }
 .bj-act.bj-split { color: #f5c451; border-color: rgba(245,196,81,0.32); background: rgba(245,196,81,0.08); }
 .bj-act .bj-act-label { color: var(--text); }
+
+/* ---- Keno ------------------------------------------------------------- */
+.keno-tools { display: flex; gap: 8px; margin-bottom: 12px; }
+.keno-tool { flex: 1; }
+
+.keno-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.keno-tile {
+  appearance: none;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--glass-bg-2);
+  box-shadow: var(--glass-inset-hi);
+  color: var(--text-dim);
+  font: inherit; font-weight: 700; font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.keno-tile:active { transform: scale(0.94); }
+.keno-tile:disabled { cursor: default; }
+.keno-tile.selected {
+  background: linear-gradient(180deg, rgba(203,239,245,0.22), rgba(0,124,143,0.30));
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: var(--glass-inset-hi), 0 0 0 1px rgba(203,239,245,0.25);
+}
+/* A drawn number that matched one of the player's picks. */
+.keno-tile.hit {
+  background: linear-gradient(180deg, var(--good), #1aa85a);
+  border-color: rgba(53,199,124,0.7);
+  color: #04160c;
+  box-shadow: 0 0 12px rgba(53,199,124,0.5);
+}
+/* A drawn number the player did NOT pick. */
+.keno-tile.miss {
+  background: var(--bg-elev-2);
+  border-color: var(--glass-border);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+/* A pick that was not drawn — dimmed after the reveal. */
+.keno-tile.selected.faded { opacity: 0.4; }
+.keno-tile.landing { animation: keno-pop 0.26s ease-out; }
+@keyframes keno-pop {
+  0%   { transform: scale(0.6); }
+  55%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .keno-tile.landing { animation: none; } }
+
+.keno-prompt {
+  text-align: center; color: var(--text-dim);
+  font-size: 13px; font-weight: 600;
+  padding: 12px; margin-bottom: 4px;
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+}
+
+.keno-paytable {
+  display: flex; gap: 6px;
+  overflow-x: auto;
+  padding: 8px; margin-bottom: 6px;
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: var(--glass-inset-hi);
+  scrollbar-width: none;
+}
+.keno-paytable::-webkit-scrollbar { display: none; }
+.keno-pt-cell {
+  flex: 1 0 auto; min-width: 52px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 7px 6px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.03);
+}
+.keno-pt-cell.zero { opacity: 0.5; }
+.keno-pt-mult {
+  font-size: 13px; font-weight: 800; color: var(--accent);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.keno-pt-cell.zero .keno-pt-mult { color: var(--text-dim); }
+.keno-pt-hits {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 12px; font-weight: 700; color: var(--good);
+  font-variant-numeric: tabular-nums;
+}
+.keno-pt-cell.zero .keno-pt-hits { color: var(--text-dim); }

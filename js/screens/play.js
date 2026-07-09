@@ -4,8 +4,8 @@
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
 
-  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps", "chicken", "crash", "blackjack"];
-  const NEW_GAMES = ["rps", "chicken", "crash", "blackjack"];
+  const ORDER = ["dice", "flip", "mines", "towers", "highlow", "plinko", "rps", "chicken", "crash", "blackjack", "keno"];
+  const NEW_GAMES = ["rps", "chicken", "crash", "blackjack", "keno"];
   let selected = "dice";
 
   // ---- Provably Fair: verification code shown per game ----------------------
