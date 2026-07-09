@@ -326,7 +326,7 @@
     });
     return el("div", { class: "game-title-wrap" }, [
       el("h3", { class: "game-title" }, [BT.ui.icon(iconKey, 22), el("span", null, title)]),
-      el("div", { class: "game-title-actions" }, [statsBtn, alertBtn, infoBtn]),
+      el("div", { class: "game-title-actions" }, [alertBtn, statsBtn, infoBtn]),
     ]);
   }
 
