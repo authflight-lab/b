@@ -164,6 +164,10 @@
       '<path d="M4 20V10"/>' +
       '<path d="M12 20V4"/>' +
       '<path d="M20 20v-7"/>',
+    alert:
+      '<path d="M12 3.4 22 20.2H2L12 3.4Z"/>' +
+      '<path d="M12 9.5v4.6"/>' +
+      '<circle cx="12" cy="17.2" r="0.7" fill="currentColor" stroke="none"/>',
   };
 
   function icon(name, size) {

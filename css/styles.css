@@ -517,6 +517,9 @@ input[type="number"].betbox-input:focus {
 }
 .game-info-btn:hover { color: var(--text); border-color: var(--accent); }
 .game-title-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+/* Red disclaimer button (points / simulated-gambling notice). */
+.game-alert-btn { color: #ff7686; border-color: rgba(244,54,76,0.5); }
+.game-alert-btn:hover { color: #ff9aa6; border-color: rgba(244,54,76,0.85); }
 .game-stats-btn.active {
   color: var(--accent); border-color: var(--accent);
   background: rgba(53,184,105,0.12);

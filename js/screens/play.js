@@ -197,9 +197,6 @@
     // still fed centrally (api.js/BT.session) while the panel is mounted.
     BT.session.reset();
     root.appendChild(BT.games.common.sessionPanel());
-
-    // VERBATIM legal footer (spec §9). Do not paraphrase.
-    root.appendChild(el("div", { class: "legal-footer" }, BT.LEGAL_POINTS));
   }
 
   // Provably Fair panel (Rainbet-style seed pair). Two sections:

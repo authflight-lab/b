@@ -281,6 +281,29 @@
       statsBtn.setAttribute("aria-pressed", String(statsToggle.isVisible()));
     });
 
+    // Red disclaimer button: opens the points/simulated-gambling notice in an
+    // overlay (same pattern as the ⓘ info button below).
+    const alertBtn = el("button", {
+      class: "game-info-btn game-alert-btn",
+      type: "button",
+      "aria-label": "Points & fairness disclaimer",
+    }, BT.ui.icon("alert", 15));
+    alertBtn.addEventListener("click", () => {
+      const overlay = el("div", { class: "overlay" });
+      const close = () => overlay.remove();
+      overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+      overlay.appendChild(
+        el("div", { class: "overlay-card game-desc-card" }, [
+          el("div", { class: "game-desc-top" }, [
+            el("div", { class: "fair-title" }, [BT.ui.icon("alert", 20), el("h2", null, "Please note")]),
+            el("button", { class: "fair-x", type: "button", onclick: close }, "✕"),
+          ]),
+          el("p", { class: "game-desc-body" }, BT.LEGAL_POINTS),
+        ])
+      );
+      document.body.appendChild(overlay);
+    });
+
     const infoBtn = el("button", {
       class: "game-info-btn",
       type: "button",
@@ -303,7 +326,7 @@
     });
     return el("div", { class: "game-title-wrap" }, [
       el("h3", { class: "game-title" }, [BT.ui.icon(iconKey, 22), el("span", null, title)]),
-      el("div", { class: "game-title-actions" }, [statsBtn, infoBtn]),
+      el("div", { class: "game-title-actions" }, [statsBtn, alertBtn, infoBtn]),
     ]);
   }
 
