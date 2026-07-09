@@ -132,6 +132,9 @@
     }
     current = key;
     document.querySelectorAll(".pillnav-link").forEach((t) => t.classList.toggle("active", t.dataset.screen === key));
+    // Let /play use a full-height flex layout so the game fills the vertical
+    // canvas instead of sitting in a top-weighted box (see .screen-play CSS).
+    root.classList.toggle("screen-play", key === "play");
     moveIndicator();
     const scr = BT.screens && BT.screens[key];
     if (scr && typeof scr.render === "function") {

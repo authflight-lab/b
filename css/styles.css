@@ -532,6 +532,28 @@ input[type="number"].betbox-input:focus {
 /* Hidden per-game fairness anchor (state lives in the Provably Fair panel) */
 .fair-anchor { display: none; }
 
+/* ==========================================================================
+   /play — fill the vertical canvas so the game doesn't feel "trapped" in a
+   top box with a black void below. header/strip stay on top, the game card
+   flattens (less box-in-box) and its board grows to meet the bet controls.
+   ========================================================================== */
+.screen-root.screen-play { display: flex; flex-direction: column; }
+.screen-play .play-head { flex: 0 0 auto; }
+.screen-play .game-strip { flex: 0 0 auto; }
+.screen-play #game-panel { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+/* Drop the outer game-card chrome on /play: the page already provides the
+   surface, so the game breathes edge-to-edge instead of a card-in-a-page. */
+.screen-play #game-panel > .card {
+  flex: 1 1 auto; display: flex; flex-direction: column;
+  background: none; border: none; box-shadow: none;
+  padding: 0; margin-bottom: 10px;
+}
+/* Blackjack: the felt is the table — let it stretch to fill the middle. */
+.screen-play #game-panel > .card .bj-felt { flex: 1 1 auto; min-height: 300px; }
+/* Everything else: anchor the bet controls + primary button to the bottom so
+   the empty space sits above them (filled by the board) rather than below. */
+.screen-play #game-panel > .card .betbox { margin-top: auto; }
+
 /* Play header row with the Provably Fair pill on the right */
 .play-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .play-head-title { font-size: 15px; font-weight: 700; color: var(--text); }
