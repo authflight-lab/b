@@ -542,17 +542,41 @@ input[type="number"].betbox-input:focus {
 .screen-play .game-strip { flex: 0 0 auto; }
 .screen-play #game-panel { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
 /* Drop the outer game-card chrome on /play: the page already provides the
-   surface, so the game breathes edge-to-edge instead of a card-in-a-page. */
+   surface, so the game breathes edge-to-edge instead of a card-in-a-page.
+   safe-center keeps content vertically centered but never clips tall games. */
 .screen-play #game-panel > .card {
   flex: 1 1 auto; display: flex; flex-direction: column;
+  justify-content: safe center;
   background: none; border: none; box-shadow: none;
   padding: 0; margin-bottom: 10px;
 }
-/* Blackjack: the felt is the table — let it stretch to fill the middle. */
-.screen-play #game-panel > .card .bj-felt { flex: 1 1 auto; min-height: 300px; }
-/* Everything else: anchor the bet controls + primary button to the bottom so
-   the empty space sits above them (filled by the board) rather than below. */
-.screen-play #game-panel > .card .betbox { margin-top: auto; }
+/* Let each game's board stretch to fill the middle so the table meets the
+   controls instead of leaving a dead void below. Plinko is intentionally
+   excluded (its canvas geometry is measured at a fixed pixel size and must
+   not be stretched) — it rides the card's vertical centering instead. */
+.screen-play #game-panel > .card .bj-felt,
+.screen-play #game-panel > .card .crash-stage,
+.screen-play #game-panel > .card .coin-flip-wrap,
+.screen-play #game-panel > .card .hl-board,
+.screen-play #game-panel > .card .tower-shaft,
+.screen-play #game-panel > .card .rps-board,
+.screen-play #game-panel > .card .dice-slider,
+.screen-play #game-panel > .card .ck-road-wrap {
+  flex: 1 1 auto;
+}
+.screen-play #game-panel > .card .bj-felt { min-height: 300px; }
+/* Center content inside boards that don't already self-center, so the grown
+   height stays balanced rather than top-aligned. Mines is excluded from the
+   grow list: its grid renders after the controls and is empty pre-bet, so it
+   rides the card's vertical centering instead. */
+.screen-play #game-panel > .card .tower-shaft,
+.screen-play #game-panel > .card .rps-board,
+.screen-play #game-panel > .card .dice-slider {
+  display: flex; flex-direction: column; justify-content: center;
+}
+.screen-play #game-panel > .card .hl-board { align-content: center; }
+.screen-play #game-panel > .card .ck-road-wrap { display: flex; flex-direction: column; }
+.screen-play #game-panel > .card .ck-road-wrap .ck-road { flex: 1 1 auto; }
 
 /* Play header row with the Provably Fair pill on the right */
 .play-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
