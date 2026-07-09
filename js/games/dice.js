@@ -24,10 +24,7 @@
     const results = el("div", { class: "dice-results" });
     function renderResults() {
       BT.ui.clear(results);
-      if (!history.length) {
-        results.appendChild(el("span", { class: "small muted" }, "No rolls yet."));
-        return;
-      }
+      if (!history.length) return;
       history.forEach((h) => {
         results.appendChild(
           el("div", { class: "dice-pill " + (h.win ? "win" : "lose") }, [

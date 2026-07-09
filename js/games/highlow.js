@@ -49,10 +49,7 @@
     }
     function renderHistory() {
       BT.ui.clear(histEl);
-      if (!history.length) {
-        histEl.appendChild(el("span", { class: "small muted" }, "Place a bet to start the run."));
-        return;
-      }
+      if (!history.length) return;
       history.forEach((h, i) => {
         if (h.dir) {
           histEl.appendChild(el("div", { class: "hl-hist-arrow" }, h.dir === "higher" ? "▲" : "▼"));
