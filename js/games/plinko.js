@@ -168,6 +168,7 @@
     let rafId = null;
     let lastT = null;
     let landingY = 0;
+    let lastPegY = 0; // y of the bottom-most peg row — the "commit line"
 
     function sizeCanvas() {
       DPR = window.devicePixelRatio || 1;
@@ -197,6 +198,13 @@
         }
       }
       pegs = list;
+      // The commit line sits at the bottom peg row: above it the ball falls
+      // freely and optimistically; below it (the clear gap before the buckets)
+      // there are no pegs, so the ball's x is steered deterministically to the
+      // resolved bucket. The ball is never allowed to cross this line until the
+      // server outcome is known — that is what guarantees the visual landing
+      // always matches the settled multiplier.
+      lastPegY = list.length ? list[list.length - 1].y : 0;
     }
 
     function bucketX(j, n) {
@@ -299,6 +307,9 @@
         payout: null,
         resolved: false,
         waiting: false,
+        committed: false,
+        commitX: 0,
+        commitY: 0,
         done: false,
       };
       balls.push(ball);
@@ -343,9 +354,9 @@
       ball.payout = s.payout || 0;
       ball.resolved = true;
       C.syncBalance(s);
-      // If the ball already reached the bottom before the server answered,
-      // it was parked in `waiting` — release it into its bucket right now.
-      if (ball.waiting && !ball.done) finalizeBall(ball, rows.get());
+      // The ball reads `ball.resolved` on its next physics frame: if it is
+      // still falling it will commit at the commit line; if it is already
+      // parked there it releases into the deterministic glide to the bucket.
       updateBusyLock();
     }
 
@@ -401,14 +412,47 @@
       // uses real time.
       const bdt = dt * BALL_TIME_SCALE;
       const n = rows.get();
+      // The commit line: last peg row, clamped a little above the buckets so
+      // there is always some clear gap left to slide across into the target.
+      const commitY = Math.min(lastPegY, landingY - BALL_R * 2);
+      const hasTarget = (b) => b.target !== null && b.target !== undefined;
       for (const ball of balls) {
         if (ball.done) continue;
+
+        // Phase 3 — committed: below the commit line the outcome is known, so
+        // the ball is steered deterministically to the exact target bucket.
+        // No pegs live down here and x is interpolated (not physics-driven),
+        // so it ALWAYS lands dead-center in the resolved bucket.
+        if (ball.committed) {
+          ball.vy += GRAVITY * bdt;
+          ball.y += ball.vy * bdt;
+          if (hasTarget(ball)) {
+            const targetX = bucketX(ball.target, n);
+            const span = Math.max(1, landingY - ball.commitY);
+            const t = Math.min(1, Math.max(0, (ball.y - ball.commitY) / span));
+            const e = t * t * (3 - 2 * t); // smoothstep — eased horizontal glide
+            ball.x = ball.commitX + (targetX - ball.commitX) * e;
+          }
+          if (ball.y >= landingY) {
+            ball.y = landingY;
+            // Belt-and-suspenders: snap x exactly onto the target center before
+            // finalizing, so even a mid-flight resize (which can shift landingY
+            // below a ball's stored commitY and short-circuit the glide) can
+            // never leave the ball landing off its resolved bucket.
+            if (hasTarget(ball)) ball.x = bucketX(ball.target, n);
+            finalizeBall(ball, n);
+          }
+          continue;
+        }
+
         if (!ball.waiting) {
           ball.vy += GRAVITY * bdt;
           ball.x += ball.vx * bdt;
           ball.y += ball.vy * bdt;
 
-          if (ball.target !== null && ball.target !== undefined) {
+          // Soft steer toward the target while still known — a natural bias so
+          // the eventual deterministic glide below the commit line is small.
+          if (hasTarget(ball)) {
             const targetX = bucketX(ball.target, n);
             const proximity = Math.min(1, Math.max(0, ball.y / landingY));
             const gain = 3 + proximity * 9;
@@ -421,19 +465,31 @@
 
           for (const peg of pegs) resolvePegCollision(ball, peg);
 
-          if (ball.y >= landingY) {
-            ball.y = landingY;
+          // Reaching the commit line: only cross it once the outcome is known.
+          if (ball.y >= commitY) {
             if (ball.resolved) {
-              finalizeBall(ball, n);
+              ball.committed = true;
+              ball.commitY = commitY;
+              ball.commitX = ball.x;
+              ball.y = commitY;
             } else {
+              // Outcome not back yet — park (hover) on the commit line rather
+              // than committing to a bucket the server hasn't chosen.
               ball.waiting = true;
+              ball.y = commitY;
               ball.vy = 0;
               ball.vx *= 0.4;
             }
           }
         } else {
+          // Parked on the commit line. Release into the deterministic glide the
+          // instant the outcome lands; otherwise drift gently in place.
           if (ball.resolved) {
-            finalizeBall(ball, n);
+            ball.committed = true;
+            ball.commitY = commitY;
+            ball.commitX = ball.x;
+            ball.waiting = false;
+            ball.vy = 0;
           } else {
             ball.vx *= 0.9;
             ball.x += ball.vx * bdt;
@@ -443,11 +499,15 @@
       }
 
       // Ball-vs-ball soft repulsion so concurrent balls jostle instead of
-      // stacking exactly on top of one another.
+      // stacking exactly on top of one another. Only free-falling balls take
+      // part: a parked (waiting) ball must not be shoved across the commit line
+      // before its outcome is known, and a committed ball's x is deterministic
+      // (repulsion would knock it off its guaranteed target glide).
+      const jostles = (b) => !b.done && !b.waiting && !b.committed;
       for (let i = 0; i < balls.length; i++) {
-        if (balls[i].done) continue;
+        if (!jostles(balls[i])) continue;
         for (let j = i + 1; j < balls.length; j++) {
-          if (balls[j].done) continue;
+          if (!jostles(balls[j])) continue;
           resolveBallRepulsion(balls[i], balls[j], bdt);
         }
       }
