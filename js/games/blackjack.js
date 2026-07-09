@@ -67,7 +67,7 @@
     let player = [], dealer = [];
     let holeHidden = true;
     // Split client state: one object per hand.
-    let hands = [];            // [{ cards, done, cardsEl, totalEl, seatEl, wagerEl }]
+    let hands = [];            // [{ cards, done, cardsEl, totalEl, seatEl }]
     let active = 0;
     let acesSplit = false;
 
@@ -93,12 +93,11 @@
     function makeSeat(labelText, isYou) {
       const cardsEl = el("div", { class: "bj-cards" });
       const totalEl = el("span", { class: "bj-total", style: "display:none" }, "");
-      const wagerEl = el("span", { class: "bj-wager", style: "display:none" }, "");
       const seatEl = el("div", { class: "bj-seat" }, [
-        el("div", { class: "bj-total-row" }, [totalEl, wagerEl]),
+        el("div", { class: "bj-total-row" }, [totalEl]),
         cardsEl,
       ]);
-      return { cardsEl, totalEl, wagerEl, seatEl, cards: [], done: false };
+      return { cardsEl, totalEl, seatEl, cards: [], done: false };
     }
 
     // Default single seat.
@@ -111,11 +110,10 @@
     }
     mountSingle();
 
-    function setWager(seat, amount, doubled) {
-      seat.wagerEl.style.display = amount > 0 ? "inline-flex" : "none";
-      seat.wagerEl.classList.toggle("doubled", !!doubled);
-      seat.wagerEl.textContent = amount > 0 ? BT.ui.fmt(amount) + (doubled ? " ·2×" : "") : "";
-    }
+    // No-op: the per-seat wager pill was removed from the layout, but call
+    // sites are kept (harmless) so the deal/double/split flow doesn't need
+    // touching elsewhere.
+    function setWager() {}
 
     function cardEl(r, idx, faceDown) {
       if (faceDown) return el("div", { class: "bj-card back" }, [el("span", { class: "bj-card-crest" }, "")]);
