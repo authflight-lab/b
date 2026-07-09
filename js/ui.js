@@ -160,6 +160,10 @@
       '<path d="M9 7.5h6"/>' +
       '<path d="M9 11h6"/>' +
       '<path d="M9 14.5h4"/>',
+    stats:
+      '<path d="M4 20V10"/>' +
+      '<path d="M12 20V4"/>' +
+      '<path d="M20 20v-7"/>',
   };
 
   function icon(name, size) {

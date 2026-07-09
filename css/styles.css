@@ -516,6 +516,11 @@ input[type="number"].betbox-input:focus {
   flex-shrink: 0; transition: color .15s, border-color .15s;
 }
 .game-info-btn:hover { color: var(--text); border-color: var(--accent); }
+.game-title-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.game-stats-btn.active {
+  color: var(--accent); border-color: var(--accent);
+  background: rgba(53,184,105,0.12);
+}
 
 /* Game description overlay card */
 .game-desc-card { max-width: 420px; }

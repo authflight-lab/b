@@ -240,10 +240,47 @@
     return (Math.round(m * 100) / 100) + "x";
   }
 
-  // Game panel header: icon + title on the left, ⓘ info button on the right.
-  // Clicking ⓘ opens a full-screen overlay with the game description, exactly
-  // like the Provably Fair panel — nothing shown until the icon is tapped.
+  // Session stats visibility — shared, module-level toggle so the header
+  // button (one per game panel, recreated on every render) and the panel
+  // itself (appended once by the play screen) stay in sync. Defaults to
+  // Hide; only a click on the header toggle flips it.
+  let statsVisible = false;
+  const statsSubs = [];
+  function statsEmit() {
+    statsSubs.slice().forEach((fn) => { try { fn(); } catch (e) {} });
+  }
+  const statsToggle = {
+    isVisible: () => statsVisible,
+    toggle() { statsVisible = !statsVisible; statsEmit(); },
+    subscribe(fn) {
+      statsSubs.push(fn);
+      return () => {
+        const i = statsSubs.indexOf(fn);
+        if (i >= 0) statsSubs.splice(i, 1);
+      };
+    },
+  };
+
+  // Game panel header: icon + title on the left, stats-toggle + ⓘ info
+  // buttons on the right. Clicking ⓘ opens a full-screen overlay with the
+  // game description, exactly like the Provably Fair panel — nothing shown
+  // until the icon is tapped. Clicking the stats icon shows/hides the
+  // session stats card below (default Hide); it lights up while active.
   function gameHeader(iconKey, title, desc) {
+    const statsBtn = el("button", {
+      class: "game-info-btn game-stats-btn",
+      type: "button",
+      "aria-label": "Toggle session stats",
+      "aria-pressed": String(statsToggle.isVisible()),
+    }, BT.ui.icon("stats", 15));
+    statsBtn.classList.toggle("active", statsToggle.isVisible());
+    statsBtn.addEventListener("click", () => statsToggle.toggle());
+    const unsubStats = statsToggle.subscribe(() => {
+      if (!statsBtn.isConnected) { unsubStats(); return; }
+      statsBtn.classList.toggle("active", statsToggle.isVisible());
+      statsBtn.setAttribute("aria-pressed", String(statsToggle.isVisible()));
+    });
+
     const infoBtn = el("button", {
       class: "game-info-btn",
       type: "button",
@@ -266,7 +303,7 @@
     });
     return el("div", { class: "game-title-wrap" }, [
       el("h3", { class: "game-title" }, [BT.ui.icon(iconKey, 22), el("span", null, title)]),
-      infoBtn,
+      el("div", { class: "game-title-actions" }, [statsBtn, infoBtn]),
     ]);
   }
 
@@ -477,6 +514,7 @@
       ]),
       body,
     ]);
+    node.classList.toggle("hidden", !statsToggle.isVisible());
 
     // Deterministic teardown: a new panel replaces the old one wholesale, so
     // creating this one unsubscribes any detached predecessor immediately.
@@ -484,13 +522,18 @@
     // a panel that is removed without a successor ever being created.
     if (sessPanelLive && !sessPanelLive.node.isConnected) {
       sessPanelLive.unsub();
+      sessPanelLive.unsubVis();
       sessPanelLive = null;
     }
     const unsub = BT.session.subscribe(() => {
       if (!node.isConnected) { unsub(); return; }
       update();
     });
-    sessPanelLive = { node, unsub };
+    const unsubVis = statsToggle.subscribe(() => {
+      if (!node.isConnected) { unsubVis(); return; }
+      node.classList.toggle("hidden", !statsToggle.isVisible());
+    });
+    sessPanelLive = { node, unsub, unsubVis };
     update();
     return node;
   }
@@ -517,6 +560,7 @@
     resultBanner,
     resultOverlay,
     sessionPanel,
+    statsToggle,
     syncBalance,
     winLines,
     winMult,
