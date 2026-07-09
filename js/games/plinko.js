@@ -8,14 +8,41 @@
   const el = BT.ui.el;
   const C = BT.games.common;
 
-  // Per-bucket multiplier — mirrors the settle formula so bucket labels match
-  // the payout the server actually returns. (Display only; no math is changed.)
+  // Per-bucket multiplier — an EXACT port of api/game/plinko.py's
+  // multiplier(j, n, risk), not an approximation. Bucket labels are the only
+  // thing the player uses to judge where a good drop lands, so a client-side
+  // mismatch with the server's real payout table is actively misleading
+  // (ball visually "lands" on a label the settle response then contradicts).
+  // Keep RISK/EPS and the lambda/weight math byte-for-byte in sync with the
+  // Python source if that file ever changes.
+  const EPS = 0.02; // must match api/game/__init__.py EPS
+  const RISK_CFG = {
+    low: { b: 1.3, alpha: 1.0 },
+    high: { b: 2.2, alpha: 1.1 },
+  };
+  function binomPmf(n, j) {
+    // C(n, j) / 2^n, built iteratively to avoid overflow on n up to 16.
+    let c = 1;
+    for (let i = 0; i < j; i++) c = (c * (n - i)) / (i + 1);
+    return c / Math.pow(2, n);
+  }
+  function bucketWeight(j, n, b, alpha) {
+    return Math.pow(b, Math.pow(Math.abs(j - n / 2), alpha));
+  }
+  const _lambdaCache = {};
+  function bucketLambda(n, risk) {
+    const key = n + ":" + risk;
+    if (_lambdaCache[key] !== undefined) return _lambdaCache[key];
+    const cfg = RISK_CFG[risk];
+    let denom = 0;
+    for (let j = 0; j <= n; j++) denom += binomPmf(n, j) * bucketWeight(j, n, cfg.b, cfg.alpha);
+    const lam = (1 - EPS) / denom;
+    _lambdaCache[key] = lam;
+    return lam;
+  }
   function bucketMult(j, rows, risk) {
-    const center = rows / 2;
-    const dist = Math.abs(j - center) / center;
-    const base = risk === "high" ? [0, 0.2, 0.5, 1, 2, 5, 12] : [0.3, 0.5, 0.8, 1, 1.3, 1.8, 3];
-    const idx = Math.min(base.length - 1, Math.floor(dist * (base.length - 1)));
-    return base[idx];
+    const cfg = RISK_CFG[risk];
+    return bucketLambda(rows, risk) * bucketWeight(j, rows, cfg.b, cfg.alpha);
   }
 
   function fmtMult(m) {
