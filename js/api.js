@@ -162,6 +162,12 @@
     history: () => get("/bt/api/history"),
     bets: () => get("/bt/api/bets"),
 
+    // Referrals: read the caller's (permanent) invite link + stats, and create
+    // it once if absent. generateInvite is idempotent server-side — a user who
+    // already has a link gets the same one back, never a new one.
+    invite: () => get("/bt/api/invite"),
+    generateInvite: () => post("/bt/api/invite/generate"),
+
     getSeedState: () => get("/bt/api/game/seeds"),
     rotateSeed: (body) => post("/bt/api/game/seeds/rotate", body || {}),
 

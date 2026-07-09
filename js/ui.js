@@ -175,6 +175,16 @@
       '<circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/>' +
       '<circle cx="15.5" cy="15.5" r="1.4"/>' +
       '<circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
+    invite:
+      '<circle cx="9" cy="8" r="3.2"/>' +
+      '<path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/>' +
+      '<path d="M18 7.5v5"/>' +
+      '<path d="M15.5 10h5"/>',
+    copy:
+      '<rect x="9" y="9" width="11" height="11" rx="2"/>' +
+      '<path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+    check:
+      '<path d="M20 6 9 17l-5-5"/>',
   };
 
   function icon(name, size) {
