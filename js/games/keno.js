@@ -13,6 +13,7 @@
   const COLS = 8;
   const MAX_PICKS = 10;
   const EPS = 0.01; // Keno-specific edge — MUST match KENO_EPS in api/game/keno.py.
+  const MULT_BOOST = 1.05; // MUST match MULT_BOOST in api/game/keno.py.
   const REVEAL_STAGGER_MS = 150;
 
   // Relative payout weights per (picks, hits) — an EXACT port of SHAPE in
@@ -51,7 +52,7 @@
     const shape = SHAPE[k] || {};
     let raw = 0;
     for (const h in shape) raw += pHit(k, +h) * shape[h];
-    const factor = (1 - EPS) / raw;
+    const factor = ((1 - EPS) * MULT_BOOST) / raw;
     const row = [];
     for (let h = 0; h <= k; h++) row.push((shape[h] || 0) * factor);
     return row;
