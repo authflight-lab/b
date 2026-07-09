@@ -113,6 +113,20 @@
     const buckets = el("div", { class: "pk-buckets" });
     let bucketEls = [];
 
+    // Small running net (this board only — separate from the shared session
+    // panel below) so the player sees at a glance whether this drop streak
+    // is up or down. Only counts balls that actually resolved a payout.
+    let net = 0;
+    const netEl = el("div", { class: "pk-net" }, "+0");
+    board.appendChild(netEl);
+    function updateNet(delta) {
+      net += delta;
+      const rounded = Math.round(net * 100) / 100;
+      netEl.textContent = (rounded >= 0 ? "+" : "") + rounded;
+      netEl.classList.toggle("pos", rounded > 0);
+      netEl.classList.toggle("neg", rounded < 0);
+    }
+
     // (The old on-board session stats box lived here; it was replaced by the
     // shared session P&L tracker rendered under every game — see play.js.)
 
@@ -230,6 +244,7 @@
         flashBucket(bucketEls[slot], ball.payout > 0);
       }
       BT.ui.haptic(ball.payout > 0 ? "success" : "error");
+      if (ball.resolved) updateNet((ball.payout || 0) - (ball.bet || 0));
     }
 
     // Spawn one ball = one real bet. Fires gameBet then gameSettle; the ball
