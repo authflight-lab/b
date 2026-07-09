@@ -1683,28 +1683,58 @@ input[type="number"].betbox-input:focus {
 
 /* Blackjack — dealer row on top, player row on bottom. Cards mirror the
    HighLow card look (own bj-* classes so nothing here can regress HighLow). */
-.bj-table { display: flex; flex-direction: row; gap: 10px; padding: 10px 2px 6px; position: relative; }
-.bj-hand { display: flex; flex-direction: column; gap: 8px; align-items: center; flex: 1; min-width: 0; }
-.bj-hand-head { display: flex; align-items: center; justify-content: center; gap: 8px; }
-.bj-hand-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
-.bj-hand-label.you { color: var(--accent); text-shadow: 0 0 10px rgba(var(--accent-rgb, 78,205,255), 0.7); }
-.bj-total { padding: 2px 8px; border-radius: 999px; background: var(--bg-elev); border: 1px solid var(--glass-border); font-size: 12px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 20px; text-align: center; }
-.bj-total.bust { background: rgba(244,54,76,0.15); border-color: rgba(244,54,76,0.5); color: #f4364c; }
-.bj-cards { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 102px; }
+/* Casino table: an oval navy felt with the dealer on top, the pays-3-to-2
+   band across the middle, and the player seat(s) on the bottom. */
+.bj-felt {
+  position: relative; display: flex; flex-direction: column;
+  align-items: center; justify-content: space-between; gap: 6px;
+  min-height: 380px; padding: 26px 14px 30px; margin: 6px 0 2px;
+  border-radius: 26px; overflow: hidden; isolation: isolate;
+  background:
+    radial-gradient(120% 78% at 50% 34%, rgba(46,66,116,0.55), rgba(14,20,38,0.0) 70%),
+    linear-gradient(180deg, #141b31, #0d1322 100%), #0e1526;
+  border: 1px solid var(--glass-border);
+}
+.bj-dealer, .bj-player { position: relative; z-index: 1; width: 100%; display: flex;
+  flex-direction: column; align-items: center; gap: 8px; }
+.bj-dealer { padding-top: 4px; }
+.bj-player { padding-bottom: 2px; }
+.bj-player.split { flex-direction: row; align-items: flex-end; justify-content: center; gap: 14px; }
+.bj-seat { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 0 1 auto; min-width: 0; padding: 6px; border-radius: 16px; transition: box-shadow .18s ease, background .18s ease; }
+.bj-player.split .bj-seat { flex: 1 1 0; }
+.bj-seat.active { background: rgba(120,150,255,0.08); box-shadow: 0 0 0 1.5px rgba(120,160,255,0.55), 0 0 22px rgba(90,130,240,0.35); }
+.bj-seat.done { opacity: 0.72; }
+
+/* The middle band — gold brand mark across the felt. */
+.bj-band { position: relative; z-index: 1; text-align: center; padding: 6px 0; user-select: none; }
+.bj-band-main { font-size: 15px; font-weight: 900; letter-spacing: 1.5px;
+  color: rgba(154,166,184,0.3); text-shadow: none; }
+
+.bj-total-row { display: flex; align-items: center; gap: 6px; justify-content: center; min-height: 20px; }
+.bj-total { padding: 3px 12px; border-radius: 999px; background: rgba(8,12,22,0.75); border: 1px solid rgba(160,180,230,0.28); font-size: 14px; font-weight: 900; color: #eaf0ff; font-variant-numeric: tabular-nums; min-width: 22px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.35); }
+.bj-total.bust { background: rgba(244,54,76,0.2); border-color: rgba(244,54,76,0.6); color: #ff7686; }
+.bj-cards { display: flex; flex-wrap: nowrap; gap: 6px; justify-content: center; min-height: 108px; }
+.bj-player.split .bj-cards { gap: 4px; }
 .bj-card {
-  width: 70px; height: 101px; border-radius: 11px; position: relative;
-  background: linear-gradient(160deg, #ffffff, #e9edf5); box-shadow: 0 6px 14px rgba(0,0,0,0.4);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 22px; gap: 2px; animation: bjDeal .25s ease;
+  width: 74px; height: 106px; border-radius: 10px; position: relative; flex: 0 0 auto;
+  background: linear-gradient(160deg, #ffffff, #eef1f7); box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; animation: bjDeal .25s ease;
 }
-.bj-card.red { color: #d13b3b; }
-.bj-card.black { color: #1a2230; }
-.bj-suit { font-size: 18px; }
+.bj-player.split .bj-card { width: 58px; height: 84px; }
+.bj-card .bj-rank { position: absolute; top: 6px; left: 8px; font-size: 20px; line-height: 1; }
+.bj-card .bj-suit { font-size: 34px; }
+.bj-player.split .bj-card .bj-rank { top: 4px; left: 6px; font-size: 15px; }
+.bj-player.split .bj-card .bj-suit { font-size: 26px; }
+.bj-card.red { color: #d1263b; }
+.bj-card.black { color: #17202e; }
 .bj-card.back {
-  background: repeating-linear-gradient(135deg, #2c3550, #2c3550 6px, #232a3f 6px, #232a3f 12px);
-  border: 1px solid rgba(255,255,255,0.12);
+  background:
+    repeating-linear-gradient(135deg, #33477e, #33477e 5px, #283a6a 5px, #283a6a 10px);
+  border: 2px solid rgba(255,255,255,0.14);
 }
-@keyframes bjDeal { 0% { transform: translateY(-26px) translateX(18px) scale(0.85) rotate(3deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.bj-card.back .bj-card-crest { width: 60%; height: 72%; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.25); }
+@keyframes bjDeal { 0% { transform: translateY(-30px) translateX(20px) scale(0.85) rotate(3deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
 
 /* Hole-card flip: rotateY out on the back, then the face rotates in. */
 .bj-card.bj-flip-out { animation: bjFlipOut 0.17s ease-in forwards; }
@@ -1714,9 +1744,9 @@ input[type="number"].betbox-input:focus {
 
 /* Current wager chip next to the player's total — turns gold when doubled. */
 .bj-wager {
-  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px;
-  background: var(--bg-elev); border: 1px solid var(--glass-border);
-  font-size: 11px; font-weight: 800; color: var(--text-dim); font-variant-numeric: tabular-nums;
+  align-items: center; padding: 2px 8px; border-radius: 999px;
+  background: rgba(8,12,22,0.7); border: 1px solid rgba(160,180,230,0.25);
+  font-size: 10px; font-weight: 800; color: var(--text-dim); font-variant-numeric: tabular-nums;
 }
 .bj-wager.doubled { color: #f5c451; border-color: rgba(245,196,81,0.45); animation: bjDeal 0.25s ease; }
 
@@ -1754,5 +1784,24 @@ input[type="number"].betbox-input:focus {
   100% { transform: translateY(120px) rotate(8deg); opacity: 0; }
 }
 
-.bj-actions { display: flex; gap: 8px; margin: 8px 0 4px; }
-.bj-actions .btn { flex: 1; }
+.bj-actions { display: flex; gap: 8px; margin: 10px 0 6px; }
+.bj-act {
+  flex: 1 1 0; min-width: 0; display: inline-flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 5px;
+  padding: 13px 6px; border-radius: 13px; cursor: pointer;
+  background: rgba(255,255,255,0.045); border: 1px solid var(--glass-border);
+  color: var(--text); font-weight: 800; font-size: 12px; letter-spacing: 0.3px;
+  transition: transform .12s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.bj-act:active { transform: scale(0.95); }
+.bj-act[disabled] { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.bj-act .bj-act-ic { display: inline-flex; align-items: center; justify-content: center; }
+.bj-act .bj-act-label { line-height: 1; }
+.bj-act.bj-double, .bj-act.bj-hit, .bj-act.bj-stand {
+  background: rgba(255,255,255,0.045); border-color: var(--glass-border);
+}
+.bj-act.bj-double .bj-act-ic, .bj-act.bj-hit .bj-act-ic, .bj-act.bj-stand .bj-act-ic {
+  color: var(--accent);
+}
+.bj-act.bj-split { color: #f5c451; border-color: rgba(245,196,81,0.32); background: rgba(245,196,81,0.08); }
+.bj-act .bj-act-label { color: var(--text); }
