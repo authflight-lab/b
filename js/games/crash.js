@@ -31,7 +31,12 @@
     // --- Stage: exponential curve + top-left counter ----------------------
     // One SVG path (glowing stroke) + one fill path (gradient area) + one
     // leading-tip dot, all redrawn per frame — single-path GPU-cheap drawing.
-    const W = 320, H = 150;
+    // W/H track the stage's actual rendered pixel size (not a fixed design
+    // size) so the viewBox always matches its real aspect ratio — otherwise
+    // preserveAspectRatio="none" stretches the fixed-ratio curve to fit
+    // whatever height the flex layout gives the stage (looks distorted on
+    // tall mobile screens). Re-synced on attach and on resize.
+    let W = 320, H = 150;
     const NS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(NS, "svg");
     svg.setAttribute("viewBox", "0 0 " + W + " " + H);
@@ -103,6 +108,15 @@
       curve.setAttribute("d", "");
       fillPath.setAttribute("d", "");
       tip.style.display = "none";
+    }
+    function syncSize() {
+      const w = Math.round(stage.clientWidth);
+      const h = Math.round(stage.clientHeight);
+      if (w > 0 && h > 0 && (w !== W || h !== H)) {
+        W = w; H = h;
+        svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+        drawCurve();
+      }
     }
     function drawCurve() {
       if (points.length < 2) { clearCurve(); return; }
@@ -310,6 +324,16 @@
       banner.node,
       seed.node,
     ]));
+
+    // Measure once attached (detached geometry is always 0) and again on any
+    // resize/orientation change; disconnect when the screen is torn down.
+    syncSize();
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(() => syncSize());
+      ro.observe(stage);
+      const stopObserving = () => { if (!stage.isConnected) { ro.disconnect(); } else { requestAnimationFrame(stopObserving); } };
+      requestAnimationFrame(stopObserving);
+    }
   }
 
   C.register({ key: "crash", title: "Crash", render });
