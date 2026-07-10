@@ -150,8 +150,8 @@ body {
 
 /* Home sits centre-stage in the bar and gets its own warm accent so it draws
    the eye even when it isn't the active tab. */
-.pillnav-link-home { color: var(--home-accent, #ffb454); }
-.pillnav-link-home.active { color: var(--home-accent, #ffb454); }
+.pillnav-link-home { color: var(--accent); }
+.pillnav-link-home.active { color: var(--accent); }
 .pillnav-link-home .pillnav-label { text-shadow: 0 0 12px rgba(255, 180, 84, 0.35); }
 
 /* Round side pill — recent bets (paper) button, a separate capsule */
