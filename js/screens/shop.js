@@ -55,7 +55,7 @@
       BT.ui.icon("trophy", 18),
       el("span", null, "All Rewards"),
     ]);
-    b.addEventListener("click", () => BT.showScreen("vip"));
+    b.addEventListener("click", () => BT.vip.open());
     return b;
   }
 

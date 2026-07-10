@@ -99,7 +99,7 @@
     const allBtn = el("button", { class: "btn block all-rewards-btn", type: "button" }, [
       BT.ui.icon("trophy", 18), el("span", null, "All Rewards"),
     ]);
-    allBtn.addEventListener("click", () => { close(); BT.showScreen("vip"); });
+    allBtn.addEventListener("click", () => { close(); BT.vip.open(); });
 
     const head = el("div", { class: "rewards-head" });
     card.appendChild(head);

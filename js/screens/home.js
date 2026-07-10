@@ -146,7 +146,7 @@
       ]),
       el("div", { class: "rankcard-arrow" }, BT.ui.icon("trophy", 20)),
     ]);
-    card.addEventListener("click", () => BT.showScreen("vip"));
+    card.addEventListener("click", () => BT.vip.open());
     return card;
   }
 
@@ -175,7 +175,11 @@
         [st.total_wagered || 0, next.req_wagered],
       ];
       const met = reqs.filter(([have, need]) => !need || have >= need).length;
-      subEl.textContent = met + " of 3 goals met · Next: " + (next.name || BT.rank.NAMES[next.level]);
+      BT.ui.clear(subEl);
+      subEl.appendChild(document.createTextNode(met + " of 3 goals met · Next: "));
+      subEl.appendChild(el("span", {
+        style: "color:" + BT.rank.color(next.level) + ";font-weight:700",
+      }, next.name || BT.rank.NAMES[next.level]));
     } else {
       subEl.textContent = lvl >= 1 ? "Top tier reached" : "Meet 2 of 3 goals to rank up";
     }

@@ -2259,6 +2259,30 @@ input[type="number"].betbox-input:focus {
 .vip-cd { color: var(--accent); font-variant-numeric: tabular-nums; }
 .vip-claim-btn { flex: 0 0 auto; min-width: 88px; }
 
+/* VIP as an overlay panel (like wager history). */
+.overlay-card.vip-card { max-width: 460px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 14px; }
+.vip-ov-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.vip-ov-body > .card { margin: 0 0 10px; }
+.vip-ov-body > .card:last-child { margin-bottom: 0; }
+.vip-ov-body .vip-hero { padding-top: 4px; }
+
+/* Colored current/next rank name. */
+.vip-rankname { font-weight: 700; }
+
+/* Compact, horizontal claim cards — no descriptions. */
+.vip-claim-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.vip-cc {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 8px;
+}
+.vip-cc-top { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.vip-cc-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.vip-cc-status { font-size: 10.5px; font-weight: 600; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.vip-cc-status.ready { color: var(--accent); }
+.vip-cc-icon { width: 40px; height: 40px; object-fit: contain; margin: 2px 0; }
+.vip-cc-amt { font-size: 13px; font-weight: 800; color: var(--accent); }
+.vip-cc-btn { width: 100%; min-width: 0; }
+
 .vip-perk-row { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--glass-border); font-size: 13.5px; }
 .vip-perk-row:first-of-type { border-top: none; }
 .vip-perk-k { color: var(--text-dim); }
