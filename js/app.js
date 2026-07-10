@@ -170,13 +170,8 @@
       if (ic) btn.insertBefore(BT.ui.icon(ic, 22), btn.firstChild);
       btn.addEventListener("click", () => showScreen(btn.dataset.screen));
     });
-    // History (recent bets) now lives inside the bar as an icon that opens the
-    // bets overlay — it is not a screen, so it never takes the active indicator.
-    const betsBtn = document.getElementById("bets-btn");
-    if (betsBtn) {
-      betsBtn.insertBefore(BT.ui.icon("paper", 22), betsBtn.firstChild);
-      betsBtn.addEventListener("click", () => { if (BT.bets) BT.bets.open(); });
-    }
+    // Wager history now lives in the /play header (beside the balance), wired
+    // there in screens/play.js — no longer a nav item.
     window.addEventListener("resize", moveIndicator);
   }
 

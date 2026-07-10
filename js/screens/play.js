@@ -139,7 +139,7 @@
     // (Provably Fair now lives inside each game's header, next to the ⓘ icon.)
     const rankBtn = el("button", {
       class: "rank-pill", type: "button", title: "Your rewards", "aria-label": "Your rewards",
-      onclick: () => BT.rank.openPanel(),
+      onclick: () => BT.rank.openPanel(rankBtn),
     }, [el("span", { class: "rank-pill-name" }, "Unranked")]);
     BT.rank.summary().then((s) => { if (rankBtn.isConnected) BT.rank.fillPill(rankBtn, s); });
     // Live balance chip beside the rank pill; kept in sync by BT.setBalance.
@@ -147,9 +147,14 @@
       BT.ui.icon("token", 14),
       el("span", { id: "play-bal-value" }, BT.ui.fmt(BT.state.balance)),
     ]);
+    // Wager history moved out of the navbar to sit beside the balance chip.
+    const histBtn = el("button", {
+      class: "play-hist-btn", type: "button", title: "Wager history", "aria-label": "Wager history",
+      onclick: () => { if (BT.bets) BT.bets.open(); },
+    }, [BT.ui.icon("paper", 16)]);
     root.appendChild(el("div", { class: "play-head" }, [
       el("span", { class: "play-head-title" }, "Games"),
-      el("div", { class: "play-head-right" }, [balChip, rankBtn]),
+      el("div", { class: "play-head-right" }, [balChip, histBtn, rankBtn]),
     ]));
 
     // Compact horizontal selector strip (scrollable) so the game panel sits

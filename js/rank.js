@@ -73,14 +73,28 @@
     return m + "m";
   }
 
-  async function openPanel() {
+  async function openPanel(anchorEl) {
     // Singleton: don't stack a second sheet if one is already open.
-    if (document.querySelector(".overlay .rewards-panel")) return;
-    const overlay = el("div", { class: "overlay" });
-    const close = () => overlay.remove();
-    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+    if (document.querySelector(".rewards-popover")) return;
 
-    const card = el("div", { class: "overlay-card rewards-panel" });
+    // Transparent full-screen catcher for outside-click dismissal — no dim, so
+    // the page stays visible; the panel is a small popover anchored to its trigger.
+    const catcher = el("div", { class: "popover-catcher" });
+    const reposition = () => {
+      if (!anchorEl || !anchorEl.getBoundingClientRect) return;
+      const r = anchorEl.getBoundingClientRect();
+      card.style.top = Math.round(r.bottom + 8) + "px";
+      card.style.right = Math.round(Math.max(8, window.innerWidth - r.right)) + "px";
+    };
+    const onScroll = () => close();
+    const close = () => {
+      catcher.remove();
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+    catcher.addEventListener("click", (e) => { if (e.target === catcher) close(); });
+
+    const card = el("div", { class: "overlay-card rewards-panel rewards-popover" });
     const list = el("div", { class: "rewards-list" }, el("div", { class: "loading" }, "Loading rewards…"));
     const allBtn = el("button", { class: "btn block all-rewards-btn", type: "button" }, [
       BT.ui.icon("trophy", 18), el("span", null, "All Rewards"),
@@ -91,8 +105,11 @@
     card.appendChild(head);
     card.appendChild(list);
     card.appendChild(allBtn);
-    overlay.appendChild(card);
-    document.body.appendChild(overlay);
+    catcher.appendChild(card);
+    document.body.appendChild(catcher);
+    reposition();
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", onScroll, true);
 
     async function refresh() {
       const s = await summary(true);

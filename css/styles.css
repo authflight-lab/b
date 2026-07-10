@@ -731,6 +731,27 @@ input[type="number"].betbox-input:focus {
 
 /* Rewards popup opened by the Play-header rank pill. */
 .rewards-panel { width: min(92vw, 400px); }
+
+/* Anchored popover variant — floats near its trigger instead of a full-screen
+   overlay, so it doesn't cover the page. */
+.popover-catcher { position: fixed; inset: 0; z-index: 60; background: transparent; }
+.rewards-popover {
+  position: fixed; z-index: 61; width: min(88vw, 340px); padding: 14px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  transform-origin: top right; animation: popover-in .14s ease-out;
+}
+@keyframes popover-in { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rewards-popover { animation: none; } }
+
+/* Wager-history button in the /play header, matching the balance chip. */
+.play-hist-btn {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 34px; height: 34px; border-radius: 999px; cursor: pointer;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border); color: var(--text-dim);
+  box-shadow: var(--glass-inset-hi); transition: color .15s ease, border-color .15s ease;
+}
+.play-hist-btn:hover { color: var(--text); border-color: var(--accent); }
+.play-hist-btn:active { transform: scale(0.94); }
 .rewards-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .rewards-head-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .rewards-head-badge {
