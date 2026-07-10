@@ -117,6 +117,7 @@
       const cur = (s.tiers || []).find((t) => t.level === lvl) || {};
       const st = s.state || {};
 
+      card.style.setProperty("--rank-color", color(lvl));
       BT.ui.clear(head);
       const badge = badgeImg(lvl, 30);
       head.appendChild(el("div", { class: "rewards-head-left" }, [
@@ -130,9 +131,9 @@
 
       const now = Date.now();
       const rows = [
-        { kind: "rakeback", title: "Rakeback", icon: "rakeback", amount: st.unclaimed_rakeback || 0, nextTs: 0, sub: "Cashback on every wager" },
-        { kind: "weekly", title: "Weekly", icon: "7d", amount: Math.floor((st.week_wagered || 0) * (cur.weekly_rate || 0)), nextTs: nextAt(st.weekly_claimed_at, WEEK_MS), sub: "This week's volume" },
-        { kind: "monthly", title: "Monthly", icon: "30d", amount: Math.floor((st.month_wagered || 0) * (cur.monthly_rate || 0)), nextTs: nextAt(st.monthly_claimed_at, MONTH_MS), sub: "This month's volume" },
+        { kind: "rakeback", title: "Rakeback", icon: "rakeback", amount: st.unclaimed_rakeback || 0, nextTs: 0 },
+        { kind: "weekly", title: "Weekly", icon: "7d", amount: Math.floor((st.week_wagered || 0) * (cur.weekly_rate || 0)), nextTs: nextAt(st.weekly_claimed_at, WEEK_MS) },
+        { kind: "monthly", title: "Monthly", icon: "30d", amount: Math.floor((st.month_wagered || 0) * (cur.monthly_rate || 0)), nextTs: nextAt(st.monthly_claimed_at, MONTH_MS) },
       ];
 
       BT.ui.clear(list);
@@ -170,7 +171,7 @@
         el("img", { class: "rewards-row-icon", src: "assets/vip/claim-" + r.icon + ".png", alt: "" }),
         el("div", { class: "rewards-row-mid" }, [
           el("div", { class: "rewards-row-title" }, r.title),
-          el("div", { class: "rewards-row-sub muted" }, BT.ui.fmt(r.amount) + " pts · " + r.sub),
+          el("div", { class: "rewards-row-sub muted" }, BT.ui.fmt(r.amount) + " pts"),
         ]),
         btn,
       ]);
