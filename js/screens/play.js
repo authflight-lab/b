@@ -135,19 +135,21 @@
   function renderGames(root) {
     BT.ui.clear(root);
 
-    // Header row: game grid title area with the Provably Fair pill on the right.
-    const fairBtn = el("button", { class: "fair-btn", onclick: openFair }, [
-      BT.ui.icon("shield", 16),
-      el("span", null, "Provably Fair"),
-    ]);
-    // Live balance chip beside the Provably Fair pill; kept in sync by BT.setBalance.
+    // Header row: game grid title area with the rank badge pill on the right.
+    // (Provably Fair now lives inside each game's header, next to the ⓘ icon.)
+    const rankBtn = el("button", {
+      class: "rank-pill", type: "button", title: "View VIP", "aria-label": "Your rank",
+      onclick: () => BT.showScreen("vip"),
+    }, [el("span", { class: "rank-pill-name" }, "Unranked")]);
+    BT.rank.summary().then((s) => { if (rankBtn.isConnected) BT.rank.fillPill(rankBtn, s); });
+    // Live balance chip beside the rank pill; kept in sync by BT.setBalance.
     const balChip = el("div", { class: "fair-bal", title: "Your balance" }, [
       BT.ui.icon("token", 14),
       el("span", { id: "play-bal-value" }, BT.ui.fmt(BT.state.balance)),
     ]);
     root.appendChild(el("div", { class: "play-head" }, [
       el("span", { class: "play-head-title" }, "Games"),
-      el("div", { class: "play-head-right" }, [balChip, fairBtn]),
+      el("div", { class: "play-head-right" }, [balChip, rankBtn]),
     ]));
 
     // Compact horizontal selector strip (scrollable) so the game panel sits
@@ -206,8 +208,9 @@
   //   • Rotate — set a new client seed (or randomize) and rotate: this reveals
   //     the current server seed and commits the pre-shown next server hash.
   // The panel is driven entirely by BT.fair, not by any per-round game state.
-  async function openFair() {
-    const g = BT.games.registry[selected];
+  async function openFair(key) {
+    const sel = (key && BT.games.registry[key]) ? key : selected;
+    const g = BT.games.registry[sel];
 
     const overlay = el("div", { class: "overlay" });
     const close = () => overlay.remove();
@@ -286,7 +289,7 @@
     }
 
     // --- Collapsible verification code (unchanged logic reference) ------------
-    const codeText = FAIR_CODE[selected] || FAIR_PREAMBLE;
+    const codeText = FAIR_CODE[sel] || FAIR_PREAMBLE;
     const pre = el("pre", null, codeText);
     const copyBtn = el("button", { class: "copy-btn" }, "Copy");
     copyBtn.addEventListener("click", async () => {
@@ -334,6 +337,7 @@
     BT.showScreen("play");
   }
   BT.openGame = openGame;
+  BT.openFair = openFair;
 
   BT.screens = BT.screens || {};
   BT.screens.play = { render };

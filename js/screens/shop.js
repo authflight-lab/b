@@ -46,6 +46,17 @@
     rewards.forEach((rw) => list.appendChild(rewardCard(rw, balance, canRedeem, root)));
     root.appendChild(el("div", { class: "section-title" }, "Prizes"));
     root.appendChild(list);
+    root.appendChild(allRewardsBtn());
+  }
+
+  // Full-width entry point to the VIP page (VIP was removed from the navbar).
+  function allRewardsBtn() {
+    const b = el("button", { class: "btn block all-rewards-btn", type: "button" }, [
+      BT.ui.icon("trophy", 18),
+      el("span", null, "All Rewards"),
+    ]);
+    b.addEventListener("click", () => BT.showScreen("vip"));
+    return b;
   }
 
   function rewardCard(rw, balance, canRedeem, root) {

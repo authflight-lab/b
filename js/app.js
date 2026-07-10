@@ -151,19 +151,30 @@
   // ---- Pill nav (liquid-glass floating nav bar, always expanded) -----------
   function moveIndicator() {
     const indicator = document.getElementById("pillnav-indicator");
+    if (!indicator) return;
     const active = document.querySelector(".pillnav-link.active");
-    if (!indicator || !active) return;
+    // Tab-less screens (e.g. VIP, reached via cards/buttons) have no active
+    // link — collapse the indicator so it doesn't stay stuck under a stale tab.
+    if (!active) { indicator.style.width = "0px"; return; }
     indicator.style.width = active.offsetWidth + "px";
     indicator.style.transform = `translateX(${active.offsetLeft}px)`;
   }
 
+  // Screen → nav icon. Text labels are kept in the DOM (visually hidden) for
+  // a11y + the native hover tooltip; the bar itself shows icons only.
+  const NAV_ICONS = { shop: "store", play: "dice", home: "home", leaderboard: "trophy", invites: "people" };
+
   function wireNav() {
-    document.querySelectorAll(".pillnav-link").forEach((btn) => {
+    document.querySelectorAll(".pillnav-link[data-screen]").forEach((btn) => {
+      const ic = NAV_ICONS[btn.dataset.screen];
+      if (ic) btn.insertBefore(BT.ui.icon(ic, 22), btn.firstChild);
       btn.addEventListener("click", () => showScreen(btn.dataset.screen));
     });
+    // History (recent bets) now lives inside the bar as an icon that opens the
+    // bets overlay — it is not a screen, so it never takes the active indicator.
     const betsBtn = document.getElementById("bets-btn");
     if (betsBtn) {
-      betsBtn.appendChild(BT.ui.icon("paper", 20));
+      betsBtn.insertBefore(BT.ui.icon("paper", 22), betsBtn.firstChild);
       betsBtn.addEventListener("click", () => { if (BT.bets) BT.bets.open(); });
     }
     window.addEventListener("resize", moveIndicator);

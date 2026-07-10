@@ -324,9 +324,16 @@
       );
       document.body.appendChild(overlay);
     });
+    // Provably Fair now lives here, to the right of the ⓘ info button, so it is
+    // scoped to the game the player is actually in. Opens the same fair panel.
+    const fairBtn = el("button", {
+      class: "game-fair-btn", type: "button", "aria-label": "Provably fair",
+    }, [BT.ui.icon("shield", 14), el("span", null, "Provably fair")]);
+    fairBtn.addEventListener("click", () => { if (BT.openFair) BT.openFair(iconKey); });
+
     return el("div", { class: "game-title-wrap" }, [
       el("h3", { class: "game-title" }, [BT.ui.icon(iconKey, 22), el("span", null, title)]),
-      el("div", { class: "game-title-actions" }, [alertBtn, statsBtn, infoBtn]),
+      el("div", { class: "game-title-actions" }, [alertBtn, statsBtn, infoBtn, fairBtn]),
     ]);
   }
 

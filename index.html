@@ -18,27 +18,26 @@
       <div class="pillnav-inner" id="pillnav-inner">
         <div class="pillnav-links" id="pillnav-links">
           <div class="pillnav-indicator" id="pillnav-indicator"></div>
-          <button class="pillnav-link" data-screen="shop">
+          <button class="pillnav-link" data-screen="shop" title="Shop" aria-label="Shop">
             <span class="pillnav-label">Shop</span>
           </button>
-          <button class="pillnav-link" data-screen="play">
+          <button class="pillnav-link" data-screen="play" title="Play" aria-label="Play">
             <span class="pillnav-label">Play</span>
           </button>
-          <button class="pillnav-link pillnav-link-home" data-screen="home">
+          <button class="pillnav-link pillnav-link-home" data-screen="home" title="Home" aria-label="Home">
             <span class="pillnav-label">Home</span>
           </button>
-          <button class="pillnav-link" data-screen="leaderboard">
+          <button class="pillnav-link" data-screen="leaderboard" title="Ranks" aria-label="Ranks">
             <span class="pillnav-label">Ranks</span>
           </button>
-          <button class="pillnav-link" data-screen="vip">
-            <span class="pillnav-label">VIP</span>
-          </button>
-          <button class="pillnav-link" data-screen="invites">
+          <button class="pillnav-link" data-screen="invites" title="Invites" aria-label="Invites">
             <span class="pillnav-label">Invites</span>
+          </button>
+          <button class="pillnav-link pillnav-link-history" id="bets-btn" type="button" title="History" aria-label="History">
+            <span class="pillnav-label">History</span>
           </button>
         </div>
       </div>
-      <button class="pillnav-round" id="bets-btn" aria-label="Recent bets" title="Recent bets"></button>
     </nav>
   </div>
 
@@ -52,6 +51,7 @@
   <script src="config.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/rank.js"></script>
   <script src="js/games/common.js"></script>
   <script src="js/games/dice.js"></script>
   <script src="js/games/flip.js"></script>

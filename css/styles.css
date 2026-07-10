@@ -641,6 +641,80 @@ input[type="number"].betbox-input:focus {
 }
 @media (prefers-reduced-motion: reduce) { .fair-btn::after { animation: none; display: none; } }
 
+/* Rank pill in the Play header (replaces the old Provably Fair pill). Coloured
+   to the player's current rank via --rank-color. */
+.rank-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border); color: var(--text);
+  padding: 6px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  box-shadow: var(--glass-inset-hi); white-space: nowrap;
+  transition: border-color .2s ease, box-shadow .2s ease;
+  --rank-color: var(--text-dim);
+}
+.rank-pill.ranked {
+  border-color: color-mix(in srgb, var(--rank-color) 60%, transparent);
+  color: var(--rank-color);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rank-color) 30%, transparent);
+}
+.rank-pill:hover { border-color: color-mix(in srgb, var(--rank-color) 80%, transparent); }
+.rank-pill .rank-badge-img { display: block; }
+.rank-pill-name { position: relative; }
+
+/* Provably Fair pill inside each game header, sitting next to the ⓘ button. */
+.game-fair-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: transparent; border: 1px solid var(--glass-border); color: var(--text-dim);
+  height: 26px; padding: 0 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.game-fair-btn:hover { color: var(--text); border-color: var(--accent); }
+.game-fair-btn .icon { color: var(--accent); }
+
+/* Home rank + progression card — clickable, opens VIP, with a shimmer outline
+   in the rank's signature colour. */
+.rankcard {
+  position: relative; width: 100%; text-align: left; cursor: pointer; font: inherit; color: var(--text);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; margin-bottom: 14px; overflow: hidden;
+  --rank-color: var(--text-dim);
+}
+.rankcard::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
+  background: linear-gradient(110deg, transparent 18%, var(--rank-color) 50%, transparent 82%);
+  background-size: 220% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: rank-shimmer 3.2s linear infinite; pointer-events: none; opacity: .9;
+}
+@keyframes rank-shimmer { 0% { background-position: 220% 0; } 100% { background-position: -220% 0; } }
+@media (prefers-reduced-motion: reduce) { .rankcard::before { animation: none; } }
+.rankcard-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.rankcard-badge {
+  width: 44px; height: 44px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; background: var(--glass-bg-2); border: 1px solid var(--glass-border);
+  color: var(--rank-color);
+}
+.rankcard-badge .rank-badge-img { display: block; }
+.rankcard-name { font-size: 15px; font-weight: 800; color: var(--text); }
+.rankcard.ranked .rankcard-name { color: var(--rank-color); }
+.rankcard-sub { font-size: 12.5px; margin-top: 2px; }
+.rankcard-arrow { flex-shrink: 0; color: var(--rank-color); display: flex; }
+
+/* "All Rewards" button at the bottom of the Shop (VIP entry point). */
+.all-rewards-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; }
+.all-rewards-btn .icon { color: currentColor; }
+
+/* Icon-only navbar: labels are visually hidden (kept for a11y + hover title). */
+.pillnav-label {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.pillnav-link .icon { display: inline-flex; }
+.pillnav-link-history.active { color: var(--accent); }
+
 /* Provably Fair panel */
 .fair-card { max-width: 560px; }
 .fair-top { display: flex; align-items: center; justify-content: space-between; }

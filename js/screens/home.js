@@ -135,6 +135,52 @@
     document.head.appendChild(s);
   })();
 
+  function rankCard() {
+    const card = el("button", { class: "rankcard", type: "button", "aria-label": "View VIP rank" }, [
+      el("div", { class: "rankcard-left" }, [
+        el("div", { class: "rankcard-badge" }),
+        el("div", { class: "rankcard-text" }, [
+          el("div", { class: "rankcard-name" }, "Your rank"),
+          el("div", { class: "rankcard-sub muted" }, "Loading…"),
+        ]),
+      ]),
+      el("div", { class: "rankcard-arrow" }, BT.ui.icon("trophy", 20)),
+    ]);
+    card.addEventListener("click", () => BT.showScreen("vip"));
+    return card;
+  }
+
+  function fillRankCard(card, s) {
+    const lvl = (s && s.level) || 0;
+    card.style.setProperty("--rank-color", BT.rank.color(lvl));
+    card.classList.toggle("ranked", lvl >= 1);
+
+    const badgeHost = card.querySelector(".rankcard-badge");
+    const nameEl = card.querySelector(".rankcard-name");
+    const subEl = card.querySelector(".rankcard-sub");
+    BT.ui.clear(badgeHost);
+    const badge = BT.rank.badgeImg(lvl, 36);
+    badgeHost.appendChild(badge || BT.ui.icon("shield", 24));
+    nameEl.textContent = lvl >= 1 ? (s.name || BT.rank.NAMES[lvl]) : "Unranked";
+
+    const tiers = (s.tiers || []).slice().sort((a, b) => a.level - b.level);
+    const next = tiers.find((t) => t.level === lvl + 1);
+    if (s._unavailable) {
+      subEl.textContent = "Tap to view rewards";
+    } else if (next) {
+      const st = s.state || {};
+      const reqs = [
+        [st.total_msgs || 0, next.req_msgs],
+        [st.total_invites || 0, next.req_invites],
+        [st.total_wagered || 0, next.req_wagered],
+      ];
+      const met = reqs.filter(([have, need]) => !need || have >= need).length;
+      subEl.textContent = met + " of 3 goals met · Next: " + (next.name || BT.rank.NAMES[next.level]);
+    } else {
+      subEl.textContent = lvl >= 1 ? "Top tier reached" : "Meet 2 of 3 goals to rank up";
+    }
+  }
+
   function statsCard(me) {
     const s = me.stats;
     const mult = me.multiplier_active;
@@ -271,6 +317,13 @@
         }
       }
     ));
+
+    // Clickable rank + progression card sits directly above the stats card and
+    // opens the VIP page. Rendered as a placeholder, then filled once the VIP
+    // summary loads, with a shimmer outline in the rank's signature colour.
+    const rc = rankCard();
+    root.appendChild(rc);
+    BT.rank.summary().then((s) => { if (rc.isConnected) fillRankCard(rc, s); });
 
     if ((me.backlog_pts || 0) === 0 && me.stats) {
       root.appendChild(statsCard(me));

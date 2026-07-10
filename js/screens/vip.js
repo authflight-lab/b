@@ -53,7 +53,7 @@
   // ── Hero: badge + tier name ────────────────────────────────────────────
   function hero(cur, level, maxLevel) {
     const badge = level >= 1
-      ? el("img", { class: "vip-badge-img", src: "assets/vip/tier" + level + ".png", alt: cur.name })
+      ? el("img", { class: "vip-badge-img", src: "assets/vip/tier" + level + ".svg", alt: cur.name })
       : el("div", { class: "vip-badge-locked" }, BT.ui.icon ? BT.ui.icon("lock", 40) : "★");
     return el("div", { class: "vip-hero" }, [
       el("div", { class: "vip-badge" }, [badge]),
@@ -193,7 +193,7 @@
     const rows = tiers.filter((t) => t.level >= 1).map((t) => {
       const cur = t.level === level;
       return el("div", { class: "vip-ladder-row" + (cur ? " current" : "") }, [
-        el("img", { class: "vip-ladder-badge", src: "assets/vip/tier" + t.level + ".png", alt: "" }),
+        el("img", { class: "vip-ladder-badge", src: "assets/vip/tier" + t.level + ".svg", alt: "" }),
         el("div", { class: "vip-ladder-mid" }, [
           el("div", { class: "vip-ladder-name" }, t.name + (cur ? " · you" : "")),
           el("div", { class: "vip-ladder-req muted" },
