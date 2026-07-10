@@ -13,15 +13,16 @@
 
   function color(level) { return COLORS[level] || "var(--text-dim)"; }
 
-  // The rank badge as an <img> pointing at the SVG art. Unranked → null (no badge).
+  // The rank badge as an <img> pointing at the SVG art. Unranked (level 0) has
+  // its own tier0.svg placeholder, so every rank surface shows a symbol.
   function badgeImg(level, size) {
-    if (!level || level < 1) return null;
+    const lvl = level && level >= 1 ? level : 0;
     const s = size || 24;
     return el("img", {
       class: "rank-badge-img",
-      src: "assets/vip/tier" + level + ".svg",
+      src: "assets/vip/tier" + lvl + ".svg",
       width: String(s), height: String(s),
-      alt: (NAMES[level] || "") + " rank",
+      alt: (NAMES[lvl] || "Unranked") + " rank",
     });
   }
 
@@ -121,7 +122,7 @@
       BT.ui.clear(head);
       const badge = badgeImg(lvl, 38);
       head.appendChild(el("div", { class: "rewards-head-left" }, [
-        el("div", { class: "rewards-head-badge", style: "--rank-color:" + color(lvl) }, [badge || BT.ui.icon("shield", 34)]),
+        el("div", { class: "rewards-head-badge", style: "--rank-color:" + color(lvl) }, [badge]),
         el("div", {}, [
           el("div", { class: "rewards-head-name" }, lvl >= 1 ? (s.name || NAMES[lvl]) : "Unranked"),
           el("div", { class: "rewards-head-sub muted" }, "Your rewards"),

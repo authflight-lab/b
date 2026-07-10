@@ -160,7 +160,7 @@
     const subEl = card.querySelector(".rankcard-sub");
     BT.ui.clear(badgeHost);
     const badge = BT.rank.badgeImg(lvl, 36);
-    badgeHost.appendChild(badge || BT.ui.icon("shield", 24));
+    badgeHost.appendChild(badge);
     nameEl.textContent = lvl >= 1 ? (s.name || BT.rank.NAMES[lvl]) : "Unranked";
 
     const tiers = (s.tiers || []).slice().sort((a, b) => a.level - b.level);
