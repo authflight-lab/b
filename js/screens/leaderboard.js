@@ -114,7 +114,7 @@
       const prizes = showReward ? (PRIZES[currentTab] || []) : [];
       rows.forEach((r) => {
         const name = r.display_name || r.username || ("User " + r.tg_id);
-        table.appendChild(raceRow(r.rank, name, r.value, prizes[r.rank - 1], false, showReward));
+        table.appendChild(raceRow(r.rank, name, r.value, prizes[r.rank - 1], false, showReward, r.vip_level));
       });
     }
     box.appendChild(table);
@@ -122,19 +122,19 @@
     if (data.you) {
       box.appendChild(el("div", { class: "race-you-label" }, "Your position"));
       const youTable = el("div", { class: "race-table" + (showReward ? "" : " no-reward") });
-      youTable.appendChild(raceRow(data.you.rank, "You", data.you.value, null, true, showReward));
+      youTable.appendChild(raceRow(data.you.rank, "You", data.you.value, null, true, showReward, data.you.vip_level));
       box.appendChild(youTable);
     }
   }
 
-  function raceRow(rank, name, value, reward, you, showReward) {
+  function raceRow(rank, name, value, reward, you, showReward, vipLevel) {
     const tier = rank === 1 ? " r1" : rank === 2 ? " r2" : rank === 3 ? " r3" : "";
     const cells = [
       el("div", { class: "rc-rank" }, [
         el("span", { class: "hexbadge" + tier }, String(rank == null ? "?" : rank)),
       ]),
       el("div", { class: "rc-player" }, [
-        BT.ui.icon("token", 16),
+        BT.rank.badgeImg(vipLevel || 0, 16),
         el("span", { class: "rc-name" }, name),
       ]),
       el("div", { class: "rc-value" }, fmt(value)),
