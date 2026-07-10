@@ -2075,3 +2075,56 @@ input[type="number"].betbox-input:focus {
 .invite-stat-value { font-size: 22px; font-weight: 800; line-height: 1; color: var(--text);
   font-variant-numeric: tabular-nums; }
 .invite-stat-sub { margin-top: 6px; font-size: 11px; color: var(--text-dim); line-height: 1.35; }
+
+/* ── VIP screen ─────────────────────────────────────────────────────────── */
+.vip-hero { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 2px 20px; }
+.vip-badge { width: 108px; height: 108px; display: flex; align-items: center; justify-content: center;
+  filter: drop-shadow(0 8px 24px rgba(0, 124, 143, 0.35)); animation: vip-float 4s ease-in-out infinite; }
+.vip-badge-img { width: 100%; height: 100%; object-fit: contain; }
+.vip-badge-locked { width: 92px; height: 92px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); background: var(--glass-bg-2); border: 1px dashed var(--glass-border); }
+@keyframes vip-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .vip-badge { animation: none; } }
+.vip-hero-name { font-size: 26px; font-weight: 800; letter-spacing: 0.3px; color: var(--text);
+  background: linear-gradient(180deg, #fff, var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.vip-hero-sub { font-size: 12.5px; color: var(--text-dim); }
+
+.vip-progress-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.vip-met-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border); color: var(--text-dim); }
+.vip-met-pill.ready { color: var(--accent-ink); background: var(--accent); border-color: transparent; }
+.vip-req { margin-bottom: 12px; }
+.vip-req-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.vip-req-label { font-size: 13px; font-weight: 600; color: var(--text); }
+.vip-req-num { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.vip-req.met .vip-req-num { color: var(--good); }
+.vip-bar { height: 8px; border-radius: 999px; background: var(--glass-bg-2); overflow: hidden; }
+.vip-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #0a9db3, var(--accent)); transition: width 0.5s ease; }
+.vip-req.met .vip-bar-fill { background: linear-gradient(90deg, #16c954, #24a866); }
+.vip-req-hint { font-size: 11.5px; margin-top: 2px; }
+
+.vip-claims .vip-claim-row { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 0; border-top: 1px solid var(--glass-border); }
+.vip-claims .vip-claim-row:first-of-type { border-top: none; }
+.vip-claim-left { min-width: 0; }
+.vip-claim-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.vip-claim-amount { display: flex; align-items: center; gap: 6px; margin: 3px 0; font-size: 16px; font-weight: 800; color: var(--accent); }
+.vip-claim-icon { width: 18px; height: 18px; object-fit: contain; }
+.vip-claim-meta { font-size: 11px; color: var(--text-dim); }
+.vip-cd { color: var(--accent); font-variant-numeric: tabular-nums; }
+.vip-claim-btn { flex: 0 0 auto; min-width: 88px; }
+
+.vip-perk-row { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--glass-border); font-size: 13.5px; }
+.vip-perk-row:first-of-type { border-top: none; }
+.vip-perk-k { color: var(--text-dim); }
+.vip-perk-v { color: var(--text); font-weight: 700; }
+
+.vip-ladder-note { font-size: 11.5px; margin: -4px 2px 10px; }
+.vip-ladder-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--glass-border); }
+.vip-ladder-row:first-of-type { border-top: none; }
+.vip-ladder-row.current { background: linear-gradient(90deg, rgba(0,124,143,0.14), transparent); margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+.vip-ladder-badge { width: 34px; height: 34px; object-fit: contain; flex: 0 0 auto; }
+.vip-ladder-mid { flex: 1 1 auto; min-width: 0; }
+.vip-ladder-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.vip-ladder-req { font-size: 11px; }
+.vip-ladder-bonus { flex: 0 0 auto; font-size: 13px; font-weight: 800; color: var(--accent); }

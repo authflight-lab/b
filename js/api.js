@@ -162,6 +162,12 @@
     history: () => get("/bt/api/history"),
     bets: () => get("/bt/api/bets"),
 
+    // VIP tiers: read the caller's tier state + the full catalogue; claim the
+    // three periodic rewards (rakeback anytime, weekly 7d, monthly 30d). Claims
+    // change the balance, so afterMutation drops the /me memo.
+    vip: () => get("/bt/api/vip"),
+    vipClaim: (kind) => afterMutation(post("/bt/api/vip/claim/" + encodeURIComponent(kind))),
+
     // Referrals: read the caller's (permanent) invite link + stats, and create
     // it once if absent. generateInvite is idempotent server-side — a user who
     // already has a link gets the same one back, never a new one.
