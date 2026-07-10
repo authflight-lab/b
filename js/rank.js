@@ -119,9 +119,9 @@
 
       card.style.setProperty("--rank-color", color(lvl));
       BT.ui.clear(head);
-      const badge = badgeImg(lvl, 30);
+      const badge = badgeImg(lvl, 38);
       head.appendChild(el("div", { class: "rewards-head-left" }, [
-        el("div", { class: "rewards-head-badge", style: "--rank-color:" + color(lvl) }, [badge || BT.ui.icon("shield", 20)]),
+        el("div", { class: "rewards-head-badge", style: "--rank-color:" + color(lvl) }, [badge || BT.ui.icon("shield", 34)]),
         el("div", {}, [
           el("div", { class: "rewards-head-name" }, lvl >= 1 ? (s.name || NAMES[lvl]) : "Unranked"),
           el("div", { class: "rewards-head-sub muted" }, "Your rewards"),

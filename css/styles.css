@@ -768,7 +768,7 @@ input[type="number"].betbox-input:focus {
 .rewards-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .rewards-head-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .rewards-head-badge {
-  width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   color: var(--rank-color, var(--text-dim));
 }
 .rewards-head-badge img { display: block; }
