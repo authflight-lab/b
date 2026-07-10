@@ -412,6 +412,10 @@ input[type="number"].betbox-input:focus {
 .rc-rank { display: flex; justify-content: center; }
 .rc-player { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .rc-player .icon { color: var(--accent); flex: 0 0 auto; }
+.rc-player .rank-badge-img {
+  display: block; flex: 0 0 auto;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.25));
+}
 .rc-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rc-value { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); padding-right: 16px; }
 .rc-reward { text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--race-gold); text-shadow: 0 0 10px rgba(244,199,82,0.35); min-width: 56px; }

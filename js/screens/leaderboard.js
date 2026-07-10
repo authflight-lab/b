@@ -134,7 +134,7 @@
         el("span", { class: "hexbadge" + tier }, String(rank == null ? "?" : rank)),
       ]),
       el("div", { class: "rc-player" }, [
-        BT.rank.badgeImg(vipLevel || 0, 16),
+        BT.rank.badgeImg(vipLevel || 0, 19),
         el("span", { class: "rc-name" }, name),
       ]),
       el("div", { class: "rc-value" }, fmt(value)),
