@@ -18,10 +18,25 @@
     { key: "keno",    label: "Keno",    isNew: true },
   ];
 
+  // Shimmering, clickable @handle used inside quest descriptions.
+  function tgHandle(handle) {
+    const a = el("a", {
+      class: "bt-shimmer",
+      href: "https://t.me/" + handle.replace(/^@/, ""),
+      target: "_blank",
+      rel: "noopener",
+      style: "font-weight:700;text-decoration:none",
+    }, handle);
+    a.addEventListener("click", (e) => e.stopPropagation());
+    return a;
+  }
+
   const QUESTS = [
-    { n: "01", label: "Chat",   desc: "Earn points for every message in the group.", screen: null },
-    { n: "02", label: "Play",   desc: "Provably fair games, instant payouts.",       screen: "play" },
-    { n: "03", label: "Redeem", desc: "Telegram Stars, Premium, or crypto.", screen: "shop" },
+    { n: "01", label: "Chat",   desc: ["Earn points for every message sent in ", tgHandle("@partygc"), "."], screen: null },
+    { n: "02", label: "Invite", desc: ["Earn points for every person you invite to ", tgHandle("@partygc"), "."], screen: null },
+    { n: "03", label: "Refer",  desc: ["Earn points for every person registering to ", tgHandle("@partygcbot"), " through you."], screen: null },
+    { n: "04", label: "Play",   desc: "Provably fair games, instant payouts.",       screen: "play" },
+    { n: "05", label: "Redeem", desc: "Telegram Stars, Premium, or crypto.", screen: "shop" },
   ];
 
   // Gold "multiplier active" badge shown next to the name for @partygc reppers.
