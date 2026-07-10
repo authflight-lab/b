@@ -27,6 +27,7 @@
     let roundId = null, busy = false, running = false;
     let raf = 0, t0 = 0, points = [];
     let checking = false, lastCheckT = 0;
+    let skewT0 = null; // server t0_ms translated into client clock units (see startLoop)
 
     // --- Stage: exponential curve + top-left counter ----------------------
     // One SVG path (glowing stroke) + one fill path (gradient area) + one
@@ -148,7 +149,15 @@
     // cashout failure without rewinding t0/points.
     function startLoop(reset) {
       stopLoop();
-      if (reset) { t0 = C.nowMs(); points = [[0, 1]]; lastCheckT = 0; }
+      // t0 is in CLIENT clock units: t0 = (server t0_ms) + (estimated skew),
+      // where skew = clientNow-at-response - server_now_ms, i.e. how far
+      // ahead the client's clock is of the server's at the moment the bet
+      // response arrived. Elapsed-since-t0 in client time then lines up with
+      // elapsed-since-t0_ms on the server clock, instead of resetting a local
+      // "now" on arrival (which always lags the server by the bet round trip
+      // and compounds into a large multiplier gap under the exponential
+      // curve — never in the player's favor).
+      if (reset) { t0 = skewT0 != null ? skewT0 : C.nowMs(); points = [[0, 1]]; lastCheckT = 0; }
       let lastPt = points.length ? points[points.length - 1][0] : 0;
       running = true;
       (function tick() {
@@ -299,6 +308,11 @@
       BT.setActiveGame("crash", roundId);
       seed.setHash(resp.server_hash); seed.setNonce(resp.nonce); BT.fair.noteBet(resp);
       if (typeof resp.balance === "number") BT.setBalance(resp.balance);
+      // Anchor the animation to the server's true round clock instead of a
+      // local "now" reset (see startLoop for why that always lags).
+      skewT0 = (typeof resp.t0_ms === "number" && typeof resp.server_now_ms === "number")
+        ? C.nowMs() - (resp.server_now_ms - resp.t0_ms)
+        : null;
       bet.setDisabled(true); autoInput.disabled = true;
       betBtn.style.display = "none";
       cashBtn.style.display = "block"; cashBtn.disabled = false;
