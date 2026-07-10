@@ -59,7 +59,7 @@
     setPlaying(false);
 
     function pushMult(m, on) {
-      const s = el("div", { class: "mult-step" + (on ? " on" : " off") }, (m ? (Math.round(m * 100) / 100) + "×" : "?"));
+      const s = el("div", { class: "mult-step" + (on ? " on" : " off") }, (m ? (Math.round(m * 100) / 100) + "×" : "0×"));
       track.appendChild(s);
       track.scrollLeft = track.scrollWidth;
     }
