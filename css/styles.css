@@ -2295,5 +2295,7 @@ input[type="number"].betbox-input:focus {
 .vip-ladder-badge { width: 34px; height: 34px; object-fit: contain; flex: 0 0 auto; }
 .vip-ladder-mid { flex: 1 1 auto; min-width: 0; }
 .vip-ladder-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.vip-you-tag { color: var(--text-dim); font-weight: 700; }
+.vip-you-green { color: #4ade80; }
 .vip-ladder-req { font-size: 11px; }
 .vip-ladder-bonus { flex: 0 0 auto; font-size: 13px; font-weight: 800; color: var(--accent); }

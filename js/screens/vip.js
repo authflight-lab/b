@@ -220,7 +220,7 @@
       return el("div", { class: "vip-ladder-row" + (isCur ? " current" : "") }, [
         el("img", { class: "vip-ladder-badge", src: "assets/vip/tier" + t.level + ".svg", alt: "" }),
         el("div", { class: "vip-ladder-mid" }, [
-          el("div", { class: "vip-ladder-name" }, [rankName(t.name, t.level), isCur ? " · you" : ""]),
+          el("div", { class: "vip-ladder-name" }, [rankName(t.name, t.level), isCur ? el("span", { class: "vip-you-tag" }, [" (", el("span", { class: "vip-you-green" }, "YOU"), ")"]) : ""]),
           el("div", { class: "vip-ladder-req muted" },
             fmt(t.req_msgs) + " msgs · " + fmt(t.req_invites) + " invites · " + fmt(t.req_wagered) + " wagered"),
         ]),
@@ -229,7 +229,6 @@
     });
     return el("div", { class: "card vip-ladder" }, [
       el("div", { class: "section-title" }, "Tiers & rewards"),
-      el("div", { class: "vip-ladder-note muted" }, "Reach any 2 of the 3 goals to unlock a tier and collect its one-time bonus."),
       ...rows,
     ]);
   }
