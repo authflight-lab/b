@@ -53,5 +53,114 @@
     node.classList.toggle("ranked", lvl >= 1);
   }
 
-  BT.rank = { NAMES, COLORS, color, badgeImg, summary, fillPill };
+  // ── Rewards popup ────────────────────────────────────────────────────────
+  // Tapping the Play-header rank pill opens this quick rewards sheet first (a
+  // glance at claimable rakeback/weekly/monthly) with an "All Rewards" button
+  // that then opens the full VIP page. Claim maths mirror screens/vip.js.
+  const WEEK_MS = 7 * 24 * 3600 * 1000;
+  const MONTH_MS = 30 * 24 * 3600 * 1000;
+  function nextAt(claimedIso, intervalMs) {
+    if (!claimedIso) return 0;
+    const t = Date.parse(claimedIso);
+    return isNaN(t) ? 0 : t + intervalMs;
+  }
+  function countdownLabel(ms) {
+    if (ms <= 0) return "ready";
+    const s = Math.floor(ms / 1000);
+    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+    if (d > 0) return d + "d " + h + "h";
+    if (h > 0) return h + "h " + m + "m";
+    return m + "m";
+  }
+
+  async function openPanel() {
+    // Singleton: don't stack a second sheet if one is already open.
+    if (document.querySelector(".overlay .rewards-panel")) return;
+    const overlay = el("div", { class: "overlay" });
+    const close = () => overlay.remove();
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+
+    const card = el("div", { class: "overlay-card rewards-panel" });
+    const list = el("div", { class: "rewards-list" }, el("div", { class: "loading" }, "Loading rewards…"));
+    const allBtn = el("button", { class: "btn block all-rewards-btn", type: "button" }, [
+      BT.ui.icon("trophy", 18), el("span", null, "All Rewards"),
+    ]);
+    allBtn.addEventListener("click", () => { close(); BT.showScreen("vip"); });
+
+    const head = el("div", { class: "rewards-head" });
+    card.appendChild(head);
+    card.appendChild(list);
+    card.appendChild(allBtn);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    async function refresh() {
+      const s = await summary(true);
+      const lvl = (s && s.level) || 0;
+      const cur = (s.tiers || []).find((t) => t.level === lvl) || {};
+      const st = s.state || {};
+
+      BT.ui.clear(head);
+      const badge = badgeImg(lvl, 30);
+      head.appendChild(el("div", { class: "rewards-head-left" }, [
+        el("div", { class: "rewards-head-badge", style: "--rank-color:" + color(lvl) }, [badge || BT.ui.icon("shield", 20)]),
+        el("div", {}, [
+          el("div", { class: "rewards-head-name" }, lvl >= 1 ? (s.name || NAMES[lvl]) : "Unranked"),
+          el("div", { class: "rewards-head-sub muted" }, "Your rewards"),
+        ]),
+      ]));
+      head.appendChild(el("button", { class: "fair-x", type: "button", onclick: close }, "✕"));
+
+      const now = Date.now();
+      const rows = [
+        { kind: "rakeback", title: "Rakeback", icon: "rakeback", amount: st.unclaimed_rakeback || 0, nextTs: 0, sub: "Cashback on every wager" },
+        { kind: "weekly", title: "Weekly", icon: "7d", amount: Math.floor((st.week_wagered || 0) * (cur.weekly_rate || 0)), nextTs: nextAt(st.weekly_claimed_at, WEEK_MS), sub: "This week's volume" },
+        { kind: "monthly", title: "Monthly", icon: "30d", amount: Math.floor((st.month_wagered || 0) * (cur.monthly_rate || 0)), nextTs: nextAt(st.monthly_claimed_at, MONTH_MS), sub: "This month's volume" },
+      ];
+
+      BT.ui.clear(list);
+      if (s._unavailable) {
+        list.appendChild(BT.ui.notice("Rewards aren't connected yet. Open All Rewards to preview."));
+      } else {
+        rows.forEach((r) => list.appendChild(rewardRow(r, now, refresh)));
+      }
+    }
+
+    function rewardRow(r, now, onClaimed) {
+      const ready = r.amount > 0 && (!r.nextTs || r.nextTs <= now);
+      const locked = r.nextTs && r.nextTs > now;
+      const btn = el("button", {
+        class: "btn sm primary rewards-claim-btn",
+        disabled: ready ? undefined : "disabled",
+      }, ready ? "Claim" : (locked ? countdownLabel(r.nextTs - now) : "—"));
+      if (ready) {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          const res = await BT.api.vipClaim(r.kind);
+          if (res && res.ok) {
+            BT.ui.toast("Claimed " + BT.ui.fmt(res.claimed || 0) + " pts!", "success");
+            try { BT.ui.haptic("success"); } catch (e) {}
+            if (typeof res.new_balance === "number") BT.setBalance(res.new_balance);
+            else BT.refreshMe().catch(() => {});
+            onClaimed();
+          } else {
+            BT.ui.toast("Couldn't claim right now.", "error");
+            btn.disabled = false;
+          }
+        });
+      }
+      return el("div", { class: "rewards-row" }, [
+        el("img", { class: "rewards-row-icon", src: "assets/vip/claim-" + r.icon + ".png", alt: "" }),
+        el("div", { class: "rewards-row-mid" }, [
+          el("div", { class: "rewards-row-title" }, r.title),
+          el("div", { class: "rewards-row-sub muted" }, BT.ui.fmt(r.amount) + " pts · " + r.sub),
+        ]),
+        btn,
+      ]);
+    }
+
+    refresh();
+  }
+
+  BT.rank = { NAMES, COLORS, color, badgeImg, summary, fillPill, openPanel };
 })();

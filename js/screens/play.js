@@ -138,8 +138,8 @@
     // Header row: game grid title area with the rank badge pill on the right.
     // (Provably Fair now lives inside each game's header, next to the ⓘ icon.)
     const rankBtn = el("button", {
-      class: "rank-pill", type: "button", title: "View VIP", "aria-label": "Your rank",
-      onclick: () => BT.showScreen("vip"),
+      class: "rank-pill", type: "button", title: "Your rewards", "aria-label": "Your rewards",
+      onclick: () => BT.rank.openPanel(),
     }, [el("span", { class: "rank-pill-name" }, "Unranked")]);
     BT.rank.summary().then((s) => { if (rankBtn.isConnected) BT.rank.fillPill(rankBtn, s); });
     // Live balance chip beside the rank pill; kept in sync by BT.setBalance.

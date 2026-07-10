@@ -707,13 +707,50 @@ input[type="number"].betbox-input:focus {
 .all-rewards-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; }
 .all-rewards-btn .icon { color: currentColor; }
 
-/* Icon-only navbar: labels are visually hidden (kept for a11y + hover title). */
+/* Icon-only navbar: the label doubles as a hover tooltip floating above the
+   bar (kept in the DOM for a11y too). */
 .pillnav-label {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  position: absolute; left: 50%; bottom: calc(100% + 12px);
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(18, 22, 30, 0.96); border: 1px solid var(--glass-border);
+  color: var(--text); padding: 4px 10px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.2px; white-space: nowrap;
+  opacity: 0; pointer-events: none; z-index: 50;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  transition: opacity .15s ease, transform .15s ease;
 }
+.pillnav-label::after {
+  content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: rgba(18, 22, 30, 0.96);
+}
+.pillnav-link:hover .pillnav-label,
+.pillnav-link:focus-visible .pillnav-label { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (hover: none) { .pillnav-label { display: none; } }
 .pillnav-link .icon { display: inline-flex; }
 .pillnav-link-history.active { color: var(--accent); }
+
+/* Rewards popup opened by the Play-header rank pill. */
+.rewards-panel { width: min(92vw, 400px); }
+.rewards-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.rewards-head-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rewards-head-badge {
+  width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  border-radius: 11px; background: var(--glass-bg-2); border: 1px solid var(--glass-border); color: var(--rank-color, var(--text-dim));
+}
+.rewards-head-badge img { display: block; }
+.rewards-head-name { font-size: 16px; font-weight: 800; color: var(--text); }
+.rewards-head-sub { font-size: 12px; margin-top: 1px; }
+.rewards-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.rewards-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--glass-bg-2); border: 1px solid var(--glass-border);
+  border-radius: 12px; padding: 10px 12px;
+}
+.rewards-row-icon { width: 34px; height: 34px; flex-shrink: 0; }
+.rewards-row-mid { flex: 1 1 auto; min-width: 0; }
+.rewards-row-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.rewards-row-sub { font-size: 12px; margin-top: 1px; }
+.rewards-claim-btn { flex-shrink: 0; min-width: 74px; }
 
 /* Provably Fair panel */
 .fair-card { max-width: 560px; }
