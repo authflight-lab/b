@@ -12,10 +12,10 @@
     BT.games.registry[game.key] = game;
   }
 
-  // Bet range per contract §3: [1, min(350, balance)].
+  // Bet range per contract §3: [1, min(500, balance)].
   function maxBet(balance) {
     const b = Number(balance) || 0;
-    return Math.max(1, Math.min(350, b));
+    return Math.max(1, Math.min(500, b));
   }
 
   function clientSeed() {
@@ -80,7 +80,7 @@
   // Standard bet control row shared by all games. Returns { node, getBet }.
   // The 1/2 / 2x / Max buttons edit the value directly in the bet field:
   //   1/2 halves it (floored), 2x doubles it, Max jumps to the cap; both
-  //   2x and Max clamp to min(350, balance).
+  //   2x and Max clamp to min(500, balance).
   function betControl(defaultBet) {
     const bal = (BT.state && BT.state.balance) || 0;
     const mx = maxBet(bal);
