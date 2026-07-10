@@ -751,7 +751,7 @@ input[type="number"].betbox-input:focus {
   background-size: 240% 100%;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
-  animation: rank-shimmer 3s linear infinite;
+  animation: rank-shimmer 4.2s linear infinite;
 }
 @keyframes popover-in { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .rewards-popover { animation: none; } }
