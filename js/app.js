@@ -162,7 +162,7 @@
 
   // Screen → nav icon. Text labels are kept in the DOM (visually hidden) for
   // a11y + the native hover tooltip; the bar itself shows icons only.
-  const NAV_ICONS = { shop: "store", play: "dice", home: "home", leaderboard: "trophy", invites: "people" };
+  const NAV_ICONS = { shop: "store", play: "dice", home: "home", leaderboard: "trophy" };
 
   function wireNav() {
     document.querySelectorAll(".pillnav-link[data-screen]").forEach((btn) => {

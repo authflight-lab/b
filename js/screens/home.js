@@ -33,10 +33,8 @@
 
   const QUESTS = [
     { n: "01", label: "Chat",   desc: ["Earn points for every message sent in ", tgHandle("@partygc"), "."], screen: null },
-    { n: "02", label: "Invite", desc: ["Earn points for every person you invite to ", tgHandle("@partygc"), "."], screen: "invites" },
-    { n: "03", label: "Refer",  desc: ["Earn points for every person registering to ", tgHandle("@partygcbot"), " through you."], screen: "invites" },
-    { n: "04", label: "Play",   desc: "Provably fair games, instant payouts.",       screen: "play" },
-    { n: "05", label: "Redeem", desc: "Telegram Stars, Premium, or crypto.", screen: "shop" },
+    { n: "02", label: "Play",   desc: "Provably fair games, instant payouts.",       screen: "play" },
+    { n: "03", label: "Redeem", desc: "Telegram Stars, Premium, or crypto.", screen: "shop" },
   ];
 
   // Gold "multiplier active" badge shown next to the name for @partygc reppers.
@@ -171,17 +169,16 @@
       const st = s.state || {};
       const reqs = [
         [st.total_msgs || 0, next.req_msgs],
-        [st.total_invites || 0, next.req_invites],
         [st.total_wagered || 0, next.req_wagered],
       ];
       const met = reqs.filter(([have, need]) => !need || have >= need).length;
       BT.ui.clear(subEl);
-      subEl.appendChild(document.createTextNode(met + " of 3 goals met · Next: "));
+      subEl.appendChild(document.createTextNode(met + " of 2 goals met · Next: "));
       subEl.appendChild(el("span", {
         style: "color:" + BT.rank.color(next.level) + ";font-weight:700",
       }, next.name || BT.rank.NAMES[next.level]));
     } else {
-      subEl.textContent = lvl >= 1 ? "Top tier reached" : "Meet 2 of 3 goals to rank up";
+      subEl.textContent = lvl >= 1 ? "Top tier reached" : "Meet both goals to rank up";
     }
   }
 

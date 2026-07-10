@@ -1,10 +1,9 @@
 // VIP — tier progression surface, shown as an overlay (like the wager-history
-// panel). A player's tier is the HIGHEST catalogue tier for which at least TWO
-// of the three lifetime requirements (messages / invites / wagered) are met
-// (see migrations/2026-07-10_vip_tiers.sql). Higher tiers lift the per-message
-// chat-points ceiling and pay richer rakeback / weekly / monthly rewards. The
-// panel shows the current tier badge, 2-of-3 progress to the next tier, the
-// claim rewards, current-tier perks, and the full ladder.
+// panel). A player's tier is the HIGHEST catalogue tier for which BOTH lifetime
+// requirements (messages AND wagered) are met (see the VIP migration). Higher
+// tiers lift the per-message chat-points ceiling and pay richer rakeback /
+// weekly / monthly rewards. The panel shows the current tier badge, progress to
+// the next tier, the claim rewards, current-tier perks, and the full ladder.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -90,11 +89,11 @@
       el("div", { class: "vip-badge" }, [badge]),
       el("div", { class: "vip-hero-name" }, level >= 1 ? cur.name : "Unranked"),
       el("div", { class: "vip-hero-sub" },
-        level >= 1 ? ("Tier " + level + " of " + maxLevel) : "Meet any 2 of 3 goals to rank up"),
+        level >= 1 ? ("Tier " + level + " of " + maxLevel) : "Meet both goals to rank up"),
     ]);
   }
 
-  // ── Progress to next tier (2-of-3) ─────────────────────────────────────
+  // ── Progress to next tier (both goals) ─────────────────────────────────
   function progressCard(st, next) {
     if (!next) {
       return el("div", { class: "card vip-progress-card" }, [
@@ -105,7 +104,6 @@
     }
     const reqs = [
       { label: "Messages", have: st.total_msgs || 0, need: next.req_msgs },
-      { label: "Invites", have: st.total_invites || 0, need: next.req_invites },
       { label: "Wagered", have: st.total_wagered || 0, need: next.req_wagered },
     ];
     const met = reqs.filter((r) => r.have >= r.need).length;
@@ -123,10 +121,10 @@
     return el("div", { class: "card vip-progress-card" }, [
       el("div", { class: "vip-progress-head" }, [
         el("div", { class: "section-title", style: "margin:0" }, ["Next: ", rankName(next.name, next.level)]),
-        el("div", { class: "vip-met-pill" + (met >= 2 ? " ready" : "") }, met + " of 3 met"),
+        el("div", { class: "vip-met-pill" + (met >= 2 ? " ready" : "") }, met + " of 2 met"),
       ]),
       ...bars,
-      el("div", { class: "vip-req-hint muted" }, ["Meet any 2 of the 3 to unlock ", rankName(next.name, next.level), "."]),
+      el("div", { class: "vip-req-hint muted" }, ["Meet both goals to unlock ", rankName(next.name, next.level), "."]),
     ]);
   }
 
@@ -222,7 +220,7 @@
         el("div", { class: "vip-ladder-mid" }, [
           el("div", { class: "vip-ladder-name" }, [rankName(t.name, t.level), isCur ? el("span", { class: "vip-you-tag" }, [" (", el("span", { class: "vip-you-green" }, "YOU"), ")"]) : ""]),
           el("div", { class: "vip-ladder-req muted" },
-            fmt(t.req_msgs) + " msgs · " + fmt(t.req_invites) + " invites · " + fmt(t.req_wagered) + " wagered"),
+            fmt(t.req_msgs) + " msgs · " + fmt(t.req_wagered) + " wagered"),
         ]),
         el("div", { class: "vip-ladder-bonus" }, "+" + fmt(t.levelup_bonus)),
       ]);
@@ -269,17 +267,17 @@
   const DEMO = {
     ok: true,
     state: {
-      total_msgs: 320, total_invites: 3, total_wagered: 5200, current_level: 1,
+      total_msgs: 320, total_wagered: 5200, current_level: 1,
       unclaimed_rakeback: 42, week_wagered: 5200, month_wagered: 5200,
       weekly_claimed_at: null, monthly_claimed_at: null,
     },
     tiers: [
-      { level: 0, name: "Unranked", req_msgs: 0, req_invites: 0, req_wagered: 0, rakeback_rate: 0, weekly_rate: 0, monthly_rate: 0, levelup_bonus: 0, max_chat_pts: 3.0 },
-      { level: 1, name: "Bronze", req_msgs: 250, req_invites: 2, req_wagered: 3000, rakeback_rate: 0.0016, weekly_rate: 0.0005, monthly_rate: 0.001, levelup_bonus: 130, max_chat_pts: 3.5 },
-      { level: 2, name: "Silver", req_msgs: 800, req_invites: 5, req_wagered: 12000, rakeback_rate: 0.0027, weekly_rate: 0.0008, monthly_rate: 0.0016, levelup_bonus: 590, max_chat_pts: 4.0 },
-      { level: 3, name: "Gold", req_msgs: 2200, req_invites: 12, req_wagered: 40000, rakeback_rate: 0.0038, weekly_rate: 0.0011, monthly_rate: 0.0022, levelup_bonus: 2300, max_chat_pts: 4.5 },
-      { level: 4, name: "Platinum", req_msgs: 5500, req_invites: 28, req_wagered: 130000, rakeback_rate: 0.0049, weekly_rate: 0.0013, monthly_rate: 0.0027, levelup_bonus: 5900, max_chat_pts: 5.0 },
-      { level: 5, name: "Diamond", req_msgs: 13000, req_invites: 60, req_wagered: 400000, rakeback_rate: 0.005, weekly_rate: 0.0016, monthly_rate: 0.0033, levelup_bonus: 24000, max_chat_pts: 6.0 },
+      { level: 0, name: "Unranked", req_msgs: 0, req_wagered: 0, rakeback_rate: 0, weekly_rate: 0, monthly_rate: 0, levelup_bonus: 0, max_chat_pts: 3.0 },
+      { level: 1, name: "Bronze", req_msgs: 250, req_wagered: 3000, rakeback_rate: 0.0016, weekly_rate: 0.0005, monthly_rate: 0.001, levelup_bonus: 130, max_chat_pts: 3.5 },
+      { level: 2, name: "Silver", req_msgs: 800, req_wagered: 12000, rakeback_rate: 0.0027, weekly_rate: 0.0008, monthly_rate: 0.0016, levelup_bonus: 590, max_chat_pts: 4.0 },
+      { level: 3, name: "Gold", req_msgs: 2200, req_wagered: 40000, rakeback_rate: 0.0038, weekly_rate: 0.0011, monthly_rate: 0.0022, levelup_bonus: 2300, max_chat_pts: 4.5 },
+      { level: 4, name: "Platinum", req_msgs: 5500, req_wagered: 130000, rakeback_rate: 0.0049, weekly_rate: 0.0013, monthly_rate: 0.0027, levelup_bonus: 5900, max_chat_pts: 5.0 },
+      { level: 5, name: "Diamond", req_msgs: 13000, req_wagered: 400000, rakeback_rate: 0.005, weekly_rate: 0.0016, monthly_rate: 0.0033, levelup_bonus: 24000, max_chat_pts: 6.0 },
     ],
   };
 
