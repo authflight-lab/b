@@ -9,13 +9,13 @@
   const fmt = BT.ui.fmt;
 
   // Milestone reward ladder (mirrors the bot-side awarding, max 65 per referral).
+  // @partygc / @partygcbot mentions are shimmered at render time (see mentionize).
   const LADDER = [
-    { label: "Joins via your link", pts: 10 },
-    { label: "Starts the bot", pts: 5 },
-    { label: "Sends 20 messages in the group", pts: 10 },
-    { label: "Sends 100 messages", pts: 40 },
+    { label: "Joins @partygc via your link", pts: 10 },
+    { label: "Sends /start to @partygcbot", pts: 5 },
+    { label: "Sends 20+ messages in @partygc", pts: 10 },
+    { label: "Sends 100+ messages in @partygc", pts: 40 },
   ];
-  const MAX_PER_REFERRAL = 65;
 
   async function render(root) {
     BT.ui.clear(root);
@@ -42,36 +42,46 @@
   }
 
   function renderInner(root, data) {
-    root.appendChild(headerCard());
+    root.appendChild(header());
     root.appendChild(ladderCard());
     root.appendChild(linkCard(root, data));
     root.appendChild(statsCard(data));
   }
 
-  // ── Header / description ────────────────────────────────────────────────
-  function headerCard() {
-    return el("div", { class: "invite-hero" }, [
-      el("div", { class: "invite-hero-ico" }, BT.ui.icon("invite", 26)),
-      el("div", { style: "min-width:0" }, [
-        el("div", { class: "invite-hero-title" }, "Invite friends, earn points"),
-        el("div", { class: "invite-hero-sub" },
-          "Invite people to @partygc with your personal link and earn points as they join and stay active."),
-      ]),
+  // ── Header / description (no card) ──────────────────────────────────────
+  function header() {
+    return el("div", { class: "invite-header" }, [
+      el("h1", { class: "invite-title" }, "Invite friends, earn points"),
+      el("div", { class: "invite-subtitle" },
+        "Invite people to @partygc with your personal link and earn points as they join and stay active."),
     ]);
+  }
+
+  // Wrap @partygc / @partygcbot mentions in a shimmer span; returns a mixed
+  // array of text + nodes suitable for el()'s children.
+  function mentionize(text) {
+    const parts = [];
+    const re = /(@partygcbot|@partygc)/g;  // longer alt first so it wins
+    let last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) parts.push(text.slice(last, m.index));
+      parts.push(el("span", { class: "shimmer" }, m[0]));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) parts.push(text.slice(last));
+    return parts;
   }
 
   // ── Reward ladder ───────────────────────────────────────────────────────
   function ladderCard() {
     const wrap = el("div", { class: "invite-card" }, [
-      el("div", { class: "invite-card-head" }, [
-        el("span", null, "Reward ladder"),
-        el("span", { class: "invite-max" }, "max +" + MAX_PER_REFERRAL + " / referral"),
-      ]),
+      el("div", { class: "invite-card-head" }, [el("span", null, "Reward ladder")]),
+      el("div", { class: "invite-ladder-note" }, "For every member you refer:"),
     ]);
     const list = el("div", { class: "invite-ladder" });
     LADDER.forEach((step) => {
       list.appendChild(el("div", { class: "invite-ladder-row" }, [
-        el("div", { class: "invite-ladder-label" }, step.label),
+        el("div", { class: "invite-ladder-label" }, mentionize(step.label)),
         el("div", { class: "invite-ladder-pts" }, "+" + step.pts),
       ]));
     });
@@ -100,8 +110,9 @@
       const r = await BT.api.generateInvite();
       if (r && r.ok && r.link) {
         btn.textContent = "Your link is ready ✓";
+        pulseSuccess(btn);
         setFieldLink(field, r.link);
-        field.classList.remove("hidden");
+        revealField(field);
         // The generate response mirrors GET (stats included) — refresh the tiles.
         if (typeof r.referred_count === "number") setStat(root, "referred", fmt(r.referred_count));
         if (typeof r.total_earned === "number") setStat(root, "earned", fmt(r.total_earned) + " pts");
@@ -115,9 +126,55 @@
 
     wrap.appendChild(btn);
     wrap.appendChild(field);
-    wrap.appendChild(el("div", { class: "invite-hint" },
-      "This link is permanent — one per person. Tap it to copy."));
     return wrap;
+  }
+
+  // One-shot green flash + ring pulse the moment a button flips to its
+  // "done" state — timed to land alongside whatever it unlocks.
+  function pulseSuccess(btn) {
+    btn.classList.remove("success-pulse");
+    void btn.offsetWidth; // restart the animation if it's already mid-flight
+    btn.classList.add("success-pulse");
+    const cleanup = () => btn.classList.remove("success-pulse");
+    btn.addEventListener("animationend", cleanup, { once: true });
+    // Fallback in case the animation never fires (e.g. tab backgrounded,
+    // reduced-motion strips it) — never leave the class stuck.
+    setTimeout(cleanup, 900);
+  }
+
+  // Unfold the link field open — expand height + fade in (~250ms) instead of
+  // snapping visible, so the reveal reads as the page's payoff moment.
+  function revealField(field) {
+    if (field.classList.contains("revealing") || !field.classList.contains("hidden")) return;
+    field.classList.remove("hidden");
+    field.classList.add("revealing");
+    field.style.overflow = "hidden";
+    field.style.height = "0px";
+    field.style.marginTop = "0px";
+    field.style.opacity = "0";
+    void field.offsetHeight; // force reflow before measuring/animating
+    const targetHeight = field.scrollHeight;
+    field.style.transition = "height 250ms cubic-bezier(.3,.9,.4,1), " +
+      "opacity 220ms ease, margin-top 250ms ease";
+    requestAnimationFrame(() => {
+      field.style.height = targetHeight + "px";
+      field.style.opacity = "1";
+      field.style.marginTop = "";
+    });
+    const settle = () => {
+      field.style.height = "";
+      field.style.overflow = "";
+      field.style.transition = "";
+      field.classList.remove("revealing");
+    };
+    field.addEventListener("transitionend", function onEnd(e) {
+      if (e.target !== field || e.propertyName !== "height") return;
+      field.removeEventListener("transitionend", onEnd);
+      settle();
+    });
+    // Fallback so a dropped transitionend (backgrounded tab, reduced-motion)
+    // can't leave the field permanently stuck at a fixed inline height.
+    setTimeout(settle, 500);
   }
 
   function linkField(link) {
@@ -146,6 +203,15 @@
     const t = field.querySelector(".invite-link-text");
     const text = t ? t.textContent : "";
     if (!text) return;
+
+    // Tactile scale-pulse on every tap — the whole field acknowledges the
+    // press, not just the copy icon.
+    field.classList.remove("pressed");
+    void field.offsetWidth;
+    field.classList.add("pressed");
+    const cleanup = () => field.classList.remove("pressed");
+    field.addEventListener("animationend", cleanup, { once: true });
+    setTimeout(cleanup, 400);
 
     const ok = await writeClipboard(text);
     if (ok) {
