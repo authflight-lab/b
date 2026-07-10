@@ -338,6 +338,7 @@
       network_error: "Network error — please try again.",
       insufficient_balance: "Balance too low.",
       bad_init_data: "Open this from Telegram to play.",
+      too_many_failed_auth: "Too many failed sign-in attempts right now — please try again in a moment.",
       round_open: "You already have a round in progress.",
       no_open_round: "That round has ended.",
       invalid_move: "That move isn't available right now.",

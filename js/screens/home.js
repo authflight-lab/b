@@ -305,6 +305,7 @@
 
   function errMsg(r) {
     if (r && r._network) return "Couldn't reach the server. Check your connection.";
+    if (r && r.error === "too_many_failed_auth") return "Too many failed sign-in attempts right now — please try again in a moment.";
     if (r && r.error === "bad_init_data") return "Open this app from Telegram to sign in.";
     return "Something went wrong loading your profile.";
   }
