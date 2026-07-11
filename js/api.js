@@ -161,6 +161,7 @@
     leaderboard: (tab, period) => get("/bt/api/leaderboard?tab=" + encodeURIComponent(tab || "rich") + "&period=" + encodeURIComponent(period || "weekly")),
     history: () => get("/bt/api/history"),
     bets: () => get("/bt/api/bets"),
+    statsSeries: () => get("/bt/api/stats/series"),
 
     // VIP tiers: read the caller's tier state + the full catalogue; claim the
     // three periodic rewards (rakeback anytime, weekly 7d, monthly 30d). Claims

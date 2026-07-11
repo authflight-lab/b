@@ -5,6 +5,100 @@
   const el = BT.ui.el;
   const fmt = BT.ui.fmt;
 
+  // ── Dither primitives (shared) ──────────────────────────────────────────────
+  // Ordered-dither renderer ported from dither-kit (MIT,
+  // https://github.com/Boring-Software-Inc/dither-kit). A crisp pixelated
+  // backing canvas plus a blurred additive bloom power both the session area
+  // chart and the home line charts.
+  const BAYER4 = [
+    [0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5],
+  ].map(r => r.map(v => (v + 0.5) / 16));
+  const DCELL = 2, DBORDER = 0.72, DOFF = 0.4;
+  const DPAL = { green: [40, 210, 110], red: [240, 70, 70] };
+  const drgba = ([r, g, b], a) =>
+    "rgba(" + r + "," + g + "," + b + "," + (+a.toFixed(3)) + ")";
+  const dclamp = t => t < 0 ? 0 : t > 1 ? 1 : t;
+  function dCol(ctx, x, top, floor, fill) {
+    const t = Math.round(top), f = Math.round(floor), depth = f - t;
+    if (depth <= 0) {
+      ctx.fillStyle = drgba(fill, DBORDER);
+      ctx.fillRect(x, t, 1, 1);
+      return;
+    }
+    for (let y = t; y < f; y++) {
+      const density = (y - t) / depth;
+      const lit = density > BAYER4[y & 3][x & 3];
+      const k = 0.3 + density * 0.7;
+      ctx.fillStyle = drgba(fill, dclamp(lit ? k : k * DOFF));
+      ctx.fillRect(x, y, 1, 1);
+    }
+    ctx.fillStyle = drgba(fill, DBORDER);
+    ctx.fillRect(x, t, 1, 1);
+    if (depth > 1) {
+      ctx.fillStyle = drgba(fill, DBORDER * 0.5);
+      ctx.fillRect(x, t + 1, 1, 1);
+    }
+  }
+
+  // Dither line chart — same dither/bloom aesthetic as the session area chart,
+  // but a single accent-toned series with a dithered fill beneath a crisp line.
+  // Values are treated as ≥0 (counts / wagered): baseline is 0, fill rises to
+  // the line. Returns { el, draw(data) }; draw is idempotent and re-measures.
+  function ditherLineChart(opts) {
+    opts = opts || {};
+    const rgb = opts.color || [203, 239, 245];
+    const main = el("canvas", { class: "dchart-canvas", "aria-hidden": "true" });
+    const bloom = el("canvas", { class: "dchart-bloom", "aria-hidden": "true" });
+    const wrap = el("div", { class: "dchart" }, [main, bloom]);
+
+    function draw(data) {
+      data = (data && data.length) ? data.map(Number) : [0];
+      if (data.length === 1) data = [data[0], data[0]];
+      const cw = wrap.clientWidth || 260, ch = wrap.clientHeight || 100;
+      const cols = Math.min(520, Math.max(8, Math.round(cw / DCELL)));
+      const rows = Math.min(220, Math.max(8, Math.round(ch / DCELL)));
+      if (main.width !== cols || main.height !== rows) {
+        main.width = cols; main.height = rows;
+        bloom.width = cols; bloom.height = rows;
+      }
+      const ctx = main.getContext("2d");
+      ctx.clearRect(0, 0, cols, rows);
+      let hi = Math.max.apply(null, data);
+      const lo = Math.min(0, Math.min.apply(null, data));
+      if (hi === lo) hi = lo + 1;
+      const PAD = 2;
+      const yFn = v => PAD + ((hi - v) / (hi - lo)) * (rows - PAD * 2);
+      const floor = rows - 1;
+      const last = Math.max(data.length - 1, 1);
+      // Resample the series to one y per canvas column.
+      const line = new Array(cols);
+      for (let c = 0; c < cols; c++) {
+        const t = (c / Math.max(cols - 1, 1)) * last;
+        const i = Math.floor(t);
+        const a0 = data[i];
+        const a1 = data[Math.min(i + 1, data.length - 1)];
+        line[c] = yFn(a0 + (a1 - a0) * (t - i));
+      }
+      // Dithered fill beneath the line.
+      for (let c = 0; c < cols; c++) dCol(ctx, c, line[c], floor, rgb);
+      // Crisp line on top, spanning vertical gaps to neighbours for continuity.
+      ctx.fillStyle = drgba(rgb, 1);
+      for (let c = 0; c < cols; c++) {
+        let y0 = Math.round(line[c]), y1 = y0;
+        if (c > 0) {
+          const yp = Math.round(line[c - 1]);
+          y0 = Math.min(y0, yp); y1 = Math.max(y1, yp);
+        }
+        for (let y = y0; y <= y1; y++) ctx.fillRect(c, y, 1, 1);
+        if (y1 + 1 < rows) ctx.fillRect(c, y1 + 1, 1, 1); // ~2px weight
+      }
+      const bctx = bloom.getContext("2d");
+      bctx.clearRect(0, 0, cols, rows);
+      bctx.drawImage(main, 0, 0);
+    }
+    return { el: wrap, draw };
+  }
+
   BT.games = BT.games || {};
   BT.games.registry = BT.games.registry || {};
 
@@ -460,39 +554,8 @@
     const cWagered = cell("Wagered", "");
     const stack = el("div", { class: "sess-stack" }, [cProfit.node, cWagered.node]);
 
-    // Dither-kit area chart — port of https://github.com/Boring-Software-Inc/dither-kit (MIT).
-    // Two Canvas2D layers: crisp backing (image-rendering:pixelated) + bloom overlay
-    // (blurred additive copy). No React or bundler required.
-    const BAYER4 = [
-      [0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5],
-    ].map(r => r.map(v => (v + 0.5) / 16));
-    const DCELL = 2, DBORDER = 0.72, DOFF = 0.4;
-    const DPAL = { green: [40, 210, 110], red: [240, 70, 70] };
-    const drgba = ([r, g, b], a) =>
-      "rgba(" + r + "," + g + "," + b + "," + (+a.toFixed(3)) + ")";
-    const dclamp = t => t < 0 ? 0 : t > 1 ? 1 : t;
-    function dCol(ctx, x, top, floor, fill) {
-      const t = Math.round(top), f = Math.round(floor), depth = f - t;
-      if (depth <= 0) {
-        ctx.fillStyle = drgba(fill, DBORDER);
-        ctx.fillRect(x, t, 1, 1);
-        return;
-      }
-      for (let y = t; y < f; y++) {
-        const density = (y - t) / depth;
-        const lit = density > BAYER4[y & 3][x & 3];
-        const k = 0.3 + density * 0.7;
-        ctx.fillStyle = drgba(fill, dclamp(lit ? k : k * DOFF));
-        ctx.fillRect(x, y, 1, 1);
-      }
-      ctx.fillStyle = drgba(fill, DBORDER);
-      ctx.fillRect(x, t, 1, 1);
-      if (depth > 1) {
-        ctx.fillStyle = drgba(fill, DBORDER * 0.5);
-        ctx.fillRect(x, t + 1, 1, 1);
-      }
-    }
-
+    // Two Canvas2D layers (crisp pixelated backing + blurred additive bloom)
+    // drawn with the shared dither primitives hoisted at module scope.
     const mainCanvas = el("canvas", { class: "sess-canvas", "aria-hidden": "true" });
     const bloomCanvas = el("canvas", { class: "sess-bloom", "aria-hidden": "true" });
     const chartWrap = el("div", { class: "sess-chart" });
@@ -612,6 +675,7 @@
     resultBanner,
     resultOverlay,
     sessionPanel,
+    ditherLineChart,
     statsToggle,
     syncBalance,
     winLines,

@@ -231,8 +231,84 @@
     return el("div", { style: "margin-bottom:20px" }, [
       el("div", {
         style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);padding:12px",
-      }, [innerGrid, multRow]),
+      }, [innerGrid, statsCharts(), multRow]),
     ]);
+  }
+
+  // Accent colour as an [r,g,b] triple for the dither chart (hex CSS var → rgb).
+  function readAccentRGB() {
+    try {
+      const v = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+      const m = v.match(/^#?([0-9a-fA-F]{6})$/);
+      if (m) { const n = parseInt(m[1], 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+    } catch (_) { /* fall through to default */ }
+    return [203, 239, 245];
+  }
+
+  // Two switchable 7-day dither line charts inside the stats card: Wagered and
+  // Messages. Switch by tapping the chart, swiping, scrolling, or tapping a dot
+  // — the same paging affordance as the Explore Games grid. Both use the accent
+  // colour. Series is fetched lazily and re-drawn once it lands.
+  function statsCharts() {
+    const CHARTS = [
+      { key: "wagered",  label: "Wagered" },
+      { key: "messages", label: "Messages" },
+    ];
+    let page = 0;
+    let series = null;
+
+    const chart = BT.games.common.ditherLineChart({ color: readAccentRGB() });
+    const titleEl = el("div", { class: "statschart-title" }, "");
+    const box = el("div", { class: "statschart-box" }, [chart.el]);
+    const dots = el("div", { class: "games-page-dots" });
+
+    CHARTS.forEach((c, i) => {
+      const dot = el("button", {
+        class: "games-page-dot" + (i === 0 ? " active" : ""),
+        type: "button",
+        "aria-label": c.label + " chart",
+      });
+      dot.addEventListener("click", (e) => { e.stopPropagation(); go(i); });
+      dots.appendChild(dot);
+    });
+
+    function draw() {
+      const c = CHARTS[page];
+      const data = series ? (series[c.key] || []) : [];
+      titleEl.textContent = c.label + " · past 7 days";
+      [...dots.children].forEach((d, i) => d.classList.toggle("active", i === page));
+      chart.draw(data.length ? data : [0, 0]);
+    }
+    function go(i) { page = (i + CHARTS.length) % CHARTS.length; draw(); }
+
+    // Advance on tap; page on horizontal swipe / scroll.
+    box.addEventListener("click", () => go(page + 1));
+    let sx = 0, sy = 0;
+    box.addEventListener("touchstart", (e) => {
+      const t = e.touches[0]; sx = t.clientX; sy = t.clientY;
+    }, { passive: true });
+    box.addEventListener("touchend", (e) => {
+      const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy)) go(page + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+    let wheelLock = 0;
+    box.addEventListener("wheel", (e) => {
+      if (Math.abs(e.deltaX) < 12 && Math.abs(e.deltaY) < 12) return;
+      const now = Date.now();
+      if (now - wheelLock < 400) return;
+      wheelLock = now;
+      const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      go(page + (d > 0 ? 1 : -1));
+    }, { passive: true });
+
+    const wrap = el("div", { class: "statschart" }, [titleEl, box, dots]);
+
+    BT.api.statsSeries().then((s) => {
+      if (!wrap.isConnected) return;
+      if (s && !s.error) { series = s; draw(); }
+    }).catch(() => { /* chart stays flat on fetch failure */ });
+    requestAnimationFrame(draw);
+    return wrap;
   }
 
   // ── Backlog card ─────────────────────────────────────────────────────────────
