@@ -198,36 +198,43 @@
       '<path d="M17 13.5a5.5 5.5 0 0 1 3.5 5.5"/>',
   };
 
-  // Bonus icons (weekly/monthly) — same outer ring + rays structure as the token,
-  // but with a number label and colours driven by the caller's rank colour so the
-  // icon always matches the player's current tier.
+  // Bonus icons (weekly/monthly) — exact SVG designs from the uploaded assets,
+  // with the two hardcoded palette colours substituted for the caller's rank colour
+  // so the icon always matches the player's current tier.
+  // base = ring/glow colour (#007c8f default), hi = detail/highlight (#cbeff5 default).
   function bonusIcon(kind, size, rankColor) {
     const s = size || 32;
-    // Rank colours are hex strings; CSS vars (unranked) can't be used inside SVG
-    // attributes, so fall back to the default teal palette for unranked.
+    // CSS vars (unranked level 0) can't be used inside SVG attributes — fall back.
     const validHex = rankColor && /^#[0-9a-fA-F]{3,8}$/.test(rankColor);
     const base = validHex ? rankColor : "#007c8f";
     const hi   = validHex ? rankColor : "#cbeff5";
-    const t = kind === "30d" ? { label: "30", fs: 18 } : { label: "7", fs: 23 };
+
+    // Shared structure: outer ring + 8 rays + inner circle.
+    const shared =
+      '<circle cx="32" cy="32" r="30" fill="' + base + '" fill-opacity="0.18" stroke="' + base + '" stroke-width="2.6"/>' +
+      '<g stroke="' + hi + '" stroke-width="4" stroke-linecap="butt">' +
+        '<line x1="32" y1="3" x2="32" y2="10.5"/><line x1="32" y1="53.5" x2="32" y2="61"/>' +
+        '<line x1="3" y1="32" x2="10.5" y2="32"/><line x1="53.5" y1="32" x2="61" y2="32"/>' +
+        '<line x1="11.3" y1="11.3" x2="16.6" y2="16.6"/><line x1="47.4" y1="47.4" x2="52.7" y2="52.7"/>' +
+        '<line x1="52.7" y1="11.3" x2="47.4" y2="16.6"/><line x1="16.6" y1="47.4" x2="11.3" y2="52.7"/>' +
+      '</g>' +
+      '<circle cx="32" cy="32" r="19" fill="' + base + '" fill-opacity="0.30" stroke="' + hi + '" stroke-width="1.5" stroke-opacity="0.6"/>';
+
+    // Glyph paths are the exact path data from the uploaded SVG assets.
+    var glyph;
+    if (kind === "30d") {
+      glyph =
+        '<path d="M300 747Q375 747 428.5 721.0Q482 695 509.5 650.0Q537 605 537 549Q537 483 504.0 441.5Q471 400 427 385V381Q484 362 517.0 318.0Q550 274 550 205Q550 143 521.5 95.5Q493 48 438.5 21.0Q384 -6 309 -6Q189 -6 117.5 53.0Q46 112 42 231H208Q209 187 233.0 161.5Q257 136 303 136Q342 136 363.5 158.5Q385 181 385 218Q385 266 354.5 287.5Q324 309 257 309H225V448H257Q308 448 339.5 465.5Q371 483 371 528Q371 564 351.0 584.0Q331 604 296 604Q258 604 239.5 581.0Q221 558 218 524H51Q55 631 121.0 689.0Q187 747 300 747Z" transform="matrix(0.01992 0 0 -0.01992 19.4801 39.3805)" fill="' + hi + '"/>' +
+        '<path d="M326 745Q474 745 540.5 646.0Q607 547 607 375Q607 201 540.5 102.0Q474 3 326 3Q178 3 111.5 102.0Q45 201 45 375Q45 547 111.5 646.0Q178 745 326 745ZM326 585Q257 585 235.0 530.5Q213 476 213 375Q213 307 221.0 262.5Q229 218 253.5 190.5Q278 163 326 163Q374 163 398.5 190.5Q423 218 431.0 262.5Q439 307 439 375Q439 476 417.0 530.5Q395 585 326 585Z" transform="matrix(0.01992 0 0 -0.01992 31.5319 39.3805)" fill="' + hi + '"/>';
+    } else {
+      glyph =
+        '<path d="M511 602 260 0H85L339 583H28V729H511Z" transform="matrix(0.02606 0 0 -0.02606 25.0281 41.5000)" fill="' + hi + '"/>';
+    }
+
     const wrap = el("span", { class: "icon" });
     wrap.innerHTML =
       '<svg viewBox="0 0 64 64" width="' + s + '" height="' + s + '" fill="none" aria-hidden="true">' +
-      '<circle cx="32" cy="32" r="30" fill="' + base + '" fill-opacity="0.18" stroke="' + base + '" stroke-width="2.6"/>' +
-      '<g stroke="' + hi + '" stroke-width="4" stroke-linecap="butt">' +
-        '<line x1="32" y1="3" x2="32" y2="10.5"/>' +
-        '<line x1="32" y1="53.5" x2="32" y2="61"/>' +
-        '<line x1="3" y1="32" x2="10.5" y2="32"/>' +
-        '<line x1="53.5" y1="32" x2="61" y2="32"/>' +
-        '<line x1="11.3" y1="11.3" x2="16.6" y2="16.6"/>' +
-        '<line x1="47.4" y1="47.4" x2="52.7" y2="52.7"/>' +
-        '<line x1="52.7" y1="11.3" x2="47.4" y2="16.6"/>' +
-        '<line x1="16.6" y1="47.4" x2="11.3" y2="52.7"/>' +
-      '</g>' +
-      '<circle cx="32" cy="32" r="19" fill="' + base + '" fill-opacity="0.30" stroke="' + hi + '" stroke-width="1.5" stroke-opacity="0.6"/>' +
-      '<text x="32" y="32.5" font-size="' + t.fs + '" font-weight="900" text-anchor="middle"' +
-        ' fill="' + hi + '" stroke="' + hi + '" stroke-width="0.6"' +
-        ' font-family="Arial Black,Helvetica,Arial,sans-serif" letter-spacing="-0.5">' + t.label + '</text>' +
-      '</svg>';
+      shared + glyph + '</svg>';
     return wrap;
   }
 
