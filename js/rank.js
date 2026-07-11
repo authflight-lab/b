@@ -77,6 +77,25 @@
     const n = new Date();
     return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() + 1);
   }
+  // Daily bonus preview: D(s) = floor(20 * (1 + 1.5 * (1 - e^(-s/10)))). Keep in
+  // lockstep with api/main.py _daily_claim.
+  function dailyClaimAmount(streak) {
+    return Math.floor(20 * (1 + 1.5 * (1 - Math.exp(-(streak || 0) / 10))));
+  }
+  // Streak the NEXT claim will use, mirroring api/main.py: continue (+1) if the
+  // last claim was today or yesterday (UTC), else the streak has broken → 1.
+  function projectDailyStreak(me) {
+    const streak = (me && me.streak_days) || 0;
+    const iso = me && me.last_claim_at;
+    if (!iso) return 1;
+    const last = new Date(iso);
+    if (isNaN(last.getTime())) return 1;
+    const now = new Date();
+    const lastUtc = Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate());
+    const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const diffDays = Math.round((todayUtc - lastUtc) / 86400000);
+    return diffDays === 0 || diffDays === 1 ? streak + 1 : 1;
+  }
   function countdownLabel(ms) {
     if (ms <= 0) return "ready";
     const s = Math.floor(ms / 1000);
@@ -145,9 +164,10 @@
       const now = Date.now();
       const dailyClaimed = me && me.last_claim_at && isSameUtcDay(me.last_claim_at);
       const dailyCanClaim = !dailyClaimed && !(me && me.quest && me.quest.claimed);
+      const dailyAmt = dailyClaimAmount(projectDailyStreak(me));
       const rows = [
-        { kind: "daily", title: "Daily", icon: "daily", isDaily: true, canClaim: dailyCanClaim, amount: null, nextTs: dailyClaimed ? nextMidnightUtc() : 0 },
         { kind: "rakeback", title: "Rakeback", icon: "rakeback", amount: st.unclaimed_rakeback || 0, nextTs: 0 },
+        { kind: "daily", title: "Daily", icon: "daily", isDaily: true, canClaim: dailyCanClaim, amount: dailyAmt, nextTs: dailyClaimed ? nextMidnightUtc() : 0 },
         { kind: "weekly", title: "Weekly", icon: "7d", amount: Math.floor((st.week_wagered || 0) * (cur.weekly_rate || 0)), nextTs: nextAt(st.weekly_claimed_at, WEEK_MS) },
         { kind: "monthly", title: "Monthly", icon: "30d", amount: Math.floor((st.month_wagered || 0) * (cur.monthly_rate || 0)), nextTs: nextAt(st.monthly_claimed_at, MONTH_MS) },
       ];
@@ -203,7 +223,7 @@
           : el("img", { class: "rewards-row-icon", src: "assets/vip/claim-" + r.icon + ".png", alt: "" }),
         el("div", { class: "rewards-row-mid" }, [
           el("div", { class: "rewards-row-title" }, r.title),
-          el("div", { class: "rewards-row-sub muted" }, r.isDaily ? (ready ? "Ready to claim" : "Come back tomorrow") : (BT.ui.fmt(r.amount) + " pts")),
+          el("div", { class: "rewards-row-sub muted" }, BT.ui.fmt(r.amount) + " pts"),
         ]),
         btn,
       ]);
