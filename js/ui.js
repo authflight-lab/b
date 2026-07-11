@@ -222,7 +222,16 @@
 
     // Glyph paths are the exact path data from the uploaded SVG assets.
     var glyph;
-    if (kind === "rakeback") {
+    if (kind === "daily") {
+      // Same outer ring + rays as 7d/30d, glyph = "1" from the uploaded asset.
+      const wrap0 = el("span", { class: "icon" });
+      wrap0.innerHTML =
+        '<svg viewBox="0 0 64 64" width="' + s + '" height="' + s + '" fill="none" aria-hidden="true">' +
+        shared +
+        '<path d="M27 571V730H304V0H126V571Z" transform="matrix(0.02603 0 0 -0.02603 27.1068 41.5000)" fill="' + hi + '"/>' +
+        '</svg>';
+      return wrap0;
+    } else if (kind === "rakeback") {
       // Arc + arrow + bullseye — no outer ring/rays, own structure.
       const wrap2 = el("span", { class: "icon" });
       wrap2.innerHTML =

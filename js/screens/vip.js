@@ -12,6 +12,19 @@
   const WEEK_MS = 7 * 24 * 3600 * 1000;
   const MONTH_MS = 30 * 24 * 3600 * 1000;
 
+  function isSameUtcDay(iso) {
+    try {
+      const d = new Date(iso), n = new Date();
+      return d.getUTCFullYear() === n.getUTCFullYear() &&
+             d.getUTCMonth()    === n.getUTCMonth()    &&
+             d.getUTCDate()     === n.getUTCDate();
+    } catch (e) { return false; }
+  }
+  function nextMidnightUtc() {
+    const n = new Date();
+    return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() + 1);
+  }
+
   let _tick = null; // live countdown interval, cleared on re-render/close
   let _refresh = null; // current overlay re-render fn (re-checks claim readiness)
 
@@ -38,13 +51,13 @@
 
     async function refresh() {
       _refresh = refresh;
-      const data = await BT.api.vip();
+      const [data, me] = await Promise.all([BT.api.vip(), BT.api.me()]);
       if (!document.getElementById("vip-overlay")) return; // closed while loading
       if (_tick) { clearInterval(_tick); _tick = null; }
       BT.ui.clear(body);
 
       if (data && data._unconfigured) {
-        renderInner(body, DEMO, refresh);
+        renderInner(body, DEMO, null, refresh);
         body.appendChild(BT.ui.notice("The rewards server isn't connected yet. You're viewing a preview."));
         return;
       }
@@ -54,12 +67,12 @@
         body.appendChild(el("button", { class: "btn block", onclick: refresh }, "Retry"));
         return;
       }
-      renderInner(body, data, refresh);
+      renderInner(body, data, me, refresh);
     }
     refresh();
   }
 
-  function renderInner(root, data, refresh) {
+  function renderInner(root, data, me, refresh) {
     const tiers = data.tiers.slice().sort((a, b) => a.level - b.level);
     const st = data.state || {};
     const level = st.current_level || 0;
@@ -68,7 +81,7 @@
 
     root.appendChild(hero(cur, level, tiers.length - 1));
     root.appendChild(progressCard(st, next));
-    root.appendChild(claimsCard(root, st, cur, refresh));
+    root.appendChild(claimsCard(root, st, cur, me, refresh));
     root.appendChild(perksCard(cur));
     root.appendChild(ladderCard(tiers, level));
   }
@@ -130,7 +143,7 @@
 
   // ── Claim rewards: rakeback (anytime), weekly (7d), monthly (30d) ───────
   // Compact horizontal cards — no descriptions.
-  function claimsCard(root, st, cur, refresh) {
+  function claimsCard(root, st, cur, me, refresh) {
     const rakeReady = (st.unclaimed_rakeback || 0) > 0;
     const wkProj = Math.floor((st.week_wagered || 0) * (cur.weekly_rate || 0));
     const moProj = Math.floor((st.month_wagered || 0) * (cur.monthly_rate || 0));
@@ -138,7 +151,11 @@
     const moNext = nextAt(st.monthly_claimed_at, MONTH_MS);
 
     const rankColor = BT.rank.color(cur.level || 0);
+    const dailyClaimed = me && me.last_claim_at && isSameUtcDay(me.last_claim_at);
+    const dailyCanClaim = !dailyClaimed && !(me && me.quest && me.quest.claimed);
+    const dailyNext = dailyClaimed ? nextMidnightUtc() : 0;
     const cards = [
+      claimCard(root, "daily", "Daily", "daily", null, dailyCanClaim, dailyNext, refresh, rankColor),
       claimCard(root, "rakeback", "Rakeback", "rakeback", st.unclaimed_rakeback || 0, rakeReady, 0, refresh, rankColor),
       claimCard(root, "weekly", "Weekly", "7d", wkProj, wkProj > 0, wkNext, refresh, rankColor),
       claimCard(root, "monthly", "Monthly", "30d", moProj, moProj > 0, moNext, refresh, rankColor),
@@ -173,13 +190,28 @@
       (icon === "7d" || icon === "30d" || icon === "rakeback")
         ? BT.ui.bonusIcon(icon, 40, rankColor)
         : el("img", { class: "vip-cc-icon", src: "assets/vip/claim-" + icon + ".png", alt: "" }),
-      el("div", { class: "vip-cc-amt" }, fmt(amount) + " pts"),
+      amount !== null ? el("div", { class: "vip-cc-amt" }, fmt(amount) + " pts") : null,
       btn,
     ]);
   }
 
   async function doClaim(kind, btn, refresh) {
     btn.disabled = true;
+    if (kind === "daily") {
+      const res = await BT.api.claim();
+      if (res && res.ok) {
+        BT.ui.toast("+" + fmt(res.awarded) + " pts • streak " + fmt(res.streak_days), "success");
+        try { BT.ui.haptic("success"); } catch (e) {}
+        if (typeof res.new_balance === "number") BT.setBalance(res.new_balance);
+        else BT.refreshMe().catch(() => {});
+        if (typeof refresh === "function") refresh();
+      } else {
+        const err = (res && res.error) || "server_error";
+        BT.ui.toast(err === "already_claimed" ? "Already claimed today." : "Couldn't claim right now.", "error");
+        btn.disabled = false;
+      }
+      return;
+    }
     const res = await BT.api.vipClaim(kind);
     if (res && res.ok) {
       BT.ui.toast("Claimed " + fmt(res.claimed || 0) + " pts!", "success");

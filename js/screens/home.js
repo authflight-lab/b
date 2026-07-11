@@ -301,23 +301,6 @@
 
     root.appendChild(heroSection(name, me.balance, me.streak_days, me.member_status, me.multiplier_active));
 
-    root.appendChild(ctaRow(
-      canClaim,
-      () => BT.showScreen("shop"),
-      async () => {
-        const r = await BT.api.claim();
-        if (r && r.ok) {
-          BT.setBalance(r.new_balance);
-          BT.ui.toast("+" + fmt(r.awarded) + " pts • streak " + fmt(r.streak_days), "success");
-          BT.ui.haptic("success");
-          render(root);
-        } else {
-          BT.ui.toast(r && r.error === "already_claimed" ? "Already claimed today." : errMsg(r),
-            r && r.error === "already_claimed" ? "" : "error");
-          render(root);
-        }
-      }
-    ));
 
     // Clickable rank + progression card sits directly above the stats card and
     // opens the VIP page. Rendered as a placeholder, then filled once the VIP
@@ -353,9 +336,6 @@
   function renderPreview(root) {
     root.appendChild(heroSection("Guest", 0, "—", "Member"));
 
-    const rewardBtn = el("button", { class: "btn", style: "flex:1;opacity:.5", disabled: "disabled" }, "Rewards");
-    const claimBtn  = el("button", { class: "btn primary", style: "flex:1;opacity:.5", disabled: "disabled" }, "Claim Daily Points");
-    root.appendChild(el("div", { class: "row", style: "gap:10px;margin-bottom:20px" }, [rewardBtn, claimBtn]));
 
     root.appendChild(questList());
     root.appendChild(gamesGrid());
