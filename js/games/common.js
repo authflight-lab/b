@@ -52,8 +52,8 @@
   // dCol (session chart) is untouched.
   function ditherLineChart(opts) {
     opts = opts || {};
-    const rgb = opts.color || [203, 239, 245];        // accent light (fill)
-    const lineRgb = opts.lineColor || [203, 239, 245]; // accent light (line)
+    const rgb = opts.color || [0, 124, 143];        // accent-deep teal (fill)
+    const lineRgb = opts.lineColor || [0, 124, 143]; // accent-deep teal (line)
     const main = el("canvas", { class: "dchart-canvas", "aria-hidden": "true" });
     const bloom = el("canvas", { class: "dchart-bloom", "aria-hidden": "true" });
     const wrap = el("div", { class: "dchart" }, [main, bloom]);
