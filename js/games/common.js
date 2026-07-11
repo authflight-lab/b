@@ -52,7 +52,8 @@
   // dCol (session chart) is untouched.
   function ditherLineChart(opts) {
     opts = opts || {};
-    const rgb = opts.color || [40, 210, 110]; // stronger accent green
+    const rgb = opts.color || [40, 210, 110];       // stronger accent green (fill)
+    const lineRgb = opts.lineColor || [0, 124, 143]; // accent-deep teal (line)
     const main = el("canvas", { class: "dchart-canvas", "aria-hidden": "true" });
     const bloom = el("canvas", { class: "dchart-bloom", "aria-hidden": "true" });
     const wrap = el("div", { class: "dchart" }, [main, bloom]);
@@ -118,7 +119,7 @@
       // Dithered fill beneath the line.
       for (let c = 0; c < cols; c++) aCol(ctx, c, line[c], floor, rgb, ph);
       // Crisp line on top, spanning vertical gaps to neighbours for continuity.
-      ctx.fillStyle = drgba(rgb, 1);
+      ctx.fillStyle = drgba(lineRgb, 1);
       for (let c = 0; c < cols; c++) {
         let y0 = Math.round(line[c]), y1 = y0;
         if (c > 0) {
