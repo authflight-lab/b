@@ -65,6 +65,18 @@
     const t = Date.parse(claimedIso);
     return isNaN(t) ? 0 : t + intervalMs;
   }
+  function isSameUtcDay(iso) {
+    try {
+      const d = new Date(iso), n = new Date();
+      return d.getUTCFullYear() === n.getUTCFullYear() &&
+             d.getUTCMonth()    === n.getUTCMonth()    &&
+             d.getUTCDate()     === n.getUTCDate();
+    } catch (e) { return false; }
+  }
+  function nextMidnightUtc() {
+    const n = new Date();
+    return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() + 1);
+  }
   function countdownLabel(ms) {
     if (ms <= 0) return "ready";
     const s = Math.floor(ms / 1000);
@@ -113,7 +125,7 @@
     window.addEventListener("scroll", onScroll, true);
 
     async function refresh() {
-      const s = await summary(true);
+      const [s, me] = await Promise.all([summary(true), BT.api.me()]);
       const lvl = (s && s.level) || 0;
       const cur = (s.tiers || []).find((t) => t.level === lvl) || {};
       const st = s.state || {};
@@ -131,7 +143,10 @@
       head.appendChild(el("button", { class: "fair-x", type: "button", onclick: close }, "✕"));
 
       const now = Date.now();
+      const dailyClaimed = me && me.last_claim_at && isSameUtcDay(me.last_claim_at);
+      const dailyCanClaim = !dailyClaimed && !(me && me.quest && me.quest.claimed);
       const rows = [
+        { kind: "daily", title: "Daily", icon: "daily", isDaily: true, canClaim: dailyCanClaim, amount: null, nextTs: dailyClaimed ? nextMidnightUtc() : 0 },
         { kind: "rakeback", title: "Rakeback", icon: "rakeback", amount: st.unclaimed_rakeback || 0, nextTs: 0 },
         { kind: "weekly", title: "Weekly", icon: "7d", amount: Math.floor((st.week_wagered || 0) * (cur.weekly_rate || 0)), nextTs: nextAt(st.weekly_claimed_at, WEEK_MS) },
         { kind: "monthly", title: "Monthly", icon: "30d", amount: Math.floor((st.month_wagered || 0) * (cur.monthly_rate || 0)), nextTs: nextAt(st.monthly_claimed_at, MONTH_MS) },
@@ -146,7 +161,7 @@
     }
 
     function rewardRow(r, now, onClaimed, rankColor) {
-      const ready = r.amount > 0 && (!r.nextTs || r.nextTs <= now);
+      const ready = r.isDaily ? r.canClaim : (r.amount > 0 && (!r.nextTs || r.nextTs <= now));
       const locked = r.nextTs && r.nextTs > now;
       const btn = el("button", {
         class: "btn sm primary rewards-claim-btn",
@@ -155,6 +170,20 @@
       if (ready) {
         btn.addEventListener("click", async () => {
           btn.disabled = true;
+          if (r.isDaily) {
+            const res = await BT.api.claim();
+            if (res && res.ok) {
+              BT.ui.toast("+" + BT.ui.fmt(res.awarded) + " pts • streak " + BT.ui.fmt(res.streak_days), "success");
+              try { BT.ui.haptic("success"); } catch (e) {}
+              if (typeof res.new_balance === "number") BT.setBalance(res.new_balance);
+              else BT.refreshMe().catch(() => {});
+              onClaimed();
+            } else {
+              BT.ui.toast(res && res.error === "already_claimed" ? "Already claimed today." : "Couldn't claim right now.", "error");
+              btn.disabled = false;
+            }
+            return;
+          }
           const res = await BT.api.vipClaim(r.kind);
           if (res && res.ok) {
             BT.ui.toast("Claimed " + BT.ui.fmt(res.claimed || 0) + " pts!", "success");
@@ -169,12 +198,12 @@
         });
       }
       return el("div", { class: "rewards-row" }, [
-        (r.icon === "7d" || r.icon === "30d" || r.icon === "rakeback")
+        (r.icon === "daily" || r.icon === "7d" || r.icon === "30d" || r.icon === "rakeback")
           ? BT.ui.bonusIcon(r.icon, 34, rankColor)
           : el("img", { class: "rewards-row-icon", src: "assets/vip/claim-" + r.icon + ".png", alt: "" }),
         el("div", { class: "rewards-row-mid" }, [
           el("div", { class: "rewards-row-title" }, r.title),
-          el("div", { class: "rewards-row-sub muted" }, BT.ui.fmt(r.amount) + " pts"),
+          el("div", { class: "rewards-row-sub muted" }, r.isDaily ? (ready ? "Ready to claim" : "Come back tomorrow") : (BT.ui.fmt(r.amount) + " pts")),
         ]),
         btn,
       ]);
