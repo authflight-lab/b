@@ -105,43 +105,29 @@
     return m + "m";
   }
 
-  async function openPanel(anchorEl) {
-    // Singleton: don't stack a second sheet if one is already open.
-    if (document.querySelector(".rewards-popover")) return;
+  async function openPanel() {
+    // Singleton: don't stack a second card if one is already open.
+    if (document.querySelector(".rewards-overlay")) return;
 
-    // Transparent full-screen catcher for outside-click dismissal — no dim, so
-    // the page stays visible; the panel is a small popover anchored to its trigger.
-    const catcher = el("div", { class: "popover-catcher" });
-    const reposition = () => {
-      if (!anchorEl || !anchorEl.getBoundingClientRect) return;
-      const r = anchorEl.getBoundingClientRect();
-      card.style.top = Math.round(r.bottom + 8) + "px";
-      card.style.right = Math.round(Math.max(8, window.innerWidth - r.right)) + "px";
-    };
-    const onScroll = () => close();
-    const close = () => {
-      catcher.remove();
-      window.removeEventListener("resize", reposition);
-      window.removeEventListener("scroll", onScroll, true);
-    };
-    catcher.addEventListener("click", (e) => { if (e.target === catcher) close(); });
+    // Centred, dimmed overlay — same treatment as the full All Rewards page.
+    const overlay = el("div", { class: "overlay rewards-overlay" });
+    const close = () => overlay.remove();
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
 
-    const card = el("div", { class: "overlay-card rewards-panel rewards-popover" });
+    const card = el("div", { class: "overlay-card rewards-panel rewards-card" });
     const list = el("div", { class: "rewards-list" }, el("div", { class: "loading" }, "Loading rewards…"));
     const allBtn = el("button", { class: "btn block all-rewards-btn", type: "button" }, [
       BT.ui.icon("trophy", 18), el("span", null, "All Rewards"),
     ]);
+    // From this quick card, "All Rewards" switches to the full rewards page.
     allBtn.addEventListener("click", () => { close(); BT.vip.open(); });
 
     const head = el("div", { class: "rewards-head" });
     card.appendChild(head);
     card.appendChild(list);
     card.appendChild(allBtn);
-    catcher.appendChild(card);
-    document.body.appendChild(catcher);
-    reposition();
-    window.addEventListener("resize", reposition);
-    window.addEventListener("scroll", onScroll, true);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
 
     async function refresh() {
       const [s, me] = await Promise.all([summary(true), BT.api.me()]);

@@ -48,22 +48,28 @@
   }
 
   // ── Hero header ──────────────────────────────────────────────────────────────
-  function heroSection(name, balance, streakDays, memberStatus, multiplierActive) {
+  function heroSection(name, balance, multiplierActive) {
+    // VIP rank pill (same control as the /play header) — opens the quick rewards
+    // card. Stretches to match the height of the welcome+name stack beside it.
+    const rankPill = el("button", {
+      class: "rank-pill hero-rank-pill", type: "button",
+      title: "Your rewards", "aria-label": "Your rewards",
+      style: "align-self:stretch;justify-content:center",
+      onclick: () => BT.rank.openPanel(),
+    }, [el("span", { class: "rank-pill-name" }, "Unranked")]);
+    BT.rank.summary().then((s) => { if (rankPill.isConnected) BT.rank.fillPill(rankPill, s); });
+
     return el("div", { style: "padding:4px 0 18px" }, [
-      // Top row: welcome + name (left) / streak + status (right)
-      el("div", { class: "row between", style: "align-items:flex-start;margin-bottom:14px;gap:12px" }, [
-        el("div", { style: "min-width:0" }, [
+      // Top row: welcome + name (left) / rank pill (right)
+      el("div", { class: "row between", style: "align-items:stretch;margin-bottom:14px;gap:12px" }, [
+        el("div", { style: "min-width:0;display:flex;flex-direction:column;justify-content:center" }, [
           el("div", { class: "small muted" }, "Welcome back"),
           el("div", { style: "font-weight:700;font-size:16px;display:flex;align-items:center;min-width:0" }, [
             el("span", { style: "overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, name),
             multiplierActive ? multiplierBadge() : null,
           ]),
         ]),
-        el("div", { style: "text-align:right;flex:0 0 auto" }, [
-          el("div", { style: "font-weight:700;font-size:14px" }, fmt(streakDays) + " Day Streak"),
-          el("div", { class: "small muted" }, memberStatus || "Member"),
-          el("div", { class: "small", style: "color:var(--accent)" }, "t.me/partygc"),
-        ]),
+        rankPill,
       ]),
       // Balance hero
       el("div", { style: "font-size:60px;font-weight:800;line-height:1;color:var(--text);font-variant-numeric:tabular-nums" },
@@ -299,7 +305,7 @@
     const quest = me.quest || {};
     const canClaim = !(me.last_claim_at && isSameUtcDay(me.last_claim_at)) && !quest.claimed;
 
-    root.appendChild(heroSection(name, me.balance, me.streak_days, me.member_status, me.multiplier_active));
+    root.appendChild(heroSection(name, me.balance, me.multiplier_active));
 
 
     // Clickable rank + progression card sits directly above the stats card and
@@ -334,7 +340,7 @@
 
   // ── Preview (no API) ─────────────────────────────────────────────────────────
   function renderPreview(root) {
-    root.appendChild(heroSection("Guest", 0, "—", "Member"));
+    root.appendChild(heroSection("Guest", 0));
 
 
     root.appendChild(questList());
