@@ -526,6 +526,17 @@ input[type="number"].betbox-input:focus {
   pointer-events: none;
 }
 
+.games-page-dots {
+  display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 12px;
+}
+.games-page-dot {
+  width: 6px; height: 6px; border-radius: 50%; border: none; padding: 0; cursor: pointer;
+  background: rgba(255,255,255,0.18); transition: background 0.2s, transform 0.2s;
+}
+.games-page-dot.active {
+  background: var(--accent); transform: scale(1.35);
+}
+
 /* Inline SVG icon wrapper */
 .icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
 .icon svg { display: block; }

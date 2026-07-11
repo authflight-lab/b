@@ -259,25 +259,49 @@
     ]);
   }
 
-  // ── Games grid ───────────────────────────────────────────────────────────────
+  // ── Games grid (paginated, 6 per page) ───────────────────────────────────────
   function gamesGrid() {
-    const wrap = el("div", { style: "margin-bottom:16px" }, [
-      el("div", { class: "section-title" }, "Explore Games"),
-    ]);
+    const PAGE = 6;
+    const pageCount = Math.ceil(GAMES.length / PAGE);
+    let page = 0;
+
     const grid = el("div", {
       style: "background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px",
     });
-    GAMES.forEach((g) => {
-      const tile = el("div", { class: "game-tile", style: "cursor:pointer" }, [
-        el("div", { class: "g-ico" }, BT.ui.icon(g.key, 26)),
-        el("div", { class: "g-name" }, g.label),
-        g.isNew ? el("span", { class: "g-new" }, "NEW") : null,
-      ]);
-      tile.addEventListener("click", () => BT.openGame(g.key));
-      grid.appendChild(tile);
-    });
-    wrap.appendChild(grid);
-    return wrap;
+
+    const dots = el("div", { class: "games-page-dots" });
+
+    function renderPage() {
+      BT.ui.clear(grid);
+      BT.ui.clear(dots);
+      const slice = GAMES.slice(page * PAGE, page * PAGE + PAGE);
+      slice.forEach((g) => {
+        const tile = el("div", { class: "game-tile", style: "cursor:pointer" }, [
+          el("div", { class: "g-ico" }, BT.ui.icon(g.key, 26)),
+          el("div", { class: "g-name" }, g.label),
+          g.isNew ? el("span", { class: "g-new" }, "NEW") : null,
+        ]);
+        tile.addEventListener("click", () => BT.openGame(g.key));
+        grid.appendChild(tile);
+      });
+      for (let i = 0; i < pageCount; i++) {
+        const dot = el("button", {
+          class: "games-page-dot" + (i === page ? " active" : ""),
+          type: "button",
+          "aria-label": "Page " + (i + 1),
+        });
+        dot.addEventListener("click", () => { page = i; renderPage(); });
+        dots.appendChild(dot);
+      }
+    }
+
+    renderPage();
+
+    return el("div", { style: "margin-bottom:16px" }, [
+      el("div", { class: "section-title" }, "Explore Games"),
+      grid,
+      dots,
+    ]);
   }
 
   // ── Main render ──────────────────────────────────────────────────────────────
