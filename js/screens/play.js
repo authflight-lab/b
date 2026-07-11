@@ -144,7 +144,7 @@
     BT.rank.summary().then((s) => { if (rankBtn.isConnected) BT.rank.fillPill(rankBtn, s); });
     // Live balance chip beside the rank pill; kept in sync by BT.setBalance.
     const balChip = el("div", { class: "fair-bal", title: "Your balance" }, [
-      BT.ui.icon("token", 14),
+      BT.ui.icon("token", 17),
       el("span", { id: "play-bal-value" }, BT.ui.fmt(BT.state.balance)),
     ]);
     // Wager history moved out of the navbar to sit beside the balance chip.
