@@ -441,18 +441,12 @@
   // Session stats panel — the shared card shown under every game: a 2×2 stat
   // grid (Profit / Wins / Wagered / Losses) plus a cumulative net-profit
   // curve, green above zero and red below. Purely a view over BT.session.
-  const SVG_NS = "http://www.w3.org/2000/svg";
   let sessPanelSeq = 0;
   // The single most recent panel instance. Only one session panel exists at a
   // time (renderGames replaces it wholesale), so each new panel deterministically
   // tears down its detached predecessor's subscription instead of relying on a
   // future emit to notice the node is gone.
   let sessPanelLive = null;
-  function svgNode(tag, attrs) {
-    const n = document.createElementNS(SVG_NS, tag);
-    if (attrs) for (const k in attrs) n.setAttribute(k, attrs[k]);
-    return n;
-  }
 
   function sessionPanel() {
     const uid = "sess" + (++sessPanelSeq);
@@ -466,57 +460,83 @@
     const cWagered = cell("Wagered", "");
     const stack = el("div", { class: "sess-stack" }, [cProfit.node, cWagered.node]);
 
-    // Chart: fixed viewBox stretched to the box; non-scaling strokes keep the
-    // line crisp. The green/red split is two copies of the same line + area,
-    // clipped above and below the zero baseline.
-    const CW = 100, CH = 34, PAD = 2;
-    const svg = svgNode("svg", {
-      class: "sess-svg",
-      viewBox: "0 0 " + CW + " " + CH,
-      preserveAspectRatio: "none",
-      "aria-hidden": "true",
-    });
+    // Dither-kit area chart — port of https://github.com/Boring-Software-Inc/dither-kit (MIT).
+    // Two Canvas2D layers: crisp backing (image-rendering:pixelated) + bloom overlay
+    // (blurred additive copy). No React or bundler required.
+    const BAYER4 = [
+      [0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5],
+    ].map(r => r.map(v => (v + 0.5) / 16));
+    const DCELL = 2, DBORDER = 0.72, DOFF = 0.4;
+    const DPAL = { green: [40, 210, 110], red: [240, 70, 70] };
+    const drgba = ([r, g, b], a) =>
+      "rgba(" + r + "," + g + "," + b + "," + (+a.toFixed(3)) + ")";
+    const dclamp = t => t < 0 ? 0 : t > 1 ? 1 : t;
+    function dCol(ctx, x, top, floor, fill) {
+      const t = Math.round(top), f = Math.round(floor), depth = f - t;
+      if (depth <= 0) {
+        ctx.fillStyle = drgba(fill, DBORDER);
+        ctx.fillRect(x, t, 1, 1);
+        return;
+      }
+      for (let y = t; y < f; y++) {
+        const density = (y - t) / depth;
+        const lit = density > BAYER4[y & 3][x & 3];
+        const k = 0.3 + density * 0.7;
+        ctx.fillStyle = drgba(fill, dclamp(lit ? k : k * DOFF));
+        ctx.fillRect(x, y, 1, 1);
+      }
+      ctx.fillStyle = drgba(fill, DBORDER);
+      ctx.fillRect(x, t, 1, 1);
+      if (depth > 1) {
+        ctx.fillStyle = drgba(fill, DBORDER * 0.5);
+        ctx.fillRect(x, t + 1, 1, 1);
+      }
+    }
+
+    const mainCanvas = el("canvas", { class: "sess-canvas", "aria-hidden": "true" });
+    const bloomCanvas = el("canvas", { class: "sess-bloom", "aria-hidden": "true" });
     const chartWrap = el("div", { class: "sess-chart" });
-    chartWrap.appendChild(svg);
+    chartWrap.appendChild(mainCanvas);
+    chartWrap.appendChild(bloomCanvas);
     const emptyMsg = el("div", { class: "sess-empty" }, "Profit over time charts here once you bet.");
     chartWrap.appendChild(emptyMsg);
 
     function drawCurve(curve) {
-      BT.ui.clear(svg);
+      const cw = chartWrap.clientWidth || 200;
+      const ch = chartWrap.clientHeight || 84;
+      const cols = Math.min(520, Math.max(8, Math.round(cw / DCELL)));
+      const rows = Math.min(200, Math.max(8, Math.round(ch / DCELL)));
+      if (mainCanvas.width !== cols || mainCanvas.height !== rows) {
+        mainCanvas.width = cols; mainCanvas.height = rows;
+        bloomCanvas.width = cols; bloomCanvas.height = rows;
+      }
+      const mctx = mainCanvas.getContext("2d");
+      mctx.clearRect(0, 0, cols, rows);
       let lo = Math.min(0, Math.min.apply(null, curve));
       let hi = Math.max(0, Math.max.apply(null, curve));
-      // A flat curve (every settle was a push, so net profit never left 0)
-      // would collapse the range; pad it symmetrically so the zero baseline
-      // sits centred rather than pinned to an edge.
       if (hi === lo) { hi += 1; lo -= 1; }
-      const span = hi - lo;
-      const y = (v) => PAD + ((hi - v) / span) * (CH - PAD * 2);
-      const x = (i) => (curve.length > 1 ? (i / (curve.length - 1)) * CW : 0);
-      const zeroY = y(0);
-
-      const defs = svgNode("defs");
-      const mkClip = (id, yTop, h) => {
-        const cp = svgNode("clipPath", { id });
-        cp.appendChild(svgNode("rect", { x: -1, y: yTop, width: CW + 2, height: Math.max(0, h) }));
-        defs.appendChild(cp);
-      };
-      mkClip(uid + "-up", -1, zeroY + 1);
-      mkClip(uid + "-dn", zeroY, CH - zeroY + 1);
-      svg.appendChild(defs);
-
-      // Zero baseline.
-      svg.appendChild(svgNode("line", {
-        x1: 0, y1: zeroY, x2: CW, y2: zeroY, class: "sess-zero",
-      }));
-
-      const linePts = curve.map((v, i) => x(i) + "," + y(v)).join(" ");
-      const areaD = "M0," + zeroY + " L" + curve.map((v, i) => x(i) + "," + y(v)).join(" L") + " L" + CW + "," + zeroY + " Z";
-      [["up", "sess-up"], ["dn", "sess-dn"]].forEach(([side, cls]) => {
-        const g = svgNode("g", { "clip-path": "url(#" + uid + "-" + side + ")" });
-        g.appendChild(svgNode("path", { d: areaD, class: "sess-area " + cls }));
-        g.appendChild(svgNode("polyline", { points: linePts, class: "sess-line " + cls }));
-        svg.appendChild(g);
-      });
+      const PAD = 1;
+      const yFn = v => PAD + ((hi - v) / (hi - lo)) * (rows - PAD * 2);
+      const zeroY = yFn(0);
+      // Zero baseline
+      mctx.fillStyle = "rgba(255,255,255,0.15)";
+      mctx.fillRect(0, Math.round(zeroY), cols, 1);
+      // Resample curve → cols columns and paint
+      const last = Math.max(curve.length - 1, 1);
+      for (let c = 0; c < cols; c++) {
+        const t = (c / Math.max(cols - 1, 1)) * last;
+        const i = Math.floor(t);
+        const a0 = curve[i] ?? 0;
+        const a1 = curve[Math.min(i + 1, curve.length - 1)] ?? a0;
+        const val = a0 + (a1 - a0) * (t - i);
+        const valY = yFn(val);
+        if (val > 0) dCol(mctx, c, valY, zeroY, DPAL.green);
+        else if (val < 0) dCol(mctx, c, zeroY, valY, DPAL.red);
+      }
+      // Bloom layer: blurred additive copy of the crisp canvas
+      const bctx = bloomCanvas.getContext("2d");
+      bctx.clearRect(0, 0, cols, rows);
+      bctx.drawImage(mainCanvas, 0, 0);
     }
 
     function update() {
@@ -527,7 +547,8 @@
       const curve = BT.session.curve();
       const hasData = s.bets > 0;
       emptyMsg.classList.toggle("hidden", hasData);
-      svg.classList.toggle("hidden", !hasData);
+      mainCanvas.classList.toggle("hidden", !hasData);
+      bloomCanvas.classList.toggle("hidden", !hasData);
       if (hasData) drawCurve(curve);
     }
 
