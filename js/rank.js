@@ -170,7 +170,7 @@
       }
       return el("div", { class: "rewards-row" }, [
         (r.icon === "7d" || r.icon === "30d" || r.icon === "rakeback")
-          ? BT.ui.bonusIcon(r.icon, r.icon === "rakeback" ? 51 : 34, rankColor)
+          ? BT.ui.bonusIcon(r.icon, r.icon === "rakeback" ? 112 : 34, rankColor)
           : el("img", { class: "rewards-row-icon", src: "assets/vip/claim-" + r.icon + ".png", alt: "" }),
         el("div", { class: "rewards-row-mid" }, [
           el("div", { class: "rewards-row-title" }, r.title),

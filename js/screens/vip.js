@@ -171,7 +171,7 @@
         status,
       ]),
       (icon === "7d" || icon === "30d" || icon === "rakeback")
-        ? BT.ui.bonusIcon(icon, icon === "rakeback" ? 60 : 40, rankColor)
+        ? BT.ui.bonusIcon(icon, icon === "rakeback" ? 132 : 40, rankColor)
         : el("img", { class: "vip-cc-icon", src: "assets/vip/claim-" + icon + ".png", alt: "" }),
       el("div", { class: "vip-cc-amt" }, fmt(amount) + " pts"),
       btn,
