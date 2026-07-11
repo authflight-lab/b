@@ -141,11 +141,11 @@
       if (s._unavailable) {
         list.appendChild(BT.ui.notice("Rewards aren't connected yet. Open All Rewards to preview."));
       } else {
-        rows.forEach((r) => list.appendChild(rewardRow(r, now, refresh)));
+        rows.forEach((r) => list.appendChild(rewardRow(r, now, refresh, color(lvl))));
       }
     }
 
-    function rewardRow(r, now, onClaimed) {
+    function rewardRow(r, now, onClaimed, rankColor) {
       const ready = r.amount > 0 && (!r.nextTs || r.nextTs <= now);
       const locked = r.nextTs && r.nextTs > now;
       const btn = el("button", {
@@ -169,7 +169,9 @@
         });
       }
       return el("div", { class: "rewards-row" }, [
-        el("img", { class: "rewards-row-icon", src: "assets/vip/claim-" + r.icon + ".png", alt: "" }),
+        (r.icon === "7d" || r.icon === "30d")
+          ? BT.ui.bonusIcon(r.icon, 34, rankColor)
+          : el("img", { class: "rewards-row-icon", src: "assets/vip/claim-" + r.icon + ".png", alt: "" }),
         el("div", { class: "rewards-row-mid" }, [
           el("div", { class: "rewards-row-title" }, r.title),
           el("div", { class: "rewards-row-sub muted" }, BT.ui.fmt(r.amount) + " pts"),

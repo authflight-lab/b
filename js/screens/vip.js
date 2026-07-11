@@ -137,10 +137,11 @@
     const wkNext = nextAt(st.weekly_claimed_at, WEEK_MS);
     const moNext = nextAt(st.monthly_claimed_at, MONTH_MS);
 
+    const rankColor = BT.rank.color(cur.level || 0);
     const cards = [
-      claimCard(root, "rakeback", "Rakeback", "rakeback", st.unclaimed_rakeback || 0, rakeReady, 0, refresh),
-      claimCard(root, "weekly", "Weekly", "7d", wkProj, wkProj > 0, wkNext, refresh),
-      claimCard(root, "monthly", "Monthly", "30d", moProj, moProj > 0, moNext, refresh),
+      claimCard(root, "rakeback", "Rakeback", "rakeback", st.unclaimed_rakeback || 0, rakeReady, 0, refresh, rankColor),
+      claimCard(root, "weekly", "Weekly", "7d", wkProj, wkProj > 0, wkNext, refresh, rankColor),
+      claimCard(root, "monthly", "Monthly", "30d", moProj, moProj > 0, moNext, refresh, rankColor),
     ];
     return el("div", { class: "card vip-claims" }, [
       el("div", { class: "section-title" }, "Claim rewards"),
@@ -148,7 +149,7 @@
     ]);
   }
 
-  function claimCard(root, kind, title, icon, amount, hasAmount, nextTs, refresh) {
+  function claimCard(root, kind, title, icon, amount, hasAmount, nextTs, refresh, rankColor) {
     const now = Date.now();
     const ready = hasAmount && (!nextTs || nextTs <= now);
     const locked = nextTs && nextTs > now;
@@ -169,7 +170,9 @@
         el("span", { class: "vip-cc-title" }, title),
         status,
       ]),
-      el("img", { class: "vip-cc-icon", src: "assets/vip/claim-" + icon + ".png", alt: "" }),
+      (icon === "7d" || icon === "30d")
+        ? BT.ui.bonusIcon(icon, 40, rankColor)
+        : el("img", { class: "vip-cc-icon", src: "assets/vip/claim-" + icon + ".png", alt: "" }),
       el("div", { class: "vip-cc-amt" }, fmt(amount) + " pts"),
       btn,
     ]);

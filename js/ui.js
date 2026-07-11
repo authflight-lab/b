@@ -198,6 +198,39 @@
       '<path d="M17 13.5a5.5 5.5 0 0 1 3.5 5.5"/>',
   };
 
+  // Bonus icons (weekly/monthly) — same outer ring + rays structure as the token,
+  // but with a number label and colours driven by the caller's rank colour so the
+  // icon always matches the player's current tier.
+  function bonusIcon(kind, size, rankColor) {
+    const s = size || 32;
+    // Rank colours are hex strings; CSS vars (unranked) can't be used inside SVG
+    // attributes, so fall back to the default teal palette for unranked.
+    const validHex = rankColor && /^#[0-9a-fA-F]{3,8}$/.test(rankColor);
+    const base = validHex ? rankColor : "#007c8f";
+    const hi   = validHex ? rankColor : "#cbeff5";
+    const t = kind === "30d" ? { label: "30", fs: 18 } : { label: "7", fs: 23 };
+    const wrap = el("span", { class: "icon" });
+    wrap.innerHTML =
+      '<svg viewBox="0 0 64 64" width="' + s + '" height="' + s + '" fill="none" aria-hidden="true">' +
+      '<circle cx="32" cy="32" r="30" fill="' + base + '" fill-opacity="0.18" stroke="' + base + '" stroke-width="2.6"/>' +
+      '<g stroke="' + hi + '" stroke-width="4" stroke-linecap="butt">' +
+        '<line x1="32" y1="3" x2="32" y2="10.5"/>' +
+        '<line x1="32" y1="53.5" x2="32" y2="61"/>' +
+        '<line x1="3" y1="32" x2="10.5" y2="32"/>' +
+        '<line x1="53.5" y1="32" x2="61" y2="32"/>' +
+        '<line x1="11.3" y1="11.3" x2="16.6" y2="16.6"/>' +
+        '<line x1="47.4" y1="47.4" x2="52.7" y2="52.7"/>' +
+        '<line x1="52.7" y1="11.3" x2="47.4" y2="16.6"/>' +
+        '<line x1="16.6" y1="47.4" x2="11.3" y2="52.7"/>' +
+      '</g>' +
+      '<circle cx="32" cy="32" r="19" fill="' + base + '" fill-opacity="0.30" stroke="' + hi + '" stroke-width="1.5" stroke-opacity="0.6"/>' +
+      '<text x="32" y="32.5" font-size="' + t.fs + '" font-weight="900" text-anchor="middle"' +
+        ' fill="' + hi + '" stroke="' + hi + '" stroke-width="0.6"' +
+        ' font-family="Arial Black,Helvetica,Arial,sans-serif" letter-spacing="-0.5">' + t.label + '</text>' +
+      '</svg>';
+    return wrap;
+  }
+
   // Branded token SVG (fixed colours, own viewBox — not part of the monochrome set).
   const TOKEN_SVG =
     '<circle cx="32" cy="32" r="30" fill="#007c8f" fill-opacity="0.18" stroke="#007c8f" stroke-width="2.6"/>' +
@@ -231,5 +264,5 @@
     return wrap;
   }
 
-  BT.ui = { el, clear, fmt, fmtDate, toast, haptic, loading, notice, icon, appendChildren };
+  BT.ui = { el, clear, fmt, fmtDate, toast, haptic, loading, notice, icon, bonusIcon, appendChildren };
 })();

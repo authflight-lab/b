@@ -784,7 +784,7 @@ input[type="number"].betbox-input:focus {
   background: var(--glass-bg-2); border: 1px solid var(--glass-border);
   border-radius: 12px; padding: 10px 12px;
 }
-.rewards-row-icon { width: 34px; height: 34px; flex-shrink: 0; }
+.rewards-row-icon, .rewards-row .icon { width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .rewards-row-mid { flex: 1 1 auto; min-width: 0; }
 .rewards-row-title { font-size: 14px; font-weight: 700; color: var(--text); }
 .rewards-row-sub { font-size: 12px; margin-top: 1px; }
@@ -2196,7 +2196,7 @@ input[type="number"].betbox-input:focus {
 .vip-cc-title { font-size: 13px; font-weight: 700; color: var(--text); }
 .vip-cc-status { font-size: 10.5px; font-weight: 600; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .vip-cc-status.ready { color: var(--accent); }
-.vip-cc-icon { width: 40px; height: 40px; object-fit: contain; margin: 2px 0; }
+.vip-cc-icon, .vip-cc > .icon { width: 40px; height: 40px; object-fit: contain; margin: 2px 0; display: flex; align-items: center; justify-content: center; }
 .vip-cc-amt { font-size: 13px; font-weight: 800; color: var(--accent); }
 .vip-cc-btn { width: 100%; min-width: 0; }
 
