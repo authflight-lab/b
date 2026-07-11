@@ -204,9 +204,11 @@
         });
       }
       return el("div", { class: "rewards-row" }, [
-        (r.icon === "daily" || r.icon === "7d" || r.icon === "30d" || r.icon === "rakeback")
-          ? BT.ui.bonusIcon(r.icon, 34, rankColor)
-          : el("img", { class: "rewards-row-icon", src: "assets/vip/claim-" + r.icon + ".png", alt: "" }),
+        el("img", { class: "rewards-row-icon", alt: "", src: "assets/vip/" + (
+          { daily: "bonus_daily.svg", "7d": "bonus_7d.svg", "30d": "bonus_30d.svg",
+            rakeback: "rakeback.svg", currency: "token.svg" }[r.icon]
+          || "token.svg"
+        ) }),
         el("div", { class: "rewards-row-mid" }, [
           el("div", { class: "rewards-row-title" }, r.title),
           el("div", { class: "rewards-row-sub muted" }, BT.ui.fmt(r.amount) + " pts"),
