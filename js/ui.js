@@ -147,11 +147,7 @@
       '<circle cx="9" cy="11.5" r="1" fill="currentColor" stroke="none"/>' +
       '<circle cx="12.5" cy="11.5" r="1" fill="currentColor" stroke="none"/>' +
       '<circle cx="16" cy="11.5" r="1" fill="currentColor" stroke="none"/>',
-    token:
-      '<circle cx="12" cy="12" r="9"/>' +
-      '<circle cx="12" cy="12" r="5.5"/>' +
-      '<path d="M12 8.7v6.6"/>' +
-      '<path d="M10.3 10.4h2.6a1.3 1.3 0 0 1 0 2.6h-1.8a1.3 1.3 0 0 0 0 2.6h2.6"/>',
+    // token is rendered separately below with its own branded SVG
     shield:
       '<path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6l7-3Z"/>' +
       '<path d="M8.8 12l2.2 2.2 4.2-4.4"/>',
@@ -202,14 +198,36 @@
       '<path d="M17 13.5a5.5 5.5 0 0 1 3.5 5.5"/>',
   };
 
+  // Branded token SVG (fixed colours, own viewBox — not part of the monochrome set).
+  const TOKEN_SVG =
+    '<circle cx="32" cy="32" r="30" fill="#007c8f" fill-opacity="0.18" stroke="#007c8f" stroke-width="2.6"/>' +
+    '<g stroke="#cbeff5" stroke-width="4" stroke-linecap="butt">' +
+      '<line x1="32" y1="3" x2="32" y2="10.5"/>' +
+      '<line x1="32" y1="53.5" x2="32" y2="61"/>' +
+      '<line x1="3" y1="32" x2="10.5" y2="32"/>' +
+      '<line x1="53.5" y1="32" x2="61" y2="32"/>' +
+      '<line x1="11.3" y1="11.3" x2="16.6" y2="16.6"/>' +
+      '<line x1="47.4" y1="47.4" x2="52.7" y2="52.7"/>' +
+      '<line x1="52.7" y1="11.3" x2="47.4" y2="16.6"/>' +
+      '<line x1="16.6" y1="47.4" x2="11.3" y2="52.7"/>' +
+    '</g>' +
+    '<circle cx="32" cy="32" r="19" fill="#007c8f" fill-opacity="0.30" stroke="#cbeff5" stroke-width="1.5" stroke-opacity="0.65"/>' +
+    '<path d="M32 19.5 L35.5 28.4 L45 29 L37.7 35.1 L40.1 44.5 L32 39.2 L23.9 44.5 L26.3 35.1 L19 29 L28.5 28.4 Z" fill="#cbeff5" stroke="#cbeff5" stroke-width="1" stroke-linejoin="round"/>';
+
   function icon(name, size) {
     const s = size || 24;
-    const body = ICONS[name] || "";
     const wrap = el("span", { class: "icon" });
-    wrap.innerHTML =
-      '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="none" ' +
-      'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' +
-      'aria-hidden="true">' + body + "</svg>";
+    if (name === "token") {
+      wrap.innerHTML =
+        '<svg viewBox="0 0 64 64" width="' + s + '" height="' + s + '" fill="none" ' +
+        'aria-hidden="true">' + TOKEN_SVG + "</svg>";
+    } else {
+      const body = ICONS[name] || "";
+      wrap.innerHTML =
+        '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="none" ' +
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' +
+        'aria-hidden="true">' + body + "</svg>";
+    }
     return wrap;
   }
 
