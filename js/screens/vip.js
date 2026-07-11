@@ -187,7 +187,7 @@
         el("span", { class: "vip-cc-title" }, title),
         status,
       ]),
-      (icon === "7d" || icon === "30d" || icon === "rakeback")
+      (icon === "daily" || icon === "7d" || icon === "30d" || icon === "rakeback")
         ? BT.ui.bonusIcon(icon, 40, rankColor)
         : el("img", { class: "vip-cc-icon", src: "assets/vip/claim-" + icon + ".png", alt: "" }),
       amount !== null ? el("div", { class: "vip-cc-amt" }, fmt(amount) + " pts") : null,
