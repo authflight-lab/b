@@ -41,19 +41,55 @@
   }
 
   // Dither line chart — same dither/bloom aesthetic as the session area chart,
-  // but a single accent-toned series with a dithered fill beneath a crisp line.
+  // but a single accent-green series with a dithered fill beneath a crisp line.
   // Values are treated as ≥0 (counts / wagered): baseline is 0, fill rises to
   // the line. Returns { el, draw(data) }; draw is idempotent and re-measures.
+  //
+  // On hover the dither comes alive: the Bayer sampling scrolls and a travelling
+  // sine wave ripples the lit/unlit boundary, so the fill shimmers and flows.
+  // A rAF loop runs only while pointer-over; on leave it settles to a static
+  // frame (phase 0). Uses its own animated column painter so the shared static
+  // dCol (session chart) is untouched.
   function ditherLineChart(opts) {
     opts = opts || {};
-    const rgb = opts.color || [203, 239, 245];
+    const rgb = opts.color || [40, 210, 110]; // stronger accent green
     const main = el("canvas", { class: "dchart-canvas", "aria-hidden": "true" });
     const bloom = el("canvas", { class: "dchart-bloom", "aria-hidden": "true" });
     const wrap = el("div", { class: "dchart" }, [main, bloom]);
 
-    function draw(data) {
-      data = (data && data.length) ? data.map(Number) : [0];
-      if (data.length === 1) data = [data[0], data[0]];
+    let lastData = [0, 0];
+    let phase = 0;
+    let raf = 0;
+
+    // Animated dither column: like dCol, but density gets a travelling-wave
+    // offset and the Bayer matrix is sampled with a scrolling phase so the
+    // texture drifts. phase === 0 reproduces the static look exactly.
+    function aCol(ctx, x, top, floor, fill, ph) {
+      const t = Math.round(top), f = Math.round(floor), depth = f - t;
+      if (depth <= 0) {
+        ctx.fillStyle = drgba(fill, DBORDER);
+        ctx.fillRect(x, t, 1, 1);
+        return;
+      }
+      const ix = ((Math.floor(ph) % 4) + 4) % 4;
+      const iy = ((Math.floor(ph * 0.5) % 4) + 4) % 4;
+      const wave = ph ? 0.13 * Math.sin(x * 0.4 - ph * 1.6) : 0;
+      for (let y = t; y < f; y++) {
+        const density = (y - t) / depth;
+        const lit = dclamp(density + wave) > BAYER4[(y + iy) & 3][(x + ix) & 3];
+        const k = 0.3 + density * 0.7;
+        ctx.fillStyle = drgba(fill, dclamp(lit ? k : k * DOFF));
+        ctx.fillRect(x, y, 1, 1);
+      }
+      ctx.fillStyle = drgba(fill, DBORDER);
+      ctx.fillRect(x, t, 1, 1);
+      if (depth > 1) {
+        ctx.fillStyle = drgba(fill, DBORDER * 0.5);
+        ctx.fillRect(x, t + 1, 1, 1);
+      }
+    }
+
+    function render(data, ph) {
       const cw = wrap.clientWidth || 260, ch = wrap.clientHeight || 100;
       const cols = Math.min(520, Math.max(8, Math.round(cw / DCELL)));
       const rows = Math.min(220, Math.max(8, Math.round(ch / DCELL)));
@@ -80,7 +116,7 @@
         line[c] = yFn(a0 + (a1 - a0) * (t - i));
       }
       // Dithered fill beneath the line.
-      for (let c = 0; c < cols; c++) dCol(ctx, c, line[c], floor, rgb);
+      for (let c = 0; c < cols; c++) aCol(ctx, c, line[c], floor, rgb, ph);
       // Crisp line on top, spanning vertical gaps to neighbours for continuity.
       ctx.fillStyle = drgba(rgb, 1);
       for (let c = 0; c < cols; c++) {
@@ -96,6 +132,31 @@
       bctx.clearRect(0, 0, cols, rows);
       bctx.drawImage(main, 0, 0);
     }
+
+    function draw(data) {
+      data = (data && data.length) ? data.map(Number) : [0];
+      if (data.length === 1) data = [data[0], data[0]];
+      lastData = data;
+      render(data, raf ? phase : 0);
+    }
+
+    function loop() {
+      phase += 0.09;
+      render(lastData, phase);
+      raf = requestAnimationFrame(loop);
+    }
+    function start() {
+      if (raf || !wrap.isConnected) return;
+      raf = requestAnimationFrame(loop);
+    }
+    function stop() {
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      phase = 0;
+      render(lastData, 0);
+    }
+    wrap.addEventListener("mouseenter", start);
+    wrap.addEventListener("mouseleave", stop);
+
     return { el: wrap, draw };
   }
 

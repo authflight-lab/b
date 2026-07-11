@@ -235,20 +235,10 @@
     ]);
   }
 
-  // Accent colour as an [r,g,b] triple for the dither chart (hex CSS var → rgb).
-  function readAccentRGB() {
-    try {
-      const v = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
-      const m = v.match(/^#?([0-9a-fA-F]{6})$/);
-      if (m) { const n = parseInt(m[1], 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
-    } catch (_) { /* fall through to default */ }
-    return [203, 239, 245];
-  }
-
   // Two switchable 7-day dither line charts inside the stats card: Wagered and
   // Messages. Switch by tapping the chart, swiping, scrolling, or tapping a dot
-  // — the same paging affordance as the Explore Games grid. Both use the accent
-  // colour. Series is fetched lazily and re-drawn once it lands.
+  // — the same paging affordance as the Explore Games grid. Both use the strong
+  // accent green (chart default). Series is fetched lazily and drawn once it lands.
   function statsCharts() {
     const CHARTS = [
       { key: "wagered",  label: "Wagered" },
@@ -257,7 +247,7 @@
     let page = 0;
     let series = null;
 
-    const chart = BT.games.common.ditherLineChart({ color: readAccentRGB() });
+    const chart = BT.games.common.ditherLineChart();
     const titleEl = el("div", { class: "statschart-title" }, "");
     const box = el("div", { class: "statschart-box" }, [chart.el]);
     const dots = el("div", { class: "games-page-dots" });
