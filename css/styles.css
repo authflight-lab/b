@@ -1884,7 +1884,7 @@ input[type="number"].betbox-input:focus {
 .sess-body { display: flex; align-items: stretch; gap: 8px; }
 .sess-stack {
   display: flex; flex-direction: column; gap: 8px;
-  flex: 0 0 40%; max-width: 40%;
+  flex: 0 0 28%; max-width: 28%;
 }
 .sess-cell {
   padding: 8px 10px; border-radius: 12px;
