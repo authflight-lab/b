@@ -432,6 +432,25 @@ input[type="number"].betbox-input:focus {
 .hexbadge.r1 { color: #3a2a05; background: linear-gradient(180deg, #ffe9a8, var(--race-gold) 60%, var(--race-gold-deep)); box-shadow: 0 0 14px rgba(244,199,82,0.55); }
 .hexbadge.r2 { color: #23282e; background: linear-gradient(180deg, #f2f6fb, var(--race-silver) 60%, #9aa6b3); box-shadow: 0 0 12px rgba(205,214,224,0.4); }
 .hexbadge.r3 { color: #3a1f0a; background: linear-gradient(180deg, #f6c79a, var(--race-bronze) 60%, #b06a34); box-shadow: 0 0 12px rgba(224,149,90,0.4); }
+
+/* Streak fire effect — top-3 names only, intensifying toward #1. Molten
+   gradient fill + a flickering glow whose radius/speed scale with rank. */
+.rc-name.fire {
+  background: linear-gradient(180deg, #ffe89a 0%, #ffbe2e 38%, #ff7a1e 72%, #ff3d24 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: streak-flicker var(--fire-speed, 1.8s) ease-in-out infinite;
+}
+.rc-name.fire-3 { --fire-speed: 2s;    --fire-glow: 3px;  --fire-glow2: 0px;  }
+.rc-name.fire-2 { --fire-speed: 1.5s;  --fire-glow: 5px;  --fire-glow2: 9px;  }
+.rc-name.fire-1 { --fire-speed: 1.05s; --fire-glow: 8px;  --fire-glow2: 16px; font-weight: 800; letter-spacing: 0.2px; }
+@keyframes streak-flicker {
+  0%, 100% { filter: drop-shadow(0 0 var(--fire-glow) rgba(255,122,36,0.75)) drop-shadow(0 0 var(--fire-glow2) rgba(255,64,20,0.45)); }
+  50%      { filter: drop-shadow(0 0 calc(var(--fire-glow) * 1.7) rgba(255,152,52,0.92)) drop-shadow(0 0 calc(var(--fire-glow2) * 1.5) rgba(255,80,24,0.6)); }
+}
+@media (prefers-reduced-motion: reduce) { .rc-name.fire { animation: none; } }
 .race-you-label { margin: 16px 0 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
 
 /* Lists */
