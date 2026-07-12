@@ -531,9 +531,29 @@
     const S = { wagered: 0, returned: 0, wins: 0, losses: 0 };
     let curve = [0];
     const subs = [];
+    let holds = 0;      // >0 while a game's outcome animation is still playing
+    const queued = [];  // settles deferred until the animation ends (see hold/release)
 
     function emit() {
       subs.slice().forEach((fn) => { try { fn(); } catch (e) {} });
+    }
+    // Apply a settle to the running tally + curve, then notify subscribers.
+    function applySettle(stake, payout) {
+      const st = Number(stake) || 0;
+      const po = Number(payout) || 0;
+      S.wagered += st;
+      S.returned += po;
+      // Wins vs losses per net result: a payout at or below the stake is a
+      // loss (payout > stake is the win test, so a 1.0x push counts as a
+      // loss of nothing but not a win).
+      if (po > st) S.wins += 1; else S.losses += 1;
+      curve.push(S.returned - S.wagered);
+      // Cap the curve; decimate every other point (keeping first and last)
+      // so a long session keeps its overall shape with a bounded array.
+      if (curve.length > 240) {
+        curve = curve.filter((_, i, a) => i % 2 === 0 || i === a.length - 1);
+      }
+      emit();
     }
     return {
       // Remember an opened round's stake until its settle arrives.
@@ -554,26 +574,29 @@
         return undefined;
       },
       settle(stake, payout) {
-        const st = Number(stake) || 0;
-        const po = Number(payout) || 0;
-        S.wagered += st;
-        S.returned += po;
-        // Wins vs losses per net result: a payout at or below the stake is a
-        // loss (payout > stake is the win test, so a 1.0x push counts as a
-        // loss of nothing but not a win).
-        if (po > st) S.wins += 1; else S.losses += 1;
-        curve.push(S.returned - S.wagered);
-        // Cap the curve; decimate every other point (keeping first and last)
-        // so a long session keeps its overall shape with a bounded array.
-        if (curve.length > 240) {
-          curve = curve.filter((_, i, a) => i % 2 === 0 || i === a.length - 1);
+        // While a game holds the tracker (its outcome animation is still
+        // playing), queue the settle so the graph/profit/wagered don't jump
+        // ahead of the reveal. Flushed in order on release().
+        if (holds > 0) { queued.push([stake, payout]); return; }
+        applySettle(stake, payout);
+      },
+      // Defer settle application until an outcome animation finishes. A game
+      // calls hold() before it fires the bet and release() once the reveal is
+      // done; balanced pairs nest safely. reset() clears any outstanding hold.
+      hold() { holds += 1; },
+      release() {
+        if (holds > 0) holds -= 1;
+        if (holds === 0 && queued.length) {
+          const q = queued.splice(0, queued.length);
+          q.forEach((pair) => applySettle(pair[0], pair[1]));
         }
-        emit();
       },
       reset() {
         S.wagered = 0; S.returned = 0; S.wins = 0; S.losses = 0;
         curve = [0];
         Object.keys(open).forEach((k) => delete open[k]);
+        holds = 0;
+        queued.length = 0;
         emit();
       },
       stats: () => ({

@@ -50,6 +50,17 @@
     return r + "x";
   }
 
+  // Errors plinko handles with a quiet button cooldown instead of a toast:
+  // spam-tapping naturally trips server rate limiting and round-timing races,
+  // and a flood of "slow down" / "that round has ended" toasts is worse than
+  // silently pacing the next drop (the 750ms button greyout does the pacing).
+  const SILENT_PLINKO_ERRORS = { rate_limited: 1, round_not_open: 1, no_open_round: 1 };
+  function reportPlinkoErr(resp) {
+    const code = (resp && resp.error) || "";
+    if (SILENT_PLINKO_ERRORS[code]) return;
+    BT.ui.toast(C.errText(resp), "error");
+  }
+
   function lerp(a, b, t) {
     return [
       Math.round(a[0] + (b[0] - a[0]) * t),
@@ -254,6 +265,15 @@
         : "Drop Ball";
     }
 
+    // Tap pacing: after each tap the Drop button greys out and can't be clicked
+    // for 750ms. This replaces the old rate-limit / round-ended toast flood with
+    // a quiet, visible cooldown — the button itself paces the drops.
+    const DROP_COOLDOWN_MS = 750;
+    function coolDrop() {
+      dropBtn.disabled = true;
+      setTimeout(() => { dropBtn.disabled = false; }, DROP_COOLDOWN_MS);
+    }
+
     function flashBucket(elm, win) {
       elm.classList.remove("flash-win", "flash-loss");
       void elm.offsetWidth;
@@ -323,7 +343,7 @@
       pendingStake = Math.max(0, pendingStake - betAmt);
 
       if (!betResp || betResp.ok === false) {
-        BT.ui.toast(C.errText(betResp), "error");
+        reportPlinkoErr(betResp);
         inFlightCount = Math.max(0, inFlightCount - 1);
         removeBall(ball);
         return;
@@ -343,7 +363,7 @@
       updateDropLabel();
 
       if (!s || s.ok === false) {
-        BT.ui.toast(C.errText(s), "error");
+        reportPlinkoErr(s);
         removeBall(ball);
         return;
       }
@@ -555,12 +575,14 @@
     // gated by SPAWN_MS + MAX_INFLIGHT + affordability inside trySpawn()).
     dropBtn.addEventListener("pointerdown", (e) => {
       e.preventDefault();
+      if (dropBtn.disabled) return;
       trySpawn();
+      coolDrop();
     });
 
     root.appendChild(
       el("div", { class: "card" }, [
-        C.gameHeader("plinko", "Plinko", "Drop the ball through the pegs — where it lands sets your multiplier. Tap the button to drop balls — spam it as fast as you like, each one is its own real bet. Edges pay big but are rare; the center is safe. More rows and higher risk spread the payouts wider."),
+        C.gameHeader("plinko", "Plinko", "Drop the ball through the pegs — where it lands sets your multiplier. Tap the button to drop a ball — each tap is its own real bet. Edges pay big but are rare; the center is safe. More rows and higher risk spread the payouts wider."),
         board,
         buckets,
         el("div", { class: "row plinko-opts" }, [

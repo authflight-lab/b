@@ -208,6 +208,9 @@
     betBtn.addEventListener("click", async () => {
       if (busy || picks.size < 1) return;
       busy = true;
+      // Hold the session P&L tracker so the graph/profit/wagered update only
+      // when the draw reveal finishes — not the instant the settle lands.
+      if (BT.session) BT.session.hold();
       betBtn.disabled = qpBtn.disabled = clearBtn.disabled = true;
       bet.setDisabled(true);
       banner.hide();
@@ -256,6 +259,9 @@
         C.syncBalance(s);
         BT.ui.haptic(win ? "success" : "error");
       } finally {
+        // Release AFTER the reveal animation above, so the deferred settle now
+        // applies to the session panel in sync with the visible result.
+        if (BT.session) BT.session.release();
         busy = false;
         bet.setDisabled(false);
         refresh();
