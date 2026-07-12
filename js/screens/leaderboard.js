@@ -1,6 +1,7 @@
-// Leaderboard — category tabs (Rich / Chatters), a period toggle (Weekly /
-// All-Time), and a ranked table with hexagon rank badges and a reward column
-// for the paid places.
+// Leaderboard — category tabs (Rich / Chatters / Streak), a period toggle
+// (Weekly / All-Time) on the period-based tabs, and a ranked table with hexagon
+// rank badges and a reward column for the paid places. Streak is period-
+// agnostic (a live current streak): no toggle, no reward column.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -16,13 +17,14 @@
   const TAB_META = {
     rich: { icon: "rich", label: "Rich", col: "Balance" },
     chatters: { icon: "chat", label: "Chatters", col: "Messages" },
+    streak: { icon: "flame", label: "Streak", col: "Days", noPeriod: true },
   };
 
   function render(root) {
     BT.ui.clear(root);
 
     root.appendChild(tabRow(root));
-    root.appendChild(periodRow(root));
+    if (!TAB_META[currentTab].noPeriod) root.appendChild(periodRow(root));
 
     const body = el("div", { id: "lb-body" }, BT.ui.loading("Loading rankings…"));
     root.appendChild(body);
@@ -96,8 +98,9 @@
 
     renderResets(data.resets_at);
 
-    // Reward column only appears on the Weekly board (all-time pays nothing).
-    const showReward = currentPeriod === "weekly";
+    // Reward column only appears on the Weekly board (all-time pays nothing);
+    // the period-agnostic Streak board never pays, so it has no reward column.
+    const showReward = !TAB_META[currentTab].noPeriod && currentPeriod === "weekly";
     const rows = data.rows || [];
     const table = el("div", { class: "race-table" + (showReward ? "" : " no-reward") });
     const head = [
