@@ -1,9 +1,6 @@
-// Leaderboard — category tabs (Rich / Chatters / Streak), a period toggle
-// (Weekly / All-Time) on the period-based tabs, and a ranked table with hexagon
-// rank badges and a reward column for the paid places. Streak is period-
-// agnostic (a live current streak): no Weekly/All-Time toggle, but the top-3
-// current streaks are paid a weekly bonus, and the top-3 names get an
-// intensifying fire effect (#1 hottest).
+// Leaderboard — category tabs (Rich / Chatters), a period toggle (Weekly /
+// All-Time), and a ranked table with hexagon rank badges and a reward column
+// for the paid places.
 (function () {
   const BT = (window.BT = window.BT || {});
   const el = BT.ui.el;
@@ -14,19 +11,18 @@
 
   // Weekly bonuses paid to the top 3 each Monday (mirrors bot/bartender/weekly.py
   // CHATTERS_BONUS / RICH_BONUS). Keep in sync if those payouts change.
-  const PRIZES = { rich: [75, 50, 25], chatters: [100, 60, 40], streak: [75, 50, 25] };
+  const PRIZES = { rich: [75, 50, 25], chatters: [100, 60, 40] };
 
   const TAB_META = {
     rich: { icon: "rich", label: "Rich", col: "Balance" },
     chatters: { icon: "chat", label: "Chatters", col: "Messages" },
-    streak: { icon: "flame", label: "Streak", col: "Days", noPeriod: true },
   };
 
   function render(root) {
     BT.ui.clear(root);
 
     root.appendChild(tabRow(root));
-    if (!TAB_META[currentTab].noPeriod) root.appendChild(periodRow(root));
+    root.appendChild(periodRow(root));
 
     const body = el("div", { id: "lb-body" }, BT.ui.loading("Loading rankings…"));
     root.appendChild(body);
@@ -100,9 +96,8 @@
 
     renderResets(data.resets_at);
 
-    // Reward column: shown on the Weekly board (all-time pays nothing) and on
-    // the period-agnostic Streak board (paid weekly to the top-3 current streaks).
-    const showReward = TAB_META[currentTab].noPeriod ? true : currentPeriod === "weekly";
+    // Reward column: shown on the Weekly board only (all-time pays nothing).
+    const showReward = currentPeriod === "weekly";
     const rows = data.rows || [];
     const table = el("div", { class: "race-table" + (showReward ? "" : " no-reward") });
     const head = [
@@ -119,8 +114,7 @@
       const prizes = showReward ? (PRIZES[currentTab] || []) : [];
       rows.forEach((r) => {
         const name = r.display_name || r.username || ("User " + r.tg_id);
-        const fireTier = fireRank(r.rank);
-        table.appendChild(raceRow(r.rank, name, r.value, prizes[r.rank - 1], false, showReward, r.vip_level, fireTier));
+        table.appendChild(raceRow(r.rank, name, r.value, prizes[r.rank - 1], false, showReward, r.vip_level));
       });
     }
     box.appendChild(table);
@@ -128,27 +122,20 @@
     if (data.you) {
       box.appendChild(el("div", { class: "race-you-label" }, "Your position"));
       const youTable = el("div", { class: "race-table" + (showReward ? "" : " no-reward") });
-      youTable.appendChild(raceRow(data.you.rank, "You", data.you.value, null, true, showReward, data.you.vip_level, fireRank(data.you.rank)));
+      youTable.appendChild(raceRow(data.you.rank, "You", data.you.value, null, true, showReward, data.you.vip_level));
       box.appendChild(youTable);
     }
   }
 
-  // Fire effect applies only to the top 3 of the Streak board, intensifying
-  // toward #1. Returns the tier (1/2/3) or 0 for no fire.
-  function fireRank(rank) {
-    return currentTab === "streak" && rank >= 1 && rank <= 3 ? rank : 0;
-  }
-
-  function raceRow(rank, name, value, reward, you, showReward, vipLevel, fireTier) {
+  function raceRow(rank, name, value, reward, you, showReward, vipLevel) {
     const tier = rank === 1 ? " r1" : rank === 2 ? " r2" : rank === 3 ? " r3" : "";
-    const nameCls = "rc-name" + (fireTier ? " fire fire-" + fireTier : "");
     const cells = [
       el("div", { class: "rc-rank" }, [
         el("span", { class: "hexbadge" + tier }, String(rank == null ? "?" : rank)),
       ]),
       el("div", { class: "rc-player" }, [
         BT.rank.badgeImg(vipLevel || 0, 19),
-        el("span", { class: nameCls }, name),
+        el("span", { class: "rc-name" }, name),
       ]),
       el("div", { class: "rc-value" }, fmt(value)),
     ];
